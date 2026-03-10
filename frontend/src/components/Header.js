@@ -58,6 +58,14 @@ function Header() {
           >
             Tournaments
           </Link>
+          <Link
+            to="/stock-market"
+            style={styles.navLink}
+            onMouseEnter={e => e.target.style.backgroundColor = "#333333"}
+            onMouseLeave={e => e.target.style.backgroundColor = "transparent"}
+          >
+            Stock Market
+          </Link>
         </nav>
 
         {/* Authentication Navigation */}

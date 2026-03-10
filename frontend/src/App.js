@@ -3,10 +3,11 @@ import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import AddTournament from "./pages/AddTournament";
-import ProtectedRoute from "./routes/ProtectedRoute";
 import Tournaments from "./pages/Tournaments";
+import AddTournament from "./pages/AddTournament";
+import StockMarket from "./pages/StockMarket";
+import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./routes/ProtectedRoute";
 import TournamentDetail from "./pages/TournamentDetail";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/tournaments" element={<Tournaments />} />
+          <Route path="/stock-market" element={<StockMarket />} />
           <Route path="/tournaments/:id" element={<TournamentDetail />} />
 
           {/* protected routes - ProtectedRoute bounces unauthenticated users to /login */}

@@ -46,16 +46,27 @@ router.get("/:id", async (req, res) => {
     if (!tournament) return res.status(404).json({ message: "Tournament not found" });
 
     const now = new Date();
+    
+    // Parse dates properly to ensure comparison works
+    const startDate = new Date(tournament.start_date);
+    const endDate = new Date(tournament.end_date);
 
-    // Auto-activate when start date passes
-    if (now > new Date(tournament.start_date) && tournament.status === "open") {
+    let modified = false;
+
+    // Auto-activate when start date passes (check if start date has passed and status is open)
+    if (now >= startDate && tournament.status === "open") {
       tournament.status = "active";
-      await tournament.save();
+      modified = true;
     }
 
-    // Auto-end when end date passes
-    if (now > new Date(tournament.end_date) && tournament.status !== "ended") {
+    // Auto-end when end date passes (check if end date has passed and status is not already ended)
+    if (now >= endDate && tournament.status !== "ended") {
       tournament.status = "ended";
+      modified = true;
+    }
+
+    // Only save if we actually modified the status
+    if (modified) {
       await tournament.save();
     }
 

@@ -37,6 +37,17 @@ function TournamentDetail() {
   const [selectedStock, setSelectedStock] = useState(null);
   const [toast, setToast] = useState(location.state?.toast || "");
 
+  // debug
+  useEffect(() => {
+    if (tournament) {
+      console.log("Tournament status:", tournament.status);
+      console.log("Is participant:", isParticipant);
+      console.log("Can trade:", isParticipant && tournament.status === "active");
+      console.log("Start date:", tournament.start_date);
+      console.log("Now:", new Date());
+    }
+  }, [tournament, isParticipant]);
+
   // Clear toast after 4 seconds
   useEffect(() => {
     if (toast) {
@@ -193,8 +204,11 @@ function TournamentDetail() {
 
   const { bg, color } = getStatusStyle(tournament.status);
   const canJoin = tournament.status === "open" || tournament.status === "active";
-  const canTrade = isParticipant && tournament.status === "active";
+  const now = new Date();
+  const endDate = new Date(tournament.end_date);
+  const hasEnded = now > endDate;
 
+  const canTrade = isParticipant && !hasEnded;
   return (
     <div style={styles.page}>
       <Header />

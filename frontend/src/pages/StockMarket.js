@@ -1,27 +1,12 @@
-/**
- * StockMarket Component
- *
- * Public page displaying stock cards with cached prices from DB.
- *
- * Key behaviours:
- * - Single fetch to /api/stocks returns metadata + prices together
- * - Polls every 5 minutes (prices only update daily anyway)
- * - Filter by sector and exchange, search by name or symbol
- * - Shows priceDate so user knows which day's close is displayed
- * - Green / red color coding for price movement
- */
-
 import { useEffect, useState, useCallback } from "react";
 import Header from "../components/Header";
 
-const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const POLL_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 function StockMarket() {
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [countdown, setCountdown] = useState(POLL_INTERVAL / 1000);
   const [searchTerm, setSearchTerm] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
   const [exchangeFilter, setExchangeFilter] = useState("All");
@@ -33,8 +18,6 @@ function StockMarket() {
       if (!res.ok) throw new Error("Failed to load stocks");
       const data = await res.json();
       setStocks(data);
-      setLastUpdated(new Date());
-      setCountdown(POLL_INTERVAL / 1000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -47,13 +30,6 @@ function StockMarket() {
     const interval = setInterval(fetchStocks, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchStocks]);
-
-  useEffect(() => {
-    const tick = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(tick);
-  }, []);
 
   const sectors = ["All", ...Array.from(new Set(stocks.map((s) => s.sector))).sort()];
 
@@ -92,7 +68,6 @@ function StockMarket() {
     return vol.toString();
   }
 
-  // Check if any stock has price data yet
   const hasPrices = stocks.some((s) => s.price !== null);
   const priceDate = stocks.find((s) => s.priceDate)?.priceDate || null;
 
@@ -103,31 +78,16 @@ function StockMarket() {
 
       <main style={styles.main}>
 
-        {/* Page Header */}
         <header style={styles.pageHeader}>
-          <div>
-            <h1 style={styles.title}>Stock Market</h1>
-            <p style={styles.subtitle}>
-              Top 20 by market cap · Previous day's close
-              {priceDate && <span style={styles.priceDate}> · {priceDate}</span>}
-            </p>
-          </div>
-
+          <h1 style={styles.title}>Stock Market</h1>
           <div style={styles.refreshInfo}>
-            {lastUpdated && (
-              <span style={styles.lastUpdated}>
-                Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
+            {priceDate && (
+              <span style={styles.lastUpdated}>Updated: {priceDate}</span>
             )}
-            <div style={styles.countdownBadge}>
-              <span style={styles.countdownDot} />
-              Refreshing in {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}
-            </div>
             <button style={styles.refreshBtn} onClick={fetchStocks} title="Refresh now">↻</button>
           </div>
         </header>
 
-        {/* Filters */}
         <div style={styles.filtersRow}>
           <div style={styles.searchWrap}>
             <svg style={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
@@ -153,21 +113,18 @@ function StockMarket() {
           <span style={styles.resultCount}>{filtered.length} stocks</span>
         </div>
 
-        {/* Error */}
         {error && (
           <div style={styles.errorBanner} role="alert">
             ⚠ {error} — <button style={styles.retryBtn} onClick={fetchStocks}>Retry</button>
           </div>
         )}
 
-        {/* Price fetch in progress notice */}
         {!loading && !hasPrices && (
           <div style={styles.infoBanner}>
-            ⏳ Price data is being fetched in the background (~4 min). Cards will populate automatically.
+            ⏳ Price data is being fetched in the background (~4 min). Refresh the page once complete.
           </div>
         )}
 
-        {/* Loading skeleton */}
         {loading ? (
           <div style={styles.grid}>
             {Array.from({ length: 20 }).map((_, i) => (
@@ -184,7 +141,6 @@ function StockMarket() {
 
               return (
                 <article key={stock.symbol} style={styles.card}>
-
                   <div style={styles.cardTop}>
                     <div>
                       <span style={styles.symbol}>{stock.symbol}</span>
@@ -214,7 +170,6 @@ function StockMarket() {
                     <span style={styles.volumeLabel}>Vol</span>
                     <span style={styles.volumeValue}>{formatVolume(stock.volume)}</span>
                   </div>
-
                 </article>
               );
             })}
@@ -240,20 +195,13 @@ const styles = {
   page: { minHeight: "100vh", backgroundColor: BG, color: TEXT, fontFamily: "'IBM Plex Sans', sans-serif" },
   main: { maxWidth: "90rem", margin: "0 auto", padding: "2.5rem 1.5rem 5rem" },
   pageHeader: {
-    display: "flex", justifyContent: "space-between", alignItems: "flex-end",
+    display: "flex", justifyContent: "space-between", alignItems: "center",
     marginBottom: "2rem", paddingBottom: "1.5rem", borderBottom: `1px solid ${BORDER}`,
     flexWrap: "wrap", gap: "1rem",
   },
-  title: { margin: "0 0 0.25rem", fontSize: "2rem", fontWeight: "700", letterSpacing: "-0.02em" },
-  subtitle: { margin: 0, fontSize: "0.85rem", color: MUTED },
-  priceDate: { color: BLUE },
+  title: { margin: 0, fontSize: "2rem", fontWeight: "700", letterSpacing: "-0.02em" },
   refreshInfo: { display: "flex", alignItems: "center", gap: "0.75rem" },
-  lastUpdated: { fontSize: "0.8rem", color: MUTED },
-  countdownBadge: {
-    display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", color: MUTED,
-    backgroundColor: SURFACE, padding: "0.35rem 0.75rem", borderRadius: "2rem", border: `1px solid ${BORDER}`,
-  },
-  countdownDot: { width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#00C076", display: "inline-block" },
+  lastUpdated: { fontSize: "0.85rem", color: MUTED },
   refreshBtn: {
     background: "none", border: `1px solid ${BORDER}`, color: MUTED, borderRadius: "0.375rem",
     width: "2rem", height: "2rem", cursor: "pointer", fontSize: "1rem",

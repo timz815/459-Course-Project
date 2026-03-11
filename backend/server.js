@@ -23,7 +23,7 @@ async function connectDB() {
     await mongoose.connect(uri, clientOptions);
     await mongoose.connection.db.admin().command({ ping: 1 });
     console.log("✅ Pinged the db. You successfully connected to MongoDB!");
-    // stockRoutes.schedulePriceRefresh();
+    stockRoutes.schedulePriceRefresh();
   } catch (err) {
     console.error("❌ Connection failed:", err);
   }

@@ -30,6 +30,7 @@ function SellStock() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Fetch stock and participant holding data on mount
   useEffect(() => {
     async function fetchData() {
       try {
@@ -43,11 +44,13 @@ function SellStock() {
         const found = stocks.find((s) => s.symbol === symbol.toUpperCase());
         setStock(found || null);
 
+        // Match participant to current user via token payload
         const tokenPayload = JSON.parse(atob(token.split(".")[1]));
         const myParticipant = participants.find(
           (p) => p.user?._id === tokenPayload.id || p.user === tokenPayload.id
         );
 
+        // Extract holding for this specific symbol
         if (myParticipant) {
           const myHolding = myParticipant.holdings?.find(
             (h) => h.symbol === symbol.toUpperCase()
@@ -65,7 +68,7 @@ function SellStock() {
 
   const amount = parseFloat(dollarAmount);
 
-  // Estimate shares from cached EOD price — cosmetic only
+  // Calculate estimated shares from cached price
   const estimatedShares =
     stock?.price && amount > 0
       ? (amount / stock.price).toFixed(1)
@@ -73,6 +76,7 @@ function SellStock() {
 
   const isValid = amount > 0;
 
+  // Execute sell trade via API
   async function handleSell() {
     if (!isValid) return;
     setSubmitting(true);
@@ -112,10 +116,10 @@ function SellStock() {
 
   if (loading) {
     return (
-      <div style={styles.page}>
+      <div style={styles.pageLayout}>
         <Header />
-        <main style={styles.main}>
-          <p style={styles.statusMsg}>Loading...</p>
+        <main style={styles.mainContent}>
+          <p style={styles.statusMessage}>Loading...</p>
         </main>
       </div>
     );
@@ -123,10 +127,10 @@ function SellStock() {
 
   if (!stock || !holding) {
     return (
-      <div style={styles.page}>
+      <div style={styles.pageLayout}>
         <Header />
-        <main style={styles.main}>
-          <p style={styles.statusMsg}>
+        <main style={styles.mainContent}>
+          <p style={styles.statusMessage}>
             {!stock ? "Stock not found." : `You don't own any ${symbol.toUpperCase()} in this tournament.`}
           </p>
         </main>
@@ -135,51 +139,51 @@ function SellStock() {
   }
 
   return (
-    <div style={styles.page}>
+    <div style={styles.pageLayout}>
       <Header />
-      <main style={styles.main}>
-        <article style={styles.card}>
+      <main style={styles.mainContent}>
+        <article style={styles.saleCard}>
 
-          {/* Header */}
-          <div style={styles.cardHeader}>
+          {/* Stock header with price */}
+          <header style={styles.stockHeader}>
             <div>
-              <h1 style={styles.title}>Sell {stock.symbol}</h1>
-              <p style={styles.subtitle}>{stock.name}</p>
+              <h1 style={styles.stockSymbol}>Sell {stock.symbol}</h1>
+              <p style={styles.companyName}>{stock.name}</p>
             </div>
-            <div style={styles.priceTag}>
+            <div style={styles.priceDisplay}>
               {stock.price ? (
                 <>
                   <span style={styles.priceLabel}>~Price</span>
-                  <span style={styles.priceValue}>${stock.price.toFixed(2)}</span>
-                  <span style={styles.priceNote}>EOD est.</span>
+                  <span style={styles.priceAmount}>${stock.price.toFixed(2)}</span>
+                  <span style={styles.priceDisclaimer}>EOD est.</span>
                 </>
               ) : (
-                <span style={styles.priceNote}>Price unavailable</span>
+                <span style={styles.priceDisclaimer}>Price unavailable</span>
               )}
             </div>
-          </div>
+          </header>
 
-          {/* Current position */}
-          <div style={styles.positionCard}>
-            <div style={styles.positionRow}>
-              <span style={styles.positionLabel}>Shares Held</span>
+          {/* Current position summary */}
+          <section style={styles.positionSummary}>
+            <div style={styles.positionDetail}>
+              <span style={styles.positionMetric}>Shares Held</span>
               <span style={styles.positionValue}>{holding.shares}</span>
             </div>
             <div style={styles.positionDivider} />
-            <div style={styles.positionRow}>
-              <span style={styles.positionLabel}>Amount Invested</span>
+            <div style={styles.positionDetail}>
+              <span style={styles.positionMetric}>Amount Invested</span>
               <span style={styles.positionValue}>
                 ${holding.amount_invested.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </span>
             </div>
-          </div>
+          </section>
 
-          {/* Dollar input */}
-          <label htmlFor="dollar_amount" style={styles.label}>
+          {/* Sale amount input */}
+          <label htmlFor="dollar_amount" style={styles.inputLabel}>
             Amount to Sell
           </label>
-          <div style={styles.currencyInput}>
-            <span style={styles.currencySymbol}>$</span>
+          <div style={styles.amountInput}>
+            <span style={styles.dollarSign}>$</span>
             <input
               id="dollar_amount"
               type="number"
@@ -188,28 +192,28 @@ function SellStock() {
               placeholder="0.00"
               value={dollarAmount}
               onChange={(e) => setDollarAmount(e.target.value)}
-              style={styles.currencyField}
+              style={styles.amountField}
               autoFocus
             />
           </div>
 
-          {/* Estimated shares */}
+          {/* Shares estimate preview */}
           {estimatedShares && isValid && (
-            <div style={styles.estimate}>
+            <aside style={styles.estimatePreview}>
               <span style={styles.estimateLabel}>Estimated shares to sell</span>
               <span style={styles.estimateValue}>~{estimatedShares} shares</span>
-              <span style={styles.estimateNote}>Final amount calculated at execution price</span>
-            </div>
+              <span style={styles.estimateDisclaimer}>Final amount calculated at execution price</span>
+            </aside>
           )}
 
-          {/* Server error */}
-          {error && <p style={styles.error}>{error}</p>}
+          {/* Server error display */}
+          {error && <p style={styles.validationError}>{error}</p>}
 
-          {/* Actions */}
-          <div style={styles.actions}>
+          {/* Action buttons */}
+          <footer style={styles.actionBar}>
             <button
               type="button"
-              style={styles.cancelBtn}
+              style={styles.secondaryButton}
               onClick={() => navigate(`/tournaments/${tournamentId}`)}
             >
               Cancel
@@ -217,15 +221,15 @@ function SellStock() {
             <button
               type="button"
               style={{
-                ...styles.sellBtn,
-                ...(!isValid || submitting ? styles.btnDisabled : {}),
+                ...styles.primaryButton,
+                ...(!isValid || submitting ? styles.buttonDisabled : {}),
               }}
               onClick={handleSell}
               disabled={!isValid || submitting}
             >
               {submitting ? "Selling…" : `Sell ${stock.symbol}`}
             </button>
-          </div>
+          </footer>
 
         </article>
       </main>
@@ -239,10 +243,10 @@ const BG = "#1A1A1A";
 const TEXT = "#F9F9F9";
 
 const styles = {
-  page: { minHeight: "100vh", backgroundColor: BG, fontFamily: "'Segoe UI', sans-serif" },
-  main: { display: "flex", justifyContent: "center", padding: "2.5rem 1.25rem" },
-  statusMsg: { color: "#888", textAlign: "center", padding: "5rem" },
-  card: {
+  pageLayout: { minHeight: "100vh", backgroundColor: BG, fontFamily: "'Segoe UI', sans-serif" },
+  mainContent: { display: "flex", justifyContent: "center", padding: "2.5rem 1.25rem" },
+  statusMessage: { color: "#888", textAlign: "center", padding: "5rem" },
+  saleCard: {
     width: "100%",
     maxWidth: "30rem",
     backgroundColor: "#2a2a2a",
@@ -254,24 +258,24 @@ const styles = {
     flexDirection: "column",
     gap: "0.75rem",
   },
-  cardHeader: {
+  stockHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: "0.5rem",
   },
-  title: { margin: 0, fontSize: "1.6rem", fontWeight: "700", color: TEXT },
-  subtitle: { margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#888" },
-  priceTag: {
+  stockSymbol: { margin: 0, fontSize: "1.6rem", fontWeight: "700", color: TEXT },
+  companyName: { margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#888" },
+  priceDisplay: {
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-end",
     gap: "0.1rem",
   },
   priceLabel: { fontSize: "0.7rem", color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" },
-  priceValue: { fontSize: "1.2rem", fontWeight: "700", color: TEXT },
-  priceNote: { fontSize: "0.65rem", color: "#555" },
-  positionCard: {
+  priceAmount: { fontSize: "1.2rem", fontWeight: "700", color: TEXT },
+  priceDisclaimer: { fontSize: "0.65rem", color: "#555" },
+  positionSummary: {
     backgroundColor: "#252525",
     border: "1px solid #333",
     borderRadius: "0.5rem",
@@ -280,22 +284,22 @@ const styles = {
     gap: "0.75rem",
     alignItems: "center",
   },
-  positionRow: {
+  positionDetail: {
     display: "flex",
     flexDirection: "column",
     gap: "0.15rem",
     flex: 1,
   },
-  positionLabel: { fontSize: "0.72rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em" },
+  positionMetric: { fontSize: "0.72rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em" },
   positionValue: { fontSize: "1rem", fontWeight: "700", color: TEXT },
   positionDivider: { width: "1px", height: "2rem", backgroundColor: "#333" },
-  label: { fontSize: "0.82rem", fontWeight: "600", color: "#aaa", marginTop: "0.25rem" },
-  currencyInput: { position: "relative" },
-  currencySymbol: {
+  inputLabel: { fontSize: "0.82rem", fontWeight: "600", color: "#aaa", marginTop: "0.25rem" },
+  amountInput: { position: "relative" },
+  dollarSign: {
     position: "absolute", left: "0.875rem", top: "50%",
     transform: "translateY(-50%)", color: "#666", fontWeight: "600", pointerEvents: "none",
   },
-  currencyField: {
+  amountField: {
     width: "100%",
     padding: "0.75rem 1rem 0.75rem 1.75rem",
     borderRadius: "0.5rem",
@@ -307,7 +311,7 @@ const styles = {
     boxSizing: "border-box",
     fontFamily: "inherit",
   },
-  estimate: {
+  estimatePreview: {
     display: "flex",
     flexDirection: "column",
     gap: "0.15rem",
@@ -318,20 +322,20 @@ const styles = {
   },
   estimateLabel: { fontSize: "0.72rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" },
   estimateValue: { fontSize: "1.1rem", fontWeight: "700", color: RED },
-  estimateNote: { fontSize: "0.7rem", color: "#555" },
-  error: { color: "#ff6b6b", fontSize: "0.82rem", margin: 0 },
-  actions: { display: "flex", gap: "0.75rem", marginTop: "0.75rem" },
-  cancelBtn: {
+  estimateDisclaimer: { fontSize: "0.7rem", color: "#555" },
+  validationError: { color: "#ff6b6b", fontSize: "0.82rem", margin: 0 },
+  actionBar: { display: "flex", gap: "0.75rem", marginTop: "0.75rem" },
+  secondaryButton: {
     flex: 1, padding: "0.875rem", backgroundColor: "transparent",
     color: "#888", border: "1px solid #444", borderRadius: "0.5rem",
     fontSize: "1rem", fontWeight: "600", cursor: "pointer", fontFamily: "inherit",
   },
-  sellBtn: {
+  primaryButton: {
     flex: 2, padding: "0.875rem", backgroundColor: RED,
     color: "#fff", border: "none", borderRadius: "0.5rem",
     fontSize: "1rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
   },
-  btnDisabled: { opacity: 0.5, cursor: "not-allowed" },
+  buttonDisabled: { opacity: 0.5, cursor: "not-allowed" },
 };
 
 export default SellStock;

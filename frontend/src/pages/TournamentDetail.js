@@ -8,10 +8,10 @@
  * - Fetches tournament, participants, and stock list on mount
  * - Determines user role (owner/participant/guest) for conditional UI rendering
  * - Handles join/leave actions
- * - Buy panel: stock search dropdown → navigates to /tournaments/:id/buy/:symbol
- * - Holdings panel: lists owned stocks with shares + amount invested, search filter, sell button
+ * - Shows buy interface for selecting stocks
+ * - Displays user holdings with filtering and sell actions
  * - Shows cash balance in holdings panel
- * - Displays ranked participant leaderboard
+ * - Displays participants and cash balance
  */
 
 import { useContext, useEffect, useState } from "react";

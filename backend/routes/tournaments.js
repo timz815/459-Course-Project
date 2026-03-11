@@ -44,6 +44,21 @@ router.get("/:id", async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id).populate("owner", "username");
     if (!tournament) return res.status(404).json({ message: "Tournament not found" });
+
+    const now = new Date();
+
+    // Auto-activate when start date passes
+    if (now > new Date(tournament.start_date) && tournament.status === "open") {
+      tournament.status = "active";
+      await tournament.save();
+    }
+
+    // Auto-end when end date passes
+    if (now > new Date(tournament.end_date) && tournament.status !== "ended") {
+      tournament.status = "ended";
+      await tournament.save();
+    }
+
     res.json(tournament);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -5,6 +5,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/auth");
 const tournamentRoutes = require("./routes/tournaments");
 const stockRoutes = require("./routes/stocks");
+const tradeRoutes = require("./routes/trades");
 
 const app = express();
 const PORT = 5000;
@@ -22,10 +23,7 @@ async function connectDB() {
     await mongoose.connect(uri, clientOptions);
     await mongoose.connection.db.admin().command({ ping: 1 });
     console.log("✅ Pinged the db. You successfully connected to MongoDB!");
-
-    // Start background price refresh job AFTER DB is connected
-    const stockRoutes = require("./routes/stocks");
-    stockRoutes.schedulePriceRefresh();    schedulePriceRefresh();
+    // stockRoutes.schedulePriceRefresh();
   } catch (err) {
     console.error("❌ Connection failed:", err);
   }
@@ -34,6 +32,7 @@ async function connectDB() {
 connectDB();
 
 app.use("/api/auth", authRoutes);
+app.use("/api/tournaments", tradeRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/stocks", stockRoutes);
 

@@ -10,6 +10,9 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import TournamentDetail from "./pages/TournamentDetail";
 
+import BuyStock from "./pages/BuyStock";
+import SellStock from "./pages/SellStock";
+
 function App() {
   return (
     <AuthProvider>
@@ -32,6 +35,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/tournaments/:id/buy/:symbol" element={<ProtectedRoute><BuyStock /></ProtectedRoute>} />
+          <Route path="/tournaments/:id/sell/:symbol" element={<ProtectedRoute><SellStock /></ProtectedRoute>} />
           <Route
             path="/add-tournament"
             element={

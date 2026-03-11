@@ -5,12 +5,33 @@
  *
  * Key behaviours:
  * - Links user to tournament with cash balance tracking
+ * - Holdings array updated directly on every buy/sell trade
+ * - amount_invested per symbol tracks exact dollars spent (not EOD estimate)
  * - Enforces unique constraint preventing duplicate joins
  * - Auto-generated timestamps for creation/update tracking
- * - Referenced fields enable population of tournament and user details
  */
 
 const mongoose = require("mongoose");
+
+const HoldingSchema = new mongoose.Schema(
+  {
+    symbol: {
+      type: String,
+      required: true,
+      uppercase: true,
+      trim: true,
+    },
+    shares: {
+      type: Number,
+      required: true,
+    },
+    amount_invested: {
+      type: Number,
+      required: true,
+    },
+  },
+  { _id: false } // no need for individual IDs on subdocuments
+);
 
 const ParticipantSchema = new mongoose.Schema(
   {
@@ -27,6 +48,10 @@ const ParticipantSchema = new mongoose.Schema(
     cash_balance: {
       type: Number,
       required: true,
+    },
+    holdings: {
+      type: [HoldingSchema],
+      default: [],
     },
   },
   { timestamps: true }

@@ -51,8 +51,8 @@ function Tournaments() {
 
   // Determines button label based on auth state and tournament status
   function getActionLabel(t) {
-    if (!token) return "Login to Join";
-    if (t.status === "open" || t.status === "active") return "Join";
+    if (!token) return "View as Guest";
+    if (t.status === "open" || t.status === "active") return "View";
     return "View";
   }
 

@@ -49,6 +49,11 @@ const StockSchema = new mongoose.Schema(
     changePct: { type: Number, default: null },
     priceDate: { type: String, default: null },
     priceUpdatedAt: { type: Date, default: null },
+
+    // Intraday price history — array of [timestamp, price] tuples
+    // Updated by Finnhub queue during market hours only
+    // Max 78 entries (26 per trading day × 3 trading days)
+    priceHistory: { type: [[Number]], default: [] },
   },
   { timestamps: true }
 );

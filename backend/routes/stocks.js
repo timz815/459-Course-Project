@@ -5,8 +5,9 @@
  * (to respect free tier rate limits) and stored in MongoDB.
  *
  * Key behaviours:
- * - GET /api/stocks         → returns all stocks with cached prices from DB
- * - GET /api/stocks/refresh → manually trigger a price refresh (admin use)
+ * - GET /api/stocks           → returns all stocks with cached prices from DB (excludes priceHistory)
+ * - GET /api/stocks/:symbol   → returns single stock with full priceHistory for detail page
+ * - GET /api/stocks/refresh   → manually trigger a price refresh (admin use)
  * - Background job runs on server start and every 24 hours after
  * - Sequential fetching with 13s delay between calls (5 req/min free tier)
  * - Frontend reads from DB — always instant, never waits for Polygon
@@ -100,21 +101,30 @@ async function refreshAllPrices() {
 
 // Schedule background job — runs on startup then every 24 hours
 function schedulePriceRefresh() {
-  // Run immediately on startup
   refreshAllPrices();
-
-  // Then repeat every 24 hours
   setInterval(refreshAllPrices, 24 * 60 * 60 * 1000);
 }
 
-// Export so server.js can call it after DB connects
 module.exports.schedulePriceRefresh = schedulePriceRefresh;
 
-// GET all stocks with cached prices from DB (public)
+// GET all stocks with cached prices from DB (excludes priceHistory for performance)
 router.get("/", async (req, res) => {
   try {
-    const stocks = await Stock.find().sort({ symbol: 1 });
+    const stocks = await Stock.find().sort({ symbol: 1 }).select("-priceHistory");
     res.json(stocks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET single stock by symbol with full priceHistory for detail page
+router.get("/:symbol", async (req, res) => {
+  try {
+    const stock = await Stock.findOne({ symbol: req.params.symbol.toUpperCase() });
+    if (!stock) {
+      return res.status(404).json({ message: `Stock ${req.params.symbol.toUpperCase()} not found` });
+    }
+    res.json(stock);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -134,7 +144,7 @@ router.post("/refresh", async (req, res) => {
   if (isRefreshing) {
     return res.json({ message: "Refresh already in progress" });
   }
-  refreshAllPrices(); // fire and forget
+  refreshAllPrices();
   res.json({ message: "Price refresh started — takes ~4 minutes" });
 });
 

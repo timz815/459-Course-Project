@@ -8,10 +8,12 @@
  * - Supports filtering by search term, sector, and exchange
  * - Shows loading skeletons while fetching initial data
  * - Displays price, change, and volume metrics per stock
+ * - Clicking a stock card navigates to /stocks/:symbol for full detail
  * - Handles error states with retry functionality
  */
 
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 
 const POLL_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
@@ -23,6 +25,7 @@ function StockMarket() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
   const [exchangeFilter, setExchangeFilter] = useState("All");
+  const navigate = useNavigate();
 
   // Fetch stock data from API
   const fetchStocks = useCallback(async () => {
@@ -161,7 +164,13 @@ function StockMarket() {
               const changeBg = isPositive ? "rgba(0,192,118,0.08)" : isNegative ? "rgba(255,77,77,0.08)" : "transparent";
 
               return (
-                <article key={stock.symbol} style={styles.stockCard}>
+                <article
+                  key={stock.symbol}
+                  style={styles.stockCard}
+                  onClick={() => navigate(`/stocks/${stock.symbol}`)}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "#555"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = "#333"}
+                >
                   <header style={styles.cardHeader}>
                     <div>
                       <span style={styles.stockSymbol}>{stock.symbol}</span>
@@ -254,7 +263,8 @@ const styles = {
   skeletonCard: { height: "10rem", backgroundColor: SURFACE, borderRadius: "0.75rem", border: `1px solid ${BORDER}` },
   stockCard: {
     backgroundColor: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: "0.75rem",
-    padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem", cursor: "default",
+    padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem",
+    cursor: "pointer", transition: "border-color 0.15s",
   },
   cardHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem" },
   stockSymbol: { fontSize: "1.1rem", fontWeight: "700", fontFamily: "'IBM Plex Mono', monospace", color: TEXT, marginRight: "0.5rem" },

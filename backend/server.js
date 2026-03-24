@@ -6,6 +6,7 @@ const authRoutes = require("./routes/auth");
 const tournamentRoutes = require("./routes/tournaments");
 const stockRoutes = require("./routes/stocks");
 const tradeRoutes = require("./routes/trades");
+const { startPriceQueue } = require("./utils/priceQueue");
 
 const app = express();
 const PORT = 5000;
@@ -23,7 +24,12 @@ async function connectDB() {
     await mongoose.connect(uri, clientOptions);
     await mongoose.connection.db.admin().command({ ping: 1 });
     console.log("✅ Pinged the db. You successfully connected to MongoDB!");
+
+    // EOD price refresh via Polygon — runs daily
     stockRoutes.schedulePriceRefresh();
+
+    // Intraday price queue + trade execution — runs every 15 min ET window
+    startPriceQueue();
   } catch (err) {
     console.error("❌ Connection failed:", err);
   }

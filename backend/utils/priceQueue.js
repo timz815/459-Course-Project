@@ -4,14 +4,13 @@
  * Two queue system for managing stock price updates and trade execution.
  *
  * Key behaviours:
- * - Runs on fixed 15 minute ET clock-aligned windows (9:30, 9:45, 10:00 ... 3:45)
- * - Even seconds: always update next stock in circular queue
+ * - Stock price updates only run during market hours on 15 minute ET windows
+ * - Trade execution runs 24/7 regardless of market hours
+ * - Even seconds: update next stock (market hours only)
  * - Odd seconds: execute next pending trade if any, otherwise update next stock
  * - 1 Finnhub call per second — never exceeds free tier limits
- * - Stock price updates stored in priceHistory during market hours only
+ * - Price history stored in priceHistory during market hours only
  * - Waits for next 15 minute mark on server start — never jumps mid-window
- * - Both queues pause outside market hours
- * - Trade execution delegated to executeTrade utility
  *
  * Usage:
  *   const { startPriceQueue } = require('./utils/priceQueue');
@@ -21,7 +20,7 @@
 const Stock = require("../models/Stock");
 const TradeQueue = require("../models/TradeQueue");
 const { executeTrade } = require("./executeTrade");
-const { isMarketOpen } = require("./marketHours");
+const { isMarketOpen, isEasternDST } = require("./marketHours");
 
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 const FINNHUB_BASE = "https://finnhub.io/api/v1";
@@ -29,29 +28,22 @@ const MAX_PRICE_HISTORY = 78; // 26 per trading day × 3 trading days
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
-let stockList = [];       // all stock symbols loaded from DB
-let stockPointer = 0;     // current position in circular stock queue
-let isRunning = false;    // prevents overlapping cycles
+let stockList = [];    // all stock symbols loaded from DB
+let stockPointer = 0;  // current position in circular stock queue
+let isRunning = false; // prevents overlapping price update cycles
 
 // ─── Finnhub ──────────────────────────────────────────────────────────────────
 
 /**
  * Fetches current quote for a symbol from Finnhub.
  * Returns null on failure — never throws.
- * @param {string} symbol
- * @returns {Promise<{ price, change, changePct }|null>}
  */
 async function fetchQuote(symbol) {
   try {
     const url = `${FINNHUB_BASE}/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`;
     const res = await fetch(url);
     const data = await res.json();
-
-    if (!res.ok || !data.c || data.c === 0) {
-      console.log(`[PriceQueue] No quote data for ${symbol}`);
-      return null;
-    }
-
+    if (!res.ok || !data.c || data.c === 0) return null;
     return {
       price: data.c,
       change: data.d ?? null,
@@ -67,6 +59,7 @@ async function fetchQuote(symbol) {
 
 /**
  * Updates the next stock in the circular queue.
+ * Only called during market hours.
  * Advances the pointer regardless of success or failure.
  */
 async function updateNextStock() {
@@ -85,7 +78,7 @@ async function updateNextStock() {
     priceUpdatedAt: new Date(),
   };
 
-  // Only store price history during market hours
+  // Store price history during market hours only
   if (isMarketOpen()) {
     const timestamp = Date.now();
     await Stock.findOneAndUpdate(
@@ -95,7 +88,7 @@ async function updateNextStock() {
         $push: {
           priceHistory: {
             $each: [[timestamp, quote.price]],
-            $slice: -MAX_PRICE_HISTORY, // keep only most recent 78 entries
+            $slice: -MAX_PRICE_HISTORY,
           },
         },
       }
@@ -111,9 +104,8 @@ async function updateNextStock() {
 
 /**
  * Pulls the oldest pending trade from the queue and executes it.
- * Updates the TradeQueue document with the result.
+ * Runs 24/7 regardless of market hours.
  * Returns true if a trade was processed, false if queue was empty.
- * @returns {Promise<boolean>}
  */
 async function executeNextTrade() {
   const queued = await TradeQueue.findOne({ status: "pending" }).sort({ submittedAt: 1 });
@@ -129,31 +121,51 @@ async function executeNextTrade() {
     dollar_amount: queued.dollar_amount,
   });
 
-  // Update queue document with result
   queued.status = result.success ? "executed" : "failed";
   queued.message = result.message;
   queued.executedAt = new Date();
-  if (result.success && result.trade) {
-    queued.trade = result.trade._id;
-  }
+  if (result.success && result.trade) queued.trade = result.trade._id;
   await queued.save();
 
   console.log(`[PriceQueue] Trade ${queued._id} ${queued.status}: ${result.message}`);
   return true;
 }
 
+// ─── Trade Only Loop ──────────────────────────────────────────────────────────
+
+/**
+ * Runs continuously outside market hours processing trades only.
+ * Checks every odd second for pending trades.
+ * Stops when market opens so the full cycle can take over.
+ */
+function startTradeOnlyLoop() {
+  console.log("[PriceQueue] Market closed — trade-only loop running");
+
+  const interval = setInterval(async () => {
+    // Stop when market opens — full cycle takes over
+    if (isMarketOpen()) {
+      clearInterval(interval);
+      console.log("[PriceQueue] Market opened — switching to full cycle");
+      scheduleNextCycle();
+      return;
+    }
+
+    const second = Math.floor(Date.now() / 1000);
+    if (second % 2 !== 0) {
+      await executeNextTrade();
+    }
+  }, 1000);
+}
+
 // ─── Scheduler ────────────────────────────────────────────────────────────────
 
 /**
  * Returns milliseconds until the next 15 minute ET clock mark.
- * Marks are at :00, :15, :30, :45 of each hour.
- * If outside market hours, returns ms until next market open (9:30am ET).
- * @returns {number}
+ * Marks are at :00, :15, :30, :45 of each hour during market hours.
+ * If market is closed returns ms until next 9:30am ET.
  */
 function msUntilNextWindow() {
   const now = new Date();
-
-  // Convert to ET
   const isDST = isEasternDST(now);
   const offsetMs = (isDST ? -4 : -5) * 60 * 60 * 1000;
   const etNow = new Date(now.getTime() + offsetMs);
@@ -165,25 +177,21 @@ function msUntilNextWindow() {
   const etDay = etNow.getUTCDay();
 
   const totalMinutes = etHours * 60 + etMinutes;
-  const marketOpenMinutes = 9 * 60 + 30;   // 570
-  const marketCloseMinutes = 16 * 60;       // 960
+  const marketOpenMinutes = 9 * 60 + 30;
+  const marketCloseMinutes = 16 * 60;
 
-  // If market is open, find next 15 min mark
+  // Market is open — find next 15 min mark
   if (etDay >= 1 && etDay <= 5 && totalMinutes >= marketOpenMinutes && totalMinutes < marketCloseMinutes) {
     const minutesIntoCurrentWindow = etMinutes % 15;
-    const secondsIntoCurrentMinute = etSeconds + etMs / 1000;
-    const msUntilNextMark =
-      ((15 - minutesIntoCurrentWindow) * 60 - etSeconds) * 1000 - etMs;
+    const msUntilNextMark = ((15 - minutesIntoCurrentWindow) * 60 - etSeconds) * 1000 - etMs;
     return msUntilNextMark;
   }
 
-  // Market is closed — calculate ms until next 9:30am ET
-  // Start from tomorrow if past 4pm, or today if before 9:30am
+  // Market closed — calculate ms until next 9:30am ET
   let targetDay = new Date(etNow);
   targetDay.setUTCHours(9, 30, 0, 0);
 
   if (totalMinutes >= marketCloseMinutes) {
-    // Past close — target tomorrow
     targetDay.setUTCDate(targetDay.getUTCDate() + 1);
   }
 
@@ -192,22 +200,21 @@ function msUntilNextWindow() {
     targetDay.setUTCDate(targetDay.getUTCDate() + 1);
   }
 
-  // Convert target back to UTC and get difference
   const targetUTC = new Date(targetDay.getTime() - offsetMs);
   return targetUTC.getTime() - now.getTime();
 }
 
 /**
  * Runs one complete 15 minute window cycle.
- * Ticks every second — even seconds update stocks, odd seconds execute trades
+ * Even seconds update stocks, odd seconds execute trades
  * (falling back to stock update if no trades pending).
- * Stops when all stocks have been updated once or market closes.
+ * Stops when all stocks updated once or market closes.
  */
 async function runCycle() {
   if (isRunning) return;
   isRunning = true;
 
-  // Reload stock list fresh each cycle in case stocks were added
+  // Reload stock list fresh each cycle
   const stocks = await Stock.find({}, "symbol");
   stockList = stocks.map((s) => s.symbol);
   const totalStocks = stockList.length;
@@ -217,16 +224,17 @@ async function runCycle() {
 
   return new Promise((resolve) => {
     const interval = setInterval(async () => {
-      // Stop if market closes mid-cycle
+      // Market closed mid-cycle — stop and hand off to trade-only loop
       if (!isMarketOpen()) {
-        console.log("[PriceQueue] Market closed — pausing cycle");
+        console.log("[PriceQueue] Market closed mid-cycle — stopping");
         clearInterval(interval);
         isRunning = false;
         resolve();
+        startTradeOnlyLoop();
         return;
       }
 
-      // Stop once all stocks updated this cycle
+      // All stocks updated — cycle complete
       if (stocksUpdatedThisCycle >= totalStocks) {
         console.log(`[PriceQueue] ── Cycle complete, ${stocksUpdatedThisCycle} stocks updated ──`);
         clearInterval(interval);
@@ -266,11 +274,10 @@ async function scheduleNextCycle() {
   setTimeout(async () => {
     if (isMarketOpen()) {
       await runCycle();
+      scheduleNextCycle();
     } else {
-      console.log("[PriceQueue] Market closed — skipping cycle");
+      startTradeOnlyLoop();
     }
-    // Schedule next cycle regardless
-    scheduleNextCycle();
   }, ms);
 }
 
@@ -283,15 +290,16 @@ async function scheduleNextCycle() {
 async function startPriceQueue() {
   console.log("[PriceQueue] Starting...");
 
-  // Load initial stock list
   const stocks = await Stock.find({}, "symbol");
   stockList = stocks.map((s) => s.symbol);
   console.log(`[PriceQueue] Loaded ${stockList.length} stocks`);
 
-  scheduleNextCycle();
+  if (isMarketOpen()) {
+    scheduleNextCycle();
+  } else {
+    // Market closed — start trade-only loop immediately
+    startTradeOnlyLoop();
+  }
 }
-
-// Need isEasternDST for msUntilNextWindow — import from marketHours
-const { isEasternDST } = require("./marketHours");
 
 module.exports = { startPriceQueue };

@@ -9,8 +9,10 @@
  * - Fetches cached EOD price for estimated shares display only
  * - Updates estimated shares in real-time as user types dollar amount
  * - No frontend cap on dollar amount — backend validates against actual shares held
- * - Single Finnhub call happens on the backend at trade execution
- * - Navigates back to tournament detail on success or cancel
+ * - On submit, pushes trade to queue and polls until executed
+ * - Shows pending spinner while trade is in queue
+ * - Navigates back to tournament detail on success with toast
+ * - Stays on page and shows error on failure
  */
 
 import { useContext, useEffect, useState } from "react";
@@ -24,10 +26,11 @@ function SellStock() {
   const navigate = useNavigate();
 
   const [stock, setStock] = useState(null);
-  const [holding, setHolding] = useState(null); // { shares, amount_invested }
+  const [holding, setHolding] = useState(null);
   const [dollarAmount, setDollarAmount] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [pending, setPending] = useState(false); // trade is in queue
   const [error, setError] = useState("");
 
   // Fetch stock and participant holding data on mount
@@ -44,13 +47,11 @@ function SellStock() {
         const found = stocks.find((s) => s.symbol === symbol.toUpperCase());
         setStock(found || null);
 
-        // Match participant to current user via token payload
         const tokenPayload = JSON.parse(atob(token.split(".")[1]));
         const myParticipant = participants.find(
           (p) => p.user?._id === tokenPayload.id || p.user === tokenPayload.id
         );
 
-        // Extract holding for this specific symbol
         if (myParticipant) {
           const myHolding = myParticipant.holdings?.find(
             (h) => h.symbol === symbol.toUpperCase()
@@ -66,6 +67,30 @@ function SellStock() {
     fetchData();
   }, [tournamentId, symbol, token]);
 
+  // Poll queue until trade is no longer pending
+  async function pollUntilExecuted(queueId) {
+    return new Promise((resolve) => {
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(
+            `http://localhost:5000/api/tournaments/${tournamentId}/trades/queue`,
+            { headers: { Authorization: token } }
+          );
+          const pending = await res.json();
+          const stillPending = pending.some((t) => t._id === queueId);
+
+          if (!stillPending) {
+            clearInterval(interval);
+            resolve();
+          }
+        } catch (err) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 1000);
+    });
+  }
+
   const amount = parseFloat(dollarAmount);
 
   // Calculate estimated shares from cached price
@@ -76,7 +101,7 @@ function SellStock() {
 
   const isValid = amount > 0;
 
-  // Execute sell trade via API
+  // Submit trade to queue
   async function handleSell() {
     if (!isValid) return;
     setSubmitting(true);
@@ -100,17 +125,27 @@ function SellStock() {
       );
 
       const data = await res.json();
-      if (res.ok) {
-        navigate(`/tournaments/${tournamentId}`, {
-          state: { toast: data.message },
-        });
-      } else {
-        setError(data.message || "Trade failed");
+
+      if (!res.ok) {
+        setError(data.message || "Failed to queue trade");
+        setSubmitting(false);
+        return;
       }
+
+      // Trade queued — start polling
+      setSubmitting(false);
+      setPending(true);
+      await pollUntilExecuted(data.queueId);
+
+      // Trade executed — navigate back with toast
+      navigate(`/tournaments/${tournamentId}`, {
+        state: { toast: `Sell order for ${symbol.toUpperCase()} executed!` },
+      });
+
     } catch (err) {
       setError("Server error. Please try again.");
-    } finally {
       setSubmitting(false);
+      setPending(false);
     }
   }
 
@@ -178,58 +213,69 @@ function SellStock() {
             </div>
           </section>
 
-          {/* Sale amount input */}
-          <label htmlFor="dollar_amount" style={styles.inputLabel}>
-            Amount to Sell
-          </label>
-          <div style={styles.amountInput}>
-            <span style={styles.dollarSign}>$</span>
-            <input
-              id="dollar_amount"
-              type="number"
-              min="0"
-              step="100"
-              placeholder="0.00"
-              value={dollarAmount}
-              onChange={(e) => setDollarAmount(e.target.value)}
-              style={styles.amountField}
-              autoFocus
-            />
-          </div>
+          {/* Pending state */}
+          {pending ? (
+            <div style={styles.pendingState}>
+              <div style={styles.spinner} />
+              <p style={styles.pendingText}>Executing trade...</p>
+              <p style={styles.pendingSubtext}>Fetching live price and processing your order</p>
+            </div>
+          ) : (
+            <>
+              {/* Sale amount input */}
+              <label htmlFor="dollar_amount" style={styles.inputLabel}>
+                Amount to Sell
+              </label>
+              <div style={styles.amountInput}>
+                <span style={styles.dollarSign}>$</span>
+                <input
+                  id="dollar_amount"
+                  type="number"
+                  min="0"
+                  step="100"
+                  placeholder="0.00"
+                  value={dollarAmount}
+                  onChange={(e) => setDollarAmount(e.target.value)}
+                  style={styles.amountField}
+                  autoFocus
+                />
+              </div>
 
-          {/* Shares estimate preview */}
-          {estimatedShares && isValid && (
-            <aside style={styles.estimatePreview}>
-              <span style={styles.estimateLabel}>Estimated shares to sell</span>
-              <span style={styles.estimateValue}>~{estimatedShares} shares</span>
-              <span style={styles.estimateDisclaimer}>Final amount calculated at execution price</span>
-            </aside>
+              {/* Shares estimate preview */}
+              {estimatedShares && isValid && (
+                <aside style={styles.estimatePreview}>
+                  <span style={styles.estimateLabel}>Estimated shares to sell</span>
+                  <span style={styles.estimateValue}>~{estimatedShares} shares</span>
+                  <span style={styles.estimateDisclaimer}>Final amount calculated at execution price</span>
+                </aside>
+              )}
+
+              {/* Server error display */}
+              {error && <p style={styles.validationError}>{error}</p>}
+
+              {/* Action buttons */}
+              <footer style={styles.actionBar}>
+                <button
+                  type="button"
+                  style={styles.secondaryButton}
+                  onClick={() => navigate(`/tournaments/${tournamentId}`)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.primaryButton,
+                    ...(!isValid || submitting ? styles.buttonDisabled : {}),
+                  }}
+                  onClick={handleSell}
+                  disabled={!isValid || submitting}
+                >
+                  {submitting ? "Queuing…" : `Sell ${stock.symbol}`}
+                </button>
+              </footer>
+            </>
           )}
-
-          {/* Server error display */}
-          {error && <p style={styles.validationError}>{error}</p>}
-
-          {/* Action buttons */}
-          <footer style={styles.actionBar}>
-            <button
-              type="button"
-              style={styles.secondaryButton}
-              onClick={() => navigate(`/tournaments/${tournamentId}`)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              style={{
-                ...styles.primaryButton,
-                ...(!isValid || submitting ? styles.buttonDisabled : {}),
-              }}
-              onClick={handleSell}
-              disabled={!isValid || submitting}
-            >
-              {submitting ? "Selling…" : `Sell ${stock.symbol}`}
-            </button>
-          </footer>
 
         </article>
       </main>
@@ -237,7 +283,6 @@ function SellStock() {
   );
 }
 
-const BLUE = "#0F9FEA";
 const RED = "#FF4D4D";
 const BG = "#1A1A1A";
 const TEXT = "#F9F9F9";
@@ -336,6 +381,40 @@ const styles = {
     fontSize: "1rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
   },
   buttonDisabled: { opacity: 0.5, cursor: "not-allowed" },
+
+  // Pending state
+  pendingState: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "0.75rem",
+    padding: "2rem 1rem",
+  },
+  spinner: {
+    width: "2.5rem",
+    height: "2.5rem",
+    border: "3px solid #333",
+    borderTop: `3px solid ${RED}`,
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  },
+  pendingText: {
+    margin: 0,
+    color: TEXT,
+    fontWeight: "600",
+    fontSize: "1rem",
+  },
+  pendingSubtext: {
+    margin: 0,
+    color: "#888",
+    fontSize: "0.82rem",
+    textAlign: "center",
+  },
 };
+
+// Inject spinner animation
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+document.head.appendChild(styleSheet);
 
 export default SellStock;

@@ -1,12 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PaperTrader</title>
+    <script>
+      // Suppress non-fatal ResizeObserver dev overlay errors (runs before CRA bundle)
+      // Dennis: The problem is CRA's error overlay treats ResizeObserver loop limit exceeded warnings as errors,
+      // but they are not fatal and can be safely ignored. This code prevents those warnings from showing up in the overlay.
+      function __isResizeObserverWarning(v) {
+        var t = String(v || "");
+        return t.indexOf("ResizeObserver loop") !== -1;
+      }
+      window.addEventListener(
+        "error",
+        function (e) {
+          if (__isResizeObserverWarning(e && e.message)) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+        },
+        true,
+      );
+      window.addEventListener("unhandledrejection", function (e) {
+        if (
+          __isResizeObserverWarning(
+            (e && e.reason && e.reason.message) || (e && e.reason),
+          )
+        ) {
+          e.preventDefault();
+        }
+      });
+    </script>
   </head>
   <!-- Bug that creates weird white border, not sure where its coming from -->
-  <body style="margin:0;">
+  <body style="margin: 0">
     <div id="root"></div>
   </body>
 </html>

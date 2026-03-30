@@ -16,6 +16,7 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
+import Button from "../components/UI/Button";
 
 function Dashboard() {
   const [tournaments, setTournaments] = useState([]);
@@ -60,7 +61,6 @@ function Dashboard() {
       <Header />
 
       <main style={styles.main}>
-
         {/* User Greeting */}
         {user && (
           <section style={styles.greeting}>
@@ -70,7 +70,6 @@ function Dashboard() {
 
         {/* Tournaments Section */}
         <section style={styles.section}>
-
           {/* Section Header with Controls */}
           <div style={styles.sectionHeader}>
             <div style={styles.divider}></div>
@@ -79,19 +78,19 @@ function Dashboard() {
               <h2 style={styles.sectionTitle}>My Tournaments</h2>
 
               <nav style={styles.headerActions}>
-                <button
-                  style={styles.secondaryBtn}
+                <Button
+                  variant="secondary"
                   onClick={() => navigate("/tournaments")}
                 >
                   Check All Tournaments
-                </button>
+                </Button>
 
-                <button
-                  style={styles.primaryBtn}
+                <Button
+                  variant="primary"
                   onClick={() => navigate("/add-tournament")}
                 >
                   Create Tournament
-                </button>
+                </Button>
               </nav>
             </div>
           </div>
@@ -100,8 +99,8 @@ function Dashboard() {
           <div style={styles.grid}>
             {tournaments.length > 0 ? (
               tournaments.map((t) => (
-                <article 
-                  key={t._id} 
+                <article
+                  key={t._id}
                   style={styles.card}
                   onClick={() => navigate(`/tournaments/${t._id}`)}
                 >
@@ -111,10 +110,13 @@ function Dashboard() {
                     <dl style={styles.cardMeta}>
                       <dt style={styles.visuallyHidden}>Date Range</dt>
                       <dd style={styles.metaItem}>
-                        {t.start_date?.slice(0, 10)} → {t.end_date?.slice(0, 10)}
+                        {t.start_date?.slice(0, 10)} →{" "}
+                        {t.end_date?.slice(0, 10)}
                       </dd>
 
-                      <span aria-hidden="true" style={styles.metaSeparator}>·</span>
+                      <span aria-hidden="true" style={styles.metaSeparator}>
+                        ·
+                      </span>
 
                       <dt style={styles.visuallyHidden}>Starting Balance</dt>
                       <dd style={styles.metaItem}>
@@ -128,15 +130,16 @@ function Dashboard() {
                   </div>
 
                   <div style={styles.cardActions}>
-                    <button
-                      style={styles.deleteBtn}
+                    <Button
+                      variant="cancel"
+                      size="small"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(t._id);
                       }}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </article>
               ))
@@ -147,9 +150,7 @@ function Dashboard() {
               </div>
             )}
           </div>
-
         </section>
-
       </main>
     </div>
   );

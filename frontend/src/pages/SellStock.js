@@ -19,6 +19,7 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
+import Button from "../components/UI/Button";
 
 function SellStock() {
   const { id: tournamentId, symbol } = useParams();
@@ -39,7 +40,9 @@ function SellStock() {
       try {
         const [stockRes, participantsRes] = await Promise.all([
           fetch(`http://localhost:5000/api/stocks`),
-          fetch(`http://localhost:5000/api/tournaments/${tournamentId}/participants`),
+          fetch(
+            `http://localhost:5000/api/tournaments/${tournamentId}/participants`,
+          ),
         ]);
         const stocks = await stockRes.json();
         const participants = await participantsRes.json();
@@ -49,12 +52,12 @@ function SellStock() {
 
         const tokenPayload = JSON.parse(atob(token.split(".")[1]));
         const myParticipant = participants.find(
-          (p) => p.user?._id === tokenPayload.id || p.user === tokenPayload.id
+          (p) => p.user?._id === tokenPayload.id || p.user === tokenPayload.id,
         );
 
         if (myParticipant) {
           const myHolding = myParticipant.holdings?.find(
-            (h) => h.symbol === symbol.toUpperCase()
+            (h) => h.symbol === symbol.toUpperCase(),
           );
           setHolding(myHolding || null);
         }
@@ -74,7 +77,7 @@ function SellStock() {
         try {
           const res = await fetch(
             `http://localhost:5000/api/tournaments/${tournamentId}/trades/queue`,
-            { headers: { Authorization: token } }
+            { headers: { Authorization: token } },
           );
           const pending = await res.json();
           const stillPending = pending.some((t) => t._id === queueId);
@@ -95,9 +98,7 @@ function SellStock() {
 
   // Calculate estimated shares from cached price
   const estimatedShares =
-    stock?.price && amount > 0
-      ? (amount / stock.price).toFixed(1)
-      : null;
+    stock?.price && amount > 0 ? (amount / stock.price).toFixed(1) : null;
 
   const isValid = amount > 0;
 
@@ -121,7 +122,7 @@ function SellStock() {
             side: "sell",
             dollar_amount: amount,
           }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -141,7 +142,6 @@ function SellStock() {
       navigate(`/tournaments/${tournamentId}`, {
         state: { toast: `Sell order for ${symbol.toUpperCase()} executed!` },
       });
-
     } catch (err) {
       setError("Server error. Please try again.");
       setSubmitting(false);
@@ -166,7 +166,9 @@ function SellStock() {
         <Header />
         <main style={styles.mainContent}>
           <p style={styles.statusMessage}>
-            {!stock ? "Stock not found." : `You don't own any ${symbol.toUpperCase()} in this tournament.`}
+            {!stock
+              ? "Stock not found."
+              : `You don't own any ${symbol.toUpperCase()} in this tournament.`}
           </p>
         </main>
       </div>
@@ -178,7 +180,6 @@ function SellStock() {
       <Header />
       <main style={styles.mainContent}>
         <article style={styles.saleCard}>
-
           {/* Stock header with price */}
           <header style={styles.stockHeader}>
             <div>
@@ -189,7 +190,9 @@ function SellStock() {
               {stock.price ? (
                 <>
                   <span style={styles.priceLabel}>~Price</span>
-                  <span style={styles.priceAmount}>${stock.price.toFixed(2)}</span>
+                  <span style={styles.priceAmount}>
+                    ${stock.price.toFixed(2)}
+                  </span>
                   <span style={styles.priceDisclaimer}>EOD est.</span>
                 </>
               ) : (
@@ -208,7 +211,10 @@ function SellStock() {
             <div style={styles.positionDetail}>
               <span style={styles.positionMetric}>Amount Invested</span>
               <span style={styles.positionValue}>
-                ${holding.amount_invested.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                $
+                {holding.amount_invested.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}
               </span>
             </div>
           </section>
@@ -218,7 +224,9 @@ function SellStock() {
             <div style={styles.pendingState}>
               <div style={styles.spinner} />
               <p style={styles.pendingText}>Executing trade...</p>
-              <p style={styles.pendingSubtext}>Fetching live price and processing your order</p>
+              <p style={styles.pendingSubtext}>
+                Fetching live price and processing your order
+              </p>
             </div>
           ) : (
             <>
@@ -244,9 +252,15 @@ function SellStock() {
               {/* Shares estimate preview */}
               {estimatedShares && isValid && (
                 <aside style={styles.estimatePreview}>
-                  <span style={styles.estimateLabel}>Estimated shares to sell</span>
-                  <span style={styles.estimateValue}>~{estimatedShares} shares</span>
-                  <span style={styles.estimateDisclaimer}>Final amount calculated at execution price</span>
+                  <span style={styles.estimateLabel}>
+                    Estimated shares to sell
+                  </span>
+                  <span style={styles.estimateValue}>
+                    ~{estimatedShares} shares
+                  </span>
+                  <span style={styles.estimateDisclaimer}>
+                    Final amount calculated at execution price
+                  </span>
                 </aside>
               )}
 
@@ -255,28 +269,24 @@ function SellStock() {
 
               {/* Action buttons */}
               <footer style={styles.actionBar}>
-                <button
+                <Button
+                  variant="cancel"
                   type="button"
-                  style={styles.secondaryButton}
                   onClick={() => navigate(`/tournaments/${tournamentId}`)}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="cancel"
                   type="button"
-                  style={{
-                    ...styles.primaryButton,
-                    ...(!isValid || submitting ? styles.buttonDisabled : {}),
-                  }}
                   onClick={handleSell}
                   disabled={!isValid || submitting}
                 >
-                  {submitting ? "Queuing…" : `Sell ${stock.symbol}`}
-                </button>
+                  {submitting ? "Queuing\u2026" : `Sell ${stock.symbol}`}
+                </Button>
               </footer>
             </>
           )}
-
         </article>
       </main>
     </div>
@@ -288,8 +298,16 @@ const BG = "#1A1A1A";
 const TEXT = "#F9F9F9";
 
 const styles = {
-  pageLayout: { minHeight: "100vh", backgroundColor: BG, fontFamily: "'Segoe UI', sans-serif" },
-  mainContent: { display: "flex", justifyContent: "center", padding: "2.5rem 1.25rem" },
+  pageLayout: {
+    minHeight: "100vh",
+    backgroundColor: BG,
+    fontFamily: "'Segoe UI', sans-serif",
+  },
+  mainContent: {
+    display: "flex",
+    justifyContent: "center",
+    padding: "2.5rem 1.25rem",
+  },
   statusMessage: { color: "#888", textAlign: "center", padding: "5rem" },
   saleCard: {
     width: "100%",
@@ -309,7 +327,12 @@ const styles = {
     alignItems: "flex-start",
     marginBottom: "0.5rem",
   },
-  stockSymbol: { margin: 0, fontSize: "1.6rem", fontWeight: "700", color: TEXT },
+  stockSymbol: {
+    margin: 0,
+    fontSize: "1.6rem",
+    fontWeight: "700",
+    color: TEXT,
+  },
   companyName: { margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#888" },
   priceDisplay: {
     display: "flex",
@@ -317,7 +340,12 @@ const styles = {
     alignItems: "flex-end",
     gap: "0.1rem",
   },
-  priceLabel: { fontSize: "0.7rem", color: "#555", textTransform: "uppercase", letterSpacing: "0.06em" },
+  priceLabel: {
+    fontSize: "0.7rem",
+    color: "#555",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
   priceAmount: { fontSize: "1.2rem", fontWeight: "700", color: TEXT },
   priceDisclaimer: { fontSize: "0.65rem", color: "#555" },
   positionSummary: {
@@ -335,14 +363,29 @@ const styles = {
     gap: "0.15rem",
     flex: 1,
   },
-  positionMetric: { fontSize: "0.72rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em" },
+  positionMetric: {
+    fontSize: "0.72rem",
+    color: "#666",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
   positionValue: { fontSize: "1rem", fontWeight: "700", color: TEXT },
   positionDivider: { width: "1px", height: "2rem", backgroundColor: "#333" },
-  inputLabel: { fontSize: "0.82rem", fontWeight: "600", color: "#aaa", marginTop: "0.25rem" },
+  inputLabel: {
+    fontSize: "0.82rem",
+    fontWeight: "600",
+    color: "#aaa",
+    marginTop: "0.25rem",
+  },
   amountInput: { position: "relative" },
   dollarSign: {
-    position: "absolute", left: "0.875rem", top: "50%",
-    transform: "translateY(-50%)", color: "#666", fontWeight: "600", pointerEvents: "none",
+    position: "absolute",
+    left: "0.875rem",
+    top: "50%",
+    transform: "translateY(-50%)",
+    color: "#666",
+    fontWeight: "600",
+    pointerEvents: "none",
   },
   amountField: {
     width: "100%",
@@ -365,20 +408,39 @@ const styles = {
     padding: "0.625rem 0.875rem",
     borderRadius: "0.5rem",
   },
-  estimateLabel: { fontSize: "0.72rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" },
+  estimateLabel: {
+    fontSize: "0.72rem",
+    color: "#888",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
   estimateValue: { fontSize: "1.1rem", fontWeight: "700", color: RED },
   estimateDisclaimer: { fontSize: "0.7rem", color: "#555" },
   validationError: { color: "#ff6b6b", fontSize: "0.82rem", margin: 0 },
   actionBar: { display: "flex", gap: "0.75rem", marginTop: "0.75rem" },
   secondaryButton: {
-    flex: 1, padding: "0.875rem", backgroundColor: "transparent",
-    color: "#888", border: "1px solid #444", borderRadius: "0.5rem",
-    fontSize: "1rem", fontWeight: "600", cursor: "pointer", fontFamily: "inherit",
+    flex: 1,
+    padding: "0.875rem",
+    backgroundColor: "transparent",
+    color: "#888",
+    border: "1px solid #444",
+    borderRadius: "0.5rem",
+    fontSize: "1rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontFamily: "inherit",
   },
   primaryButton: {
-    flex: 2, padding: "0.875rem", backgroundColor: RED,
-    color: "#fff", border: "none", borderRadius: "0.5rem",
-    fontSize: "1rem", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
+    flex: 2,
+    padding: "0.875rem",
+    backgroundColor: RED,
+    color: "#fff",
+    border: "none",
+    borderRadius: "0.5rem",
+    fontSize: "1rem",
+    fontWeight: "700",
+    cursor: "pointer",
+    fontFamily: "inherit",
   },
   buttonDisabled: { opacity: 0.5, cursor: "not-allowed" },
 

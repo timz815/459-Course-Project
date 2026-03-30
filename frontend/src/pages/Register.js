@@ -13,6 +13,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import Button from "../components/UI/Button";
 
 function Register() {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -50,9 +51,11 @@ function Register() {
       <main style={styles.main}>
         <article style={styles.card}>
           <h1 style={styles.title}>Create Account</h1>
-          
+
           <form onSubmit={handleSubmit} style={styles.form}>
-            <label htmlFor="username" style={styles.label}>Username</label>
+            <label htmlFor="username" style={styles.label}>
+              Username
+            </label>
             <input
               id="username"
               name="username"
@@ -62,8 +65,10 @@ function Register() {
               placeholder="Choose a username"
               style={styles.input}
             />
-            
-            <label htmlFor="password" style={styles.label}>Password</label>
+
+            <label htmlFor="password" style={styles.label}>
+              Password
+            </label>
             <input
               id="password"
               type="password"
@@ -74,12 +79,12 @@ function Register() {
               placeholder="Choose a password"
               style={styles.input}
             />
-            
-            <button type="submit" style={styles.submit}>
+
+            <Button type="submit" variant="primary">
               Register
-            </button>
+            </Button>
           </form>
-          
+
           <footer style={styles.footer}>
             <p style={styles.footerText}>
               Already have an account?{" "}

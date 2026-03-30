@@ -12,6 +12,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import TournamentDetail from "./pages/TournamentDetail";
 import BuyStock from "./pages/BuyStock";
 import SellStock from "./pages/SellStock";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -28,11 +29,40 @@ function App() {
           <Route path="/tournaments/:id" element={<TournamentDetail />} />
 
           {/* protected routes */}
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/tournaments/:id/buy/:symbol" element={<ProtectedRoute><BuyStock /></ProtectedRoute>} />
-          <Route path="/tournaments/:id/sell/:symbol" element={<ProtectedRoute><SellStock /></ProtectedRoute>} />
-          <Route path="/add-tournament" element={<ProtectedRoute><AddTournament /></ProtectedRoute>} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tournaments/:id/buy/:symbol"
+            element={
+              <ProtectedRoute>
+                <BuyStock />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tournaments/:id/sell/:symbol"
+            element={
+              <ProtectedRoute>
+                <SellStock />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-tournament"
+            element={
+              <ProtectedRoute>
+                <AddTournament />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
+        <Footer />
       </Router>
     </AuthProvider>
   );

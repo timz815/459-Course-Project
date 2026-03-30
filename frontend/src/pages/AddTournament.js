@@ -16,6 +16,7 @@ import { useContext, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
+import Button from "../components/UI/Button";
 import DatePicker from "../components/DatePicker";
 import TimePicker from "../components/TimePicker";
 
@@ -23,7 +24,9 @@ import TimePicker from "../components/TimePicker";
 function getRoundedNow() {
   const now = new Date();
   const ms = 15 * 60 * 1000;
-  return new Date(Math.ceil(now.getTime() / ms) * ms).toISOString().slice(0, 16);
+  return new Date(Math.ceil(now.getTime() / ms) * ms)
+    .toISOString()
+    .slice(0, 16);
 }
 
 // Adds specified hours to an ISO date string
@@ -53,18 +56,18 @@ function AddTournament() {
     const now = new Date();
     const start = new Date(formData.start_date);
     const end = new Date(formData.end_date);
-    
+
     // Start must not be in the past (1 minute buffer)
     if (start < new Date(now.getTime() - 60000)) {
       errors.start_date = "Start time cannot be in the past";
     }
-    
+
     // End must be at least 1 minute after start
     const diffMs = end - start;
     if (diffMs < 60000) {
       errors.end_date = "End time must be at least 1 minute after start time";
     }
-    
+
     return errors;
   }, [formData.start_date, formData.end_date]);
 
@@ -89,12 +92,12 @@ function AddTournament() {
   // Submits tournament data to API after validation check
   async function handleSubmit(e) {
     e.preventDefault();
-    
+
     if (hasErrors) {
       alert("Please fix validation errors before submitting");
       return;
     }
-    
+
     try {
       const res = await fetch("http://localhost:5000/api/tournaments", {
         method: "POST",
@@ -124,13 +127,13 @@ function AddTournament() {
       <Header />
       <main style={styles.main}>
         <article style={styles.card}>
-
           <h1 style={styles.title}>Create Tournament</h1>
 
           <form onSubmit={handleSubmit} style={styles.form}>
-            
             {/* Tournament Name Field */}
-            <label htmlFor="name" style={styles.label}>Tournament Name</label>
+            <label htmlFor="name" style={styles.label}>
+              Tournament Name
+            </label>
             <input
               id="name"
               name="name"
@@ -146,40 +149,44 @@ function AddTournament() {
             <fieldset style={styles.fieldset}>
               <legend style={styles.legend}>Start Date & Time</legend>
               <div style={styles.dateTimeGroup}>
-                <DatePicker 
-                  name="start_date" 
-                  value={formData.start_date} 
+                <DatePicker
+                  name="start_date"
+                  value={formData.start_date}
                   onChange={handleChange}
                 />
-                <TimePicker 
-                  name="start_date" 
-                  value={formData.start_date} 
+                <TimePicker
+                  name="start_date"
+                  value={formData.start_date}
                   onChange={handleChange}
                 />
               </div>
             </fieldset>
             {validationErrors.start_date && (
-              <p role="alert" style={styles.error}>{validationErrors.start_date}</p>
+              <p role="alert" style={styles.error}>
+                {validationErrors.start_date}
+              </p>
             )}
 
             {/* End Date & Time Group */}
             <fieldset style={styles.fieldset}>
               <legend style={styles.legend}>End Date & Time</legend>
               <div style={styles.dateTimeGroup}>
-                <DatePicker 
-                  name="end_date" 
-                  value={formData.end_date} 
+                <DatePicker
+                  name="end_date"
+                  value={formData.end_date}
                   onChange={handleChange}
                 />
-                <TimePicker 
-                  name="end_date" 
-                  value={formData.end_date} 
+                <TimePicker
+                  name="end_date"
+                  value={formData.end_date}
                   onChange={handleChange}
                 />
               </div>
             </fieldset>
             {validationErrors.end_date && (
-              <p role="alert" style={styles.error}>{validationErrors.end_date}</p>
+              <p role="alert" style={styles.error}>
+                {validationErrors.end_date}
+              </p>
             )}
 
             {/* Live Duration Display */}
@@ -189,7 +196,9 @@ function AddTournament() {
             </div>
 
             {/* Starting Balance Field with Dollar Prefix */}
-            <label htmlFor="starting_balance" style={styles.label}>Player Starting Balance</label>
+            <label htmlFor="starting_balance" style={styles.label}>
+              Player Starting Balance
+            </label>
             <div style={styles.currencyInput}>
               <span style={styles.currencySymbol}>$</span>
               <input
@@ -207,7 +216,9 @@ function AddTournament() {
             </div>
 
             {/* Description Field */}
-            <label htmlFor="description" style={styles.label}>Game Description</label>
+            <label htmlFor="description" style={styles.label}>
+              Game Description
+            </label>
             <textarea
               id="description"
               name="description"
@@ -220,21 +231,17 @@ function AddTournament() {
 
             {/* Action Buttons */}
             <div style={styles.actions}>
-              <button type="button" style={styles.cancelButton} onClick={() => navigate("/dashboard")}>
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                style={{
-                  ...styles.submitButton,
-                  ...(hasErrors ? styles.submitButtonDisabled : {}),
-                }}
-                disabled={hasErrors}
+              <Button
+                variant="cancel"
+                type="button"
+                onClick={() => navigate("/dashboard")}
               >
+                Cancel
+              </Button>
+              <Button variant="primary" type="submit" disabled={hasErrors}>
                 Create Tournament
-              </button>
+              </Button>
             </div>
-            
           </form>
         </article>
       </main>
@@ -247,164 +254,164 @@ const BG = "#1A1A1A";
 const TEXT = "#F9F9F9";
 
 const styles = {
-  page: { 
-    minHeight: "100vh", 
-    backgroundColor: BG, 
-    fontFamily: "'Segoe UI', sans-serif" 
+  page: {
+    minHeight: "100vh",
+    backgroundColor: BG,
+    fontFamily: "'Segoe UI', sans-serif",
   },
-  main: { 
-    display: "flex", 
-    justifyContent: "center", 
-    padding: "2.5rem 1.25rem" 
+  main: {
+    display: "flex",
+    justifyContent: "center",
+    padding: "2.5rem 1.25rem",
   },
-  card: { 
-    width: "100%", 
-    maxWidth: "37.5rem", 
-    backgroundColor: "#2a2a2a", 
-    borderRadius: "1rem", 
-    padding: "2.5rem", 
-    boxShadow: "0 0.5rem 2rem rgba(0,0,0,0.4)", 
-    border: "1px solid #333" 
+  card: {
+    width: "100%",
+    maxWidth: "37.5rem",
+    backgroundColor: "#2a2a2a",
+    borderRadius: "1rem",
+    padding: "2.5rem",
+    boxShadow: "0 0.5rem 2rem rgba(0,0,0,0.4)",
+    border: "1px solid #333",
   },
-  title: { 
-    margin: "0 0 0.25rem", 
-    color: TEXT, 
-    fontSize: "1.8rem", 
-    fontWeight: "700" 
+  title: {
+    margin: "0 0 0.25rem",
+    color: TEXT,
+    fontSize: "1.8rem",
+    fontWeight: "700",
   },
-  form: { 
-    display: "flex", 
-    flexDirection: "column", 
-    gap: "0.25rem" 
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.25rem",
   },
-  fieldset: { 
-    border: "none", 
-    padding: 0, 
-    margin: "1rem 0 0 0" 
+  fieldset: {
+    border: "none",
+    padding: 0,
+    margin: "1rem 0 0 0",
   },
-  legend: { 
-    fontSize: "0.85rem", 
-    fontWeight: "600", 
-    color: "#aaa", 
+  legend: {
+    fontSize: "0.85rem",
+    fontWeight: "600",
+    color: "#aaa",
     marginBottom: "0.5rem",
-    padding: 0
+    padding: 0,
   },
-  label: { 
-    fontSize: "0.85rem", 
-    fontWeight: "600", 
-    color: "#aaa", 
-    marginTop: "1rem", 
-    marginBottom: "0.5rem", 
-    display: "block" 
+  label: {
+    fontSize: "0.85rem",
+    fontWeight: "600",
+    color: "#aaa",
+    marginTop: "1rem",
+    marginBottom: "0.5rem",
+    display: "block",
   },
-  input: { 
-    padding: "0.75rem 1rem", 
-    borderRadius: "0.5rem", 
-    border: "1px solid #444", 
-    backgroundColor: "#1f1f1f", 
-    color: TEXT, 
-    fontSize: "1rem", 
-    outline: "none", 
-    width: "100%", 
-    boxSizing: "border-box" 
+  input: {
+    padding: "0.75rem 1rem",
+    borderRadius: "0.5rem",
+    border: "1px solid #444",
+    backgroundColor: "#1f1f1f",
+    color: TEXT,
+    fontSize: "1rem",
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
   },
-  currencyInput: { 
-    position: "relative" 
+  currencyInput: {
+    position: "relative",
   },
-  currencySymbol: { 
-    position: "absolute", 
-    left: "0.875rem", 
-    top: "50%", 
-    transform: "translateY(-50%)", 
-    color: "#666", 
-    fontWeight: "600", 
-    pointerEvents: "none" 
+  currencySymbol: {
+    position: "absolute",
+    left: "0.875rem",
+    top: "50%",
+    transform: "translateY(-50%)",
+    color: "#666",
+    fontWeight: "600",
+    pointerEvents: "none",
   },
-  currencyField: { 
-    padding: "0.75rem 1rem", 
-    paddingLeft: "1.75rem", 
-    borderRadius: "0.5rem", 
-    border: "1px solid #444", 
-    backgroundColor: "#1f1f1f", 
-    color: TEXT, 
-    fontSize: "1rem", 
-    outline: "none", 
-    width: "100%", 
-    boxSizing: "border-box" 
+  currencyField: {
+    padding: "0.75rem 1rem",
+    paddingLeft: "1.75rem",
+    borderRadius: "0.5rem",
+    border: "1px solid #444",
+    backgroundColor: "#1f1f1f",
+    color: TEXT,
+    fontSize: "1rem",
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
   },
-  dateTimeGroup: { 
-    display: "flex", 
-    gap: "0.75rem", 
-    alignItems: "flex-start" 
+  dateTimeGroup: {
+    display: "flex",
+    gap: "0.75rem",
+    alignItems: "flex-start",
   },
-  duration: { 
-    display: "flex", 
-    alignItems: "center", 
-    gap: "0.5rem", 
-    backgroundColor: "#252525", 
-    padding: "0.625rem 1rem", 
-    borderRadius: "0.5rem", 
-    marginTop: "0.5rem", 
-    border: "1px solid #333" 
+  duration: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    backgroundColor: "#252525",
+    padding: "0.625rem 1rem",
+    borderRadius: "0.5rem",
+    marginTop: "0.5rem",
+    border: "1px solid #333",
   },
-  durationLabel: { 
-    color: "#888", 
-    fontSize: "0.85rem" 
+  durationLabel: {
+    color: "#888",
+    fontSize: "0.85rem",
   },
-  durationValue: { 
-    color: "#00D084", 
-    fontWeight: "700", 
-    fontSize: "1rem" 
+  durationValue: {
+    color: "#00D084",
+    fontWeight: "700",
+    fontSize: "1rem",
   },
-  textarea: { 
-    padding: "0.75rem 1rem", 
-    borderRadius: "0.5rem", 
-    border: "1px solid #444", 
-    backgroundColor: "#1f1f1f", 
-    color: TEXT, 
-    fontSize: "1rem", 
-    outline: "none", 
-    resize: "vertical", 
-    fontFamily: "'Segoe UI', sans-serif", 
-    minHeight: "6.25rem" 
+  textarea: {
+    padding: "0.75rem 1rem",
+    borderRadius: "0.5rem",
+    border: "1px solid #444",
+    backgroundColor: "#1f1f1f",
+    color: TEXT,
+    fontSize: "1rem",
+    outline: "none",
+    resize: "vertical",
+    fontFamily: "'Segoe UI', sans-serif",
+    minHeight: "6.25rem",
   },
-  actions: { 
-    display: "flex", 
-    gap: "0.75rem", 
-    marginTop: "1.5rem" 
+  actions: {
+    display: "flex",
+    gap: "0.75rem",
+    marginTop: "1.5rem",
   },
-  cancelButton: { 
-    flex: 1, 
-    padding: "0.875rem", 
-    backgroundColor: "transparent", 
-    color: "#888", 
-    border: "1px solid #444", 
-    borderRadius: "0.5rem", 
-    fontSize: "1rem", 
-    fontWeight: "600", 
-    cursor: "pointer" 
+  cancelButton: {
+    flex: 1,
+    padding: "0.875rem",
+    backgroundColor: "transparent",
+    color: "#888",
+    border: "1px solid #444",
+    borderRadius: "0.5rem",
+    fontSize: "1rem",
+    fontWeight: "600",
+    cursor: "pointer",
   },
-  submitButton: { 
-    flex: 2, 
-    padding: "0.875rem", 
-    backgroundColor: BLUE, 
-    color: "#fff", 
-    border: "none", 
-    borderRadius: "0.5rem", 
-    fontSize: "1rem", 
-    fontWeight: "700", 
-    cursor: "pointer" 
+  submitButton: {
+    flex: 2,
+    padding: "0.875rem",
+    backgroundColor: BLUE,
+    color: "#fff",
+    border: "none",
+    borderRadius: "0.5rem",
+    fontSize: "1rem",
+    fontWeight: "700",
+    cursor: "pointer",
   },
-  submitButtonDisabled: { 
-    backgroundColor: "#555", 
-    cursor: "not-allowed", 
-    opacity: 0.6 
+  submitButtonDisabled: {
+    backgroundColor: "#555",
+    cursor: "not-allowed",
+    opacity: 0.6,
   },
-  error: { 
-    color: "#ff6b6b", 
-    fontSize: "0.8rem", 
-    marginTop: "0.25rem", 
-    marginBottom: "0.5rem" 
+  error: {
+    color: "#ff6b6b",
+    fontSize: "0.8rem",
+    marginTop: "0.25rem",
+    marginBottom: "0.5rem",
   },
 };
 

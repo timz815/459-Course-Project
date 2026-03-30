@@ -15,6 +15,7 @@ import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
+import Button from "../components/UI/Button";
 
 function Login() {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -61,10 +62,16 @@ function Login() {
         <article style={styles.card}>
           <h1 style={styles.title}>Login</h1>
 
-          {error && <p role="alert" style={styles.error}>{error}</p>}
+          {error && (
+            <p role="alert" style={styles.error}>
+              {error}
+            </p>
+          )}
 
           <form onSubmit={handleSubmit} style={styles.form}>
-            <label htmlFor="username" style={styles.label}>Username</label>
+            <label htmlFor="username" style={styles.label}>
+              Username
+            </label>
             <input
               id="username"
               name="username"
@@ -74,8 +81,10 @@ function Login() {
               required
               style={styles.input}
             />
-            
-            <label htmlFor="password" style={styles.label}>Password</label>
+
+            <label htmlFor="password" style={styles.label}>
+              Password
+            </label>
             <input
               id="password"
               name="password"
@@ -85,14 +94,18 @@ function Login() {
               required
               style={styles.input}
             />
-            
-            <button type="submit" style={styles.submit}>Sign In</button>
+
+            <Button type="submit" variant="primary">
+              Sign In
+            </Button>
           </form>
 
           <footer style={styles.footer}>
             <p style={styles.footerText}>
               Need an account?{" "}
-              <Link to="/register" style={styles.link}>Register here</Link>
+              <Link to="/register" style={styles.link}>
+                Register here
+              </Link>
             </p>
           </footer>
         </article>

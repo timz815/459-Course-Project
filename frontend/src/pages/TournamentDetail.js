@@ -18,6 +18,7 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
+import Button from "../components/UI/Button";
 import StockSearchDropdown from "../components/StockSearchDropdown";
 
 function TournamentDetail() {
@@ -42,7 +43,10 @@ function TournamentDetail() {
     if (tournament) {
       console.log("Tournament status:", tournament.status);
       console.log("Is participant:", isParticipant);
-      console.log("Can trade:", isParticipant && tournament.status === "active");
+      console.log(
+        "Can trade:",
+        isParticipant && tournament.status === "active",
+      );
       console.log("Start date:", tournament.start_date);
       console.log("Now:", new Date());
     }
@@ -82,7 +86,7 @@ function TournamentDetail() {
           setParticipants(pData);
           if (user) {
             const mine = pData.find(
-              (p) => p.user?._id === user.id || p.user === user.id
+              (p) => p.user?._id === user.id || p.user === user.id,
             );
             setIsParticipant(!!mine);
             setMyParticipant(mine || null);
@@ -100,17 +104,24 @@ function TournamentDetail() {
   // Handle user joining the tournament
   async function handleJoin() {
     try {
-      const res = await fetch(`http://localhost:5000/api/tournaments/${id}/join`, {
-        method: "POST",
-        headers: { Authorization: token },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/tournaments/${id}/join`,
+        {
+          method: "POST",
+          headers: { Authorization: token },
+        },
+      );
       const data = await res.json();
       if (res.ok) {
-        const pRes = await fetch(`http://localhost:5000/api/tournaments/${id}/participants`);
+        const pRes = await fetch(
+          `http://localhost:5000/api/tournaments/${id}/participants`,
+        );
         const pData = await pRes.json();
         setParticipants(pData);
         setIsParticipant(true);
-        const mine = pData.find((p) => p.user?._id === user.id || p.user === user.id);
+        const mine = pData.find(
+          (p) => p.user?._id === user.id || p.user === user.id,
+        );
         setMyParticipant(mine || null);
       } else {
         alert(data.message || "Failed to join");
@@ -123,15 +134,20 @@ function TournamentDetail() {
   // Handle user leaving the tournament
   async function handleLeave() {
     try {
-      const res = await fetch(`http://localhost:5000/api/tournaments/${id}/leave`, {
-        method: "DELETE",
-        headers: { Authorization: token },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/tournaments/${id}/leave`,
+        {
+          method: "DELETE",
+          headers: { Authorization: token },
+        },
+      );
       const data = await res.json();
       if (res.ok) {
         setIsParticipant(false);
         setMyParticipant(null);
-        const pRes = await fetch(`http://localhost:5000/api/tournaments/${id}/participants`);
+        const pRes = await fetch(
+          `http://localhost:5000/api/tournaments/${id}/participants`,
+        );
         const pData = await pRes.json();
         setParticipants(pData);
       } else {
@@ -145,10 +161,13 @@ function TournamentDetail() {
   // Toggle tournament open/closed status
   async function handleClose() {
     try {
-      const res = await fetch(`http://localhost:5000/api/tournaments/${id}/close`, {
-        method: "PATCH",
-        headers: { Authorization: token },
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/tournaments/${id}/close`,
+        {
+          method: "PATCH",
+          headers: { Authorization: token },
+        },
+      );
       const data = await res.json();
       if (res.ok) setTournament(data);
       else alert(data.message || "Failed to update status");
@@ -159,7 +178,8 @@ function TournamentDetail() {
 
   // Delete tournament permanently
   async function handleDeleteTournament() {
-    if (!window.confirm("Are you sure you want to delete this tournament?")) return;
+    if (!window.confirm("Are you sure you want to delete this tournament?"))
+      return;
     try {
       const res = await fetch(`http://localhost:5000/api/tournaments/${id}`, {
         method: "DELETE",
@@ -178,25 +198,32 @@ function TournamentDetail() {
   // Get status badge colors
   function getStatusStyle(status) {
     switch (status) {
-      case "open":   return { bg: "#0a3a4a", color: "#0F9FEA" };
-      case "active": return { bg: "#0a3a1a", color: "#4caf50" };
-      case "closed": return { bg: "#3a1a1a", color: "#ff6b6b" };
-      case "ended":  return { bg: "#2a2a2a", color: "#888" };
-      default:       return { bg: "#2a2a2a", color: "#888" };
+      case "open":
+        return { bg: "#0a3a4a", color: "#0F9FEA" };
+      case "active":
+        return { bg: "#0a3a1a", color: "#4caf50" };
+      case "closed":
+        return { bg: "#3a1a1a", color: "#ff6b6b" };
+      case "ended":
+        return { bg: "#2a2a2a", color: "#888" };
+      default:
+        return { bg: "#2a2a2a", color: "#888" };
     }
   }
 
   // Filter holdings by search term
   const holdings = myParticipant?.holdings || [];
   const filteredHoldings = holdings.filter((h) =>
-    h.symbol.toLowerCase().includes(holdingSearch.toLowerCase())
+    h.symbol.toLowerCase().includes(holdingSearch.toLowerCase()),
   );
 
   if (loading) {
     return (
       <div style={styles.pageLayout}>
         <Header />
-        <main style={styles.mainContent}><p style={styles.statusMessage}>Loading...</p></main>
+        <main style={styles.mainContent}>
+          <p style={styles.statusMessage}>Loading...</p>
+        </main>
       </div>
     );
   }
@@ -205,13 +232,16 @@ function TournamentDetail() {
     return (
       <div style={styles.pageLayout}>
         <Header />
-        <main style={styles.mainContent}><p style={styles.statusMessage}>Tournament not found.</p></main>
+        <main style={styles.mainContent}>
+          <p style={styles.statusMessage}>Tournament not found.</p>
+        </main>
       </div>
     );
   }
 
   const { bg, color } = getStatusStyle(tournament.status);
-  const canJoin = tournament.status === "open" || tournament.status === "active";
+  const canJoin =
+    tournament.status === "open" || tournament.status === "active";
   const now = new Date();
   const endDate = new Date(tournament.end_date);
   const hasEnded = now > endDate;
@@ -222,41 +252,62 @@ function TournamentDetail() {
       <Header />
 
       {/* Toast notification */}
-      {toast && (
-        <div style={styles.toastNotification}>{toast}</div>
-      )}
+      {toast && <div style={styles.toastNotification}>{toast}</div>}
 
       <main style={styles.mainContent}>
         <nav style={styles.backNavigation}>
-          <button style={styles.backButton} onClick={() => navigate("/tournaments")}>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={() => navigate("/tournaments")}
+          >
             ← Back to Tournaments
-          </button>
+          </Button>
         </nav>
 
         {/* Tournament Header */}
         <header style={styles.tournamentHeader}>
           <div style={styles.titleRow}>
             <h1 style={styles.tournamentName}>{tournament.name}</h1>
-            <span style={{ ...styles.statusBadge, backgroundColor: bg, color }}>{tournament.status}</span>
+            <span style={{ ...styles.statusBadge, backgroundColor: bg, color }}>
+              {tournament.status}
+            </span>
           </div>
           <dl style={styles.metadataList}>
             <dt style={styles.visuallyHidden}>Date Range</dt>
-            <dd style={styles.metadataItem}>{tournament.start_date?.slice(0, 10)} → {tournament.end_date?.slice(0, 10)}</dd>
-            <span aria-hidden="true" style={styles.metadataSeparator}>·</span>
+            <dd style={styles.metadataItem}>
+              {tournament.start_date?.slice(0, 10)} →{" "}
+              {tournament.end_date?.slice(0, 10)}
+            </dd>
+            <span aria-hidden="true" style={styles.metadataSeparator}>
+              ·
+            </span>
             <dt style={styles.visuallyHidden}>Starting Balance</dt>
-            <dd style={styles.metadataItem}>${tournament.starting_balance} starting balance</dd>
-            <span aria-hidden="true" style={styles.metadataSeparator}>·</span>
+            <dd style={styles.metadataItem}>
+              ${tournament.starting_balance} starting balance
+            </dd>
+            <span aria-hidden="true" style={styles.metadataSeparator}>
+              ·
+            </span>
             <dt style={styles.visuallyHidden}>Participants</dt>
-            <dd style={styles.metadataItem}>{participants.length} participants</dd>
+            <dd style={styles.metadataItem}>
+              {participants.length} participants
+            </dd>
             {tournament.owner?.username && (
               <>
-                <span aria-hidden="true" style={styles.metadataSeparator}>·</span>
+                <span aria-hidden="true" style={styles.metadataSeparator}>
+                  ·
+                </span>
                 <dt style={styles.visuallyHidden}>Host</dt>
-                <dd style={styles.metadataItem}>Hosted by {tournament.owner.username}</dd>
+                <dd style={styles.metadataItem}>
+                  Hosted by {tournament.owner.username}
+                </dd>
               </>
             )}
           </dl>
-          {tournament.description && <p style={styles.tournamentDescription}>{tournament.description}</p>}
+          {tournament.description && (
+            <p style={styles.tournamentDescription}>{tournament.description}</p>
+          )}
         </header>
 
         {/* Action Panel */}
@@ -264,32 +315,48 @@ function TournamentDetail() {
           {!token ? (
             <div style={styles.actionRow}>
               <p style={styles.actionText}>Login to join this tournament.</p>
-              <button style={styles.primaryButton} onClick={() => navigate("/login")}>Login to Join</button>
+              <Button variant="primary" onClick={() => navigate("/login")}>
+                Login to Join
+              </Button>
             </div>
           ) : isOwner ? (
             <div style={styles.actionRow}>
               <p style={styles.ownerText}>You created this tournament.</p>
               <div style={styles.ownerActions}>
-                <button style={styles.secondaryButton} onClick={handleClose}>
-                  {tournament.status === "closed" ? "Open Joining" : "Close Joining"}
-                </button>
-                <button style={styles.dangerButton} onClick={handleDeleteTournament}>Delete Tournament</button>
+                <Button variant="secondary" onClick={handleClose}>
+                  {tournament.status === "closed"
+                    ? "Open Joining"
+                    : "Close Joining"}
+                </Button>
+                <Button variant="cancel" onClick={handleDeleteTournament}>
+                  Delete Tournament
+                </Button>
               </div>
             </div>
           ) : isParticipant ? (
             <div style={styles.actionRow}>
-              <p style={styles.successText}>✓ You are participating in this tournament.</p>
+              <p style={styles.successText}>
+                ✓ You are participating in this tournament.
+              </p>
               {canJoin && (
-                <button style={styles.dangerButton} onClick={handleLeave}>Leave Tournament</button>
+                <Button variant="cancel" onClick={handleLeave}>
+                  Leave Tournament
+                </Button>
               )}
             </div>
           ) : (
             <div style={styles.actionRow}>
-              <p style={styles.actionText}>You are not part of this tournament.</p>
+              <p style={styles.actionText}>
+                You are not part of this tournament.
+              </p>
               {canJoin ? (
-                <button style={styles.primaryButton} onClick={handleJoin}>Join Tournament</button>
+                <Button variant="primary" onClick={handleJoin}>
+                  Join Tournament
+                </Button>
               ) : (
-                <span style={styles.closedText}>Tournament is {tournament.status}</span>
+                <span style={styles.closedText}>
+                  Tournament is {tournament.status}
+                </span>
               )}
             </div>
           )}
@@ -307,16 +374,16 @@ function TournamentDetail() {
                   onSelect={setSelectedStock}
                 />
               </div>
-              <button
-                style={{
-                  ...styles.buyButton,
-                  ...(!selectedStock ? styles.buyButtonDisabled : {}),
-                }}
+              <Button
+                variant="tertiary"
                 disabled={!selectedStock}
-                onClick={() => selectedStock && navigate(`/tournaments/${id}/buy/${selectedStock.symbol}`)}
+                onClick={() =>
+                  selectedStock &&
+                  navigate(`/tournaments/${id}/buy/${selectedStock.symbol}`)
+                }
               >
                 Buy
-              </button>
+              </Button>
             </div>
           </section>
         )}
@@ -326,10 +393,19 @@ function TournamentDetail() {
           <section style={styles.portfolioPanel}>
             {/* Header row */}
             <div style={styles.portfolioHeader}>
-              <h2 style={styles.panelTitle} >Your Stocks</h2>
+              <h2 style={styles.panelTitle}>Your Stocks</h2>
               <div style={styles.portfolioSearch}>
-                <svg style={styles.portfolioSearchIcon} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <svg
+                  style={styles.portfolioSearchIcon}
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#666"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 <input
                   type="text"
@@ -345,7 +421,10 @@ function TournamentDetail() {
             <div style={styles.cashBalanceRow}>
               <span style={styles.cashLabel}>Cash Balance</span>
               <span style={styles.cashAmount}>
-                ${(myParticipant?.cash_balance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                $
+                {(myParticipant?.cash_balance ?? 0).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}
               </span>
             </div>
 
@@ -358,20 +437,33 @@ function TournamentDetail() {
                     <article key={h.symbol} style={styles.holdingCard}>
                       <div style={styles.holdingPrimary}>
                         <span style={styles.holdingSymbol}>{h.symbol}</span>
-                        {stockInfo && <span style={styles.holdingName}>{stockInfo.name}</span>}
+                        {stockInfo && (
+                          <span style={styles.holdingName}>
+                            {stockInfo.name}
+                          </span>
+                        )}
                       </div>
                       <div style={styles.holdingDetails}>
-                        <span style={styles.holdingShares}>{h.shares} shares</span>
+                        <span style={styles.holdingShares}>
+                          {h.shares} shares
+                        </span>
                         <span style={styles.holdingInvested}>
-                          ${h.amount_invested.toLocaleString("en-US", { minimumFractionDigits: 2 })} invested
+                          $
+                          {h.amount_invested.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                          })}{" "}
+                          invested
                         </span>
                       </div>
-                      <button
-                        style={styles.sellButton}
-                        onClick={() => navigate(`/tournaments/${id}/sell/${h.symbol}`)}
+                      <Button
+                        variant="cancel"
+                        size="small"
+                        onClick={() =>
+                          navigate(`/tournaments/${id}/sell/${h.symbol}`)
+                        }
                       >
                         Sell
-                      </button>
+                      </Button>
                     </article>
                   );
                 })}
@@ -390,7 +482,10 @@ function TournamentDetail() {
         <section style={styles.leaderboardSection}>
           <h2 style={styles.leaderboardTitle}>
             Participants
-            <span style={styles.participantCount}> ({participants.length})</span>
+            <span style={styles.participantCount}>
+              {" "}
+              ({participants.length})
+            </span>
           </h2>
           {participants.length > 0 ? (
             <ol style={styles.leaderboardList}>
@@ -398,14 +493,20 @@ function TournamentDetail() {
                 <li key={p._id} style={styles.leaderboardItem}>
                   <div style={styles.participantInfo}>
                     <span style={styles.rankIndicator}>#{index + 1}</span>
-                    <span style={styles.participantName}>{p.user?.username || "Unknown"}</span>
+                    <span style={styles.participantName}>
+                      {p.user?.username || "Unknown"}
+                    </span>
                   </div>
-                  <output style={styles.participantBalance}>${p.cash_balance?.toLocaleString()}</output>
+                  <output style={styles.participantBalance}>
+                    ${p.cash_balance?.toLocaleString()}
+                  </output>
                 </li>
               ))}
             </ol>
           ) : (
-            <div style={styles.emptyLeaderboard}><p>No participants yet. Be the first to join!</p></div>
+            <div style={styles.emptyLeaderboard}>
+              <p>No participants yet. Be the first to join!</p>
+            </div>
           )}
         </section>
       </main>
@@ -420,99 +521,315 @@ const BG = "#1A1A1A";
 const TEXT = "#F9F9F9";
 
 const styles = {
-  pageLayout: { minHeight: "100vh", backgroundColor: BG, color: TEXT, fontFamily: "'Segoe UI', sans-serif" },
-  mainContent: { maxWidth: "78.125rem", margin: "0 auto", padding: "2.5rem 1.25rem 5rem" },
+  pageLayout: {
+    minHeight: "100vh",
+    backgroundColor: BG,
+    color: TEXT,
+    fontFamily: "'Segoe UI', sans-serif",
+  },
+  mainContent: {
+    maxWidth: "78.125rem",
+    margin: "0 auto",
+    padding: "2.5rem 1.25rem 5rem",
+  },
   toastNotification: {
-    position: "fixed", top: "5rem", left: "50%", transform: "translateX(-50%)",
-    backgroundColor: "#1a3a2a", border: "1px solid #00C076", color: GREEN,
-    padding: "0.75rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.9rem",
-    fontWeight: "600", zIndex: 999, boxShadow: "0 0.25rem 1rem rgba(0,0,0,0.4)",
+    position: "fixed",
+    top: "5rem",
+    left: "50%",
+    transform: "translateX(-50%)",
+    backgroundColor: "#1a3a2a",
+    border: "1px solid #00C076",
+    color: GREEN,
+    padding: "0.75rem 1.5rem",
+    borderRadius: "0.5rem",
+    fontSize: "0.9rem",
+    fontWeight: "600",
+    zIndex: 999,
+    boxShadow: "0 0.25rem 1rem rgba(0,0,0,0.4)",
     whiteSpace: "nowrap",
   },
   statusMessage: { textAlign: "center", padding: "5rem", color: "#888" },
   backNavigation: { marginBottom: "1.5rem" },
-  backButton: { background: "none", border: "none", color: BLUE, fontWeight: "600", fontSize: "0.9rem", cursor: "pointer", padding: 0 },
+  backButton: {
+    background: "none",
+    border: "none",
+    color: BLUE,
+    fontWeight: "600",
+    fontSize: "0.9rem",
+    cursor: "pointer",
+    padding: 0,
+  },
   tournamentHeader: { marginBottom: "1.5rem" },
-  titleRow: { display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.75rem", flexWrap: "wrap" },
-  tournamentName: { margin: 0, fontSize: "2rem", fontWeight: "700", color: TEXT },
-  statusBadge: { padding: "0.25rem 0.875rem", borderRadius: "1.25rem", fontSize: "0.8rem", fontWeight: "600", whiteSpace: "nowrap" },
-  metadataList: { display: "flex", alignItems: "center", gap: "0.625rem", flexWrap: "wrap", margin: "0 0 0.75rem 0" },
+  titleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "1rem",
+    marginBottom: "0.75rem",
+    flexWrap: "wrap",
+  },
+  tournamentName: {
+    margin: 0,
+    fontSize: "2rem",
+    fontWeight: "700",
+    color: TEXT,
+  },
+  statusBadge: {
+    padding: "0.25rem 0.875rem",
+    borderRadius: "1.25rem",
+    fontSize: "0.8rem",
+    fontWeight: "600",
+    whiteSpace: "nowrap",
+  },
+  metadataList: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.625rem",
+    flexWrap: "wrap",
+    margin: "0 0 0.75rem 0",
+  },
   metadataItem: { fontSize: "0.9rem", color: "#aaa", margin: 0 },
   metadataSeparator: { color: "#444" },
-  tournamentDescription: { color: "#888", fontSize: "0.95rem", marginTop: "0.75rem", lineHeight: 1.6 },
+  tournamentDescription: {
+    color: "#888",
+    fontSize: "0.95rem",
+    marginTop: "0.75rem",
+    lineHeight: 1.6,
+  },
 
   // Action panel
-  actionPanel: { backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", borderRadius: "0.625rem", padding: "1.25rem 1.5rem", marginBottom: "1rem" },
-  actionRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1.25rem" },
+  actionPanel: {
+    backgroundColor: "#2a2a2a",
+    border: "1px solid #3a3a3a",
+    borderRadius: "0.625rem",
+    padding: "1.25rem 1.5rem",
+    marginBottom: "1rem",
+  },
+  actionRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "1.25rem",
+  },
   actionText: { margin: 0, color: "#888", fontSize: "0.95rem" },
-  successText: { margin: 0, color: "#4caf50", fontSize: "0.95rem", fontWeight: "600" },
+  successText: {
+    margin: 0,
+    color: "#4caf50",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+  },
   ownerText: { margin: 0, color: BLUE, fontSize: "0.95rem", fontWeight: "600" },
   ownerActions: { display: "flex", gap: "0.75rem" },
-  primaryButton: { padding: "0.625rem 1.5rem", backgroundColor: BLUE, color: "#fff", border: "none", borderRadius: "0.375rem", fontWeight: "600", fontSize: "0.95rem", cursor: "pointer" },
-  secondaryButton: { padding: "0.625rem 1.5rem", backgroundColor: "transparent", color: "#ffaa55", border: "1px solid #ffaa55", borderRadius: "0.375rem", fontWeight: "600", fontSize: "0.95rem", cursor: "pointer" },
-  dangerButton: { padding: "0.625rem 1.5rem", backgroundColor: "transparent", color: "#ff6b6b", border: "1px solid #ff6b6b", borderRadius: "0.375rem", fontWeight: "600", fontSize: "0.95rem", cursor: "pointer" },
+  primaryButton: {
+    padding: "0.625rem 1.5rem",
+    backgroundColor: BLUE,
+    color: "#fff",
+    border: "none",
+    borderRadius: "0.375rem",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    cursor: "pointer",
+  },
+  secondaryButton: {
+    padding: "0.625rem 1.5rem",
+    backgroundColor: "transparent",
+    color: "#ffaa55",
+    border: "1px solid #ffaa55",
+    borderRadius: "0.375rem",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    cursor: "pointer",
+  },
+  dangerButton: {
+    padding: "0.625rem 1.5rem",
+    backgroundColor: "transparent",
+    color: "#ff6b6b",
+    border: "1px solid #ff6b6b",
+    borderRadius: "0.375rem",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    cursor: "pointer",
+  },
   closedText: { color: "#666", fontSize: "0.9rem", fontStyle: "italic" },
 
   // Buy panel
-  tradingPanel: { backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", borderRadius: "0.625rem", padding: "1.25rem 1.5rem", marginBottom: "1rem" },
-  panelTitle: { margin: "0 0 1rem 0", fontSize: "1rem", fontWeight: "600", color: TEXT },
+  tradingPanel: {
+    backgroundColor: "#2a2a2a",
+    border: "1px solid #3a3a3a",
+    borderRadius: "0.625rem",
+    padding: "1.25rem 1.5rem",
+    marginBottom: "1rem",
+  },
+  panelTitle: {
+    margin: "0 0 1rem 0",
+    fontSize: "1rem",
+    fontWeight: "600",
+    color: TEXT,
+  },
   buyRow: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
   dropdownContainer: { flex: 1 },
   buyButton: {
-    padding: "0.75rem 1.5rem", backgroundColor: GREEN, color: "#fff",
-    border: "none", borderRadius: "0.5rem", fontWeight: "700", fontSize: "0.95rem",
-    cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0, fontFamily: "inherit",
+    padding: "0.75rem 1.5rem",
+    backgroundColor: GREEN,
+    color: "#fff",
+    border: "none",
+    borderRadius: "0.5rem",
+    fontWeight: "700",
+    fontSize: "0.95rem",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+    fontFamily: "inherit",
   },
   buyButtonDisabled: { opacity: 0.4, cursor: "not-allowed" },
 
   // Holdings panel
-  portfolioPanel: { backgroundColor: "#2a2a2a", border: "1px solid #3a3a3a", borderRadius: "0.625rem", padding: "1.25rem 1.5rem", marginBottom: "2rem" },
-  portfolioHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.875rem" },
+  portfolioPanel: {
+    backgroundColor: "#2a2a2a",
+    border: "1px solid #3a3a3a",
+    borderRadius: "0.625rem",
+    padding: "1.25rem 1.5rem",
+    marginBottom: "2rem",
+  },
+  portfolioHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "0.875rem",
+  },
   portfolioSearch: { position: "relative" },
-  portfolioSearchIcon: { position: "absolute", left: "0.625rem", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" },
+  portfolioSearchIcon: {
+    position: "absolute",
+    left: "0.625rem",
+    top: "50%",
+    transform: "translateY(-50%)",
+    pointerEvents: "none",
+  },
   portfolioSearchInput: {
-    padding: "0.4rem 0.75rem 0.4rem 1.875rem", backgroundColor: "#1f1f1f",
-    border: "1px solid #444", borderRadius: "0.375rem", color: TEXT,
-    fontSize: "0.85rem", outline: "none", fontFamily: "inherit",
+    padding: "0.4rem 0.75rem 0.4rem 1.875rem",
+    backgroundColor: "#1f1f1f",
+    border: "1px solid #444",
+    borderRadius: "0.375rem",
+    color: TEXT,
+    fontSize: "0.85rem",
+    outline: "none",
+    fontFamily: "inherit",
   },
   cashBalanceRow: {
-    display: "flex", justifyContent: "space-between", alignItems: "center",
-    backgroundColor: "#252525", padding: "0.625rem 0.875rem",
-    borderRadius: "0.5rem", border: "1px solid #333", marginBottom: "0.75rem",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#252525",
+    padding: "0.625rem 0.875rem",
+    borderRadius: "0.5rem",
+    border: "1px solid #333",
+    marginBottom: "0.75rem",
   },
   cashLabel: { fontSize: "0.82rem", color: "#888" },
   cashAmount: { fontSize: "1rem", fontWeight: "700", color: GREEN },
   holdingsList: { display: "flex", flexDirection: "column", gap: "0.5rem" },
   holdingCard: {
-    display: "flex", justifyContent: "space-between", alignItems: "center",
-    backgroundColor: "#252525", padding: "0.75rem 1rem",
-    borderRadius: "0.5rem", gap: "1rem",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#252525",
+    padding: "0.75rem 1rem",
+    borderRadius: "0.5rem",
+    gap: "1rem",
   },
-  holdingPrimary: { display: "flex", flexDirection: "column", gap: "0.1rem", minWidth: "4rem" },
+  holdingPrimary: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.1rem",
+    minWidth: "4rem",
+  },
   holdingSymbol: { fontWeight: "700", fontSize: "0.95rem", color: TEXT },
-  holdingName: { fontSize: "0.75rem", color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "12rem" },
-  holdingDetails: { display: "flex", flexDirection: "column", gap: "0.1rem", flex: 1 },
+  holdingName: {
+    fontSize: "0.75rem",
+    color: "#666",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    maxWidth: "12rem",
+  },
+  holdingDetails: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.1rem",
+    flex: 1,
+  },
   holdingShares: { fontSize: "0.9rem", color: TEXT, fontWeight: "600" },
   holdingInvested: { fontSize: "0.78rem", color: "#888" },
   sellButton: {
-    padding: "0.4rem 1rem", backgroundColor: "transparent", color: RED,
-    border: `1px solid ${RED}`, borderRadius: "0.375rem", fontWeight: "600",
-    fontSize: "0.85rem", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit",
+    padding: "0.4rem 1rem",
+    backgroundColor: "transparent",
+    color: RED,
+    border: `1px solid ${RED}`,
+    borderRadius: "0.375rem",
+    fontWeight: "600",
+    fontSize: "0.85rem",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    fontFamily: "inherit",
   },
-  emptyHoldings: { color: "#666", fontSize: "0.9rem", textAlign: "center", padding: "1.5rem 0" },
+  emptyHoldings: {
+    color: "#666",
+    fontSize: "0.9rem",
+    textAlign: "center",
+    padding: "1.5rem 0",
+  },
 
   // Leaderboard
   leaderboardSection: {},
-  leaderboardTitle: { fontSize: "1.2rem", fontWeight: "600", color: TEXT, marginBottom: "1rem", paddingBottom: "0.75rem", borderBottom: "1px solid #3a3a3a" },
+  leaderboardTitle: {
+    fontSize: "1.2rem",
+    fontWeight: "600",
+    color: TEXT,
+    marginBottom: "1rem",
+    paddingBottom: "0.75rem",
+    borderBottom: "1px solid #3a3a3a",
+  },
   participantCount: { color: "#888", fontWeight: "400", fontSize: "1rem" },
-  leaderboardList: { display: "flex", flexDirection: "column", gap: "0.5rem", listStyle: "none", padding: 0, margin: 0 },
-  leaderboardItem: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#252525", padding: "0.875rem 1.25rem", borderRadius: "0.5rem" },
+  leaderboardList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+  },
+  leaderboardItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#252525",
+    padding: "0.875rem 1.25rem",
+    borderRadius: "0.5rem",
+  },
   participantInfo: { display: "flex", alignItems: "center", gap: "0.875rem" },
-  rankIndicator: { color: "#555", fontSize: "0.85rem", fontWeight: "600", minWidth: "1.75rem" },
+  rankIndicator: {
+    color: "#555",
+    fontSize: "0.85rem",
+    fontWeight: "600",
+    minWidth: "1.75rem",
+  },
   participantName: { color: TEXT, fontWeight: "600", fontSize: "0.95rem" },
-  participantBalance: { color: "#4caf50", fontWeight: "700", fontSize: "0.95rem" },
+  participantBalance: {
+    color: "#4caf50",
+    fontWeight: "700",
+    fontSize: "0.95rem",
+  },
   emptyLeaderboard: { textAlign: "center", padding: "2.5rem", color: "#666" },
-  visuallyHidden: { position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 },
+  visuallyHidden: {
+    position: "absolute",
+    width: "1px",
+    height: "1px",
+    padding: 0,
+    margin: "-1px",
+    overflow: "hidden",
+    clip: "rect(0,0,0,0)",
+    whiteSpace: "nowrap",
+    border: 0,
+  },
 };
 
 export default TournamentDetail;

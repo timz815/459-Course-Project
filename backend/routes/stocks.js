@@ -1,14 +1,13 @@
 /**
  * Stock Routes
  *
- * Express router for stock data. Prices are fetched from Polygon sequentially
- * (to respect free tier rate limits) and stored in MongoDB.
+ * Express router for stock data. Volume is fetched from Polygon once daily
+ * at 6am ET and stored in MongoDB. All other price data is owned by Finnhub.
  *
  * Key behaviours:
  * - GET /api/stocks           → returns all stocks with cached prices from DB (excludes priceHistory)
  * - GET /api/stocks/:symbol   → returns single stock with full priceHistory for detail page
- * - GET /api/stocks/refresh   → manually trigger a price refresh (admin use)
- * - Background job runs on server start and every 24 hours after
+ * - Volume refresh job runs on server start then daily at 6am ET
  * - Sequential fetching with 13s delay between calls (5 req/min free tier)
  * - Frontend reads from DB — always instant, never waits for Polygon
  */
@@ -16,96 +15,129 @@
 const express = require("express");
 const router = express.Router();
 const Stock = require("../models/Stock");
+const { isEasternDST } = require("../utils/marketHours");
 
 const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
 const POLYGON_BASE = "https://api.polygon.io";
-const DELAY_MS = 13000; // 13s between calls to stay under 5 req/min
+const DELAY_MS = 13000;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Fetch previous close for one symbol from Polygon
-async function fetchPrevClose(symbol) {
-  const url = `${POLYGON_BASE}/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`;
-  const res = await fetch(url);
-  const data = await res.json();
+// ─── Polygon Volume Job ───────────────────────────────────────────────────────
 
-  if (!res.ok || !data.results || data.results.length === 0) {
-    console.log(`[Polygon] No data for ${symbol} (status ${res.status})`);
+/**
+ * Fetches previous day's volume for one symbol from Polygon.
+ */
+async function fetchVolume(symbol) {
+  try {
+    const url = `${POLYGON_BASE}/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!res.ok || !data.results || data.results.length === 0) {
+      console.log(`[VolumeJob] No data for ${symbol} (status ${res.status})`);
+      return null;
+    }
+
+    return data.results[0].v || null;
+  } catch (err) {
+    console.error(`[VolumeJob] Error fetching ${symbol}:`, err.message);
     return null;
   }
-
-  const result = data.results[0];
-  const change = result.c && result.o ? parseFloat((result.c - result.o).toFixed(4)) : null;
-  const changePct = result.c && result.o
-    ? parseFloat((((result.c - result.o) / result.o) * 100).toFixed(4))
-    : null;
-
-  return {
-    price: result.c || null,
-    open: result.o || null,
-    high: result.h || null,
-    low: result.l || null,
-    volume: result.v || null,
-    change,
-    changePct,
-    priceDate: result.t ? new Date(result.t).toISOString().split("T")[0] : null,
-    priceUpdatedAt: new Date(),
-  };
 }
 
-// Background job — fetches all stock prices sequentially and saves to DB
-// Takes ~4 minutes to complete due to rate limiting
 let isRefreshing = false;
 
-async function refreshAllPrices() {
+/**
+ * Fetches and stores previous day volume for all stocks sequentially.
+ * Takes ~4 minutes due to rate limiting.
+ */
+async function refreshAllVolumes() {
   if (isRefreshing) {
-    console.log("[PriceJob] Already running, skipping");
+    console.log("[VolumeJob] Already running, skipping");
     return;
   }
 
   isRefreshing = true;
-  console.log("[PriceJob] Starting price refresh...");
+  console.log("[VolumeJob] Starting volume refresh...");
 
   try {
     const stocks = await Stock.find({}, "symbol");
-    const symbols = stocks.map((s) => s.symbol);
 
-    for (let i = 0; i < symbols.length; i++) {
-      const symbol = symbols[i];
-      const priceData = await fetchPrevClose(symbol);
+    for (let i = 0; i < stocks.length; i++) {
+      const { symbol } = stocks[i];
+      const volume = await fetchVolume(symbol);
 
-      if (priceData) {
-        await Stock.findOneAndUpdate(
-          { symbol },
-          { $set: priceData },
-          { new: true }
-        );
-        console.log(`[PriceJob] ✓ ${symbol} = $${priceData.price}`);
+      if (volume !== null) {
+        await Stock.findOneAndUpdate({ symbol }, { $set: { volume } });
+        console.log(`[VolumeJob] ✓ ${symbol} volume = ${volume}`);
       }
 
-      // Wait between calls except after the last one
-      if (i < symbols.length - 1) {
-        await sleep(DELAY_MS);
-      }
+      if (i < stocks.length - 1) await sleep(DELAY_MS);
     }
 
-    console.log("[PriceJob] ✅ Price refresh complete");
+    console.log("[VolumeJob] ✅ Volume refresh complete");
   } catch (err) {
-    console.error("[PriceJob] ❌ Error:", err.message);
+    console.error("[VolumeJob] ❌ Error:", err.message);
   } finally {
     isRefreshing = false;
   }
 }
 
-// Schedule background job — runs on startup then every 24 hours
-function schedulePriceRefresh() {
-  refreshAllPrices();
-  setInterval(refreshAllPrices, 24 * 60 * 60 * 1000);
+// ─── Scheduler ────────────────────────────────────────────────────────────────
+
+/**
+ * Returns milliseconds until next 6am ET.
+ */
+function msUntil6amET() {
+  const now = new Date();
+  const isDST = isEasternDST(now);
+  const offsetMs = (isDST ? -4 : -5) * 60 * 60 * 1000;
+  const etNow = new Date(now.getTime() + offsetMs);
+
+  // Target: next 6am ET
+  const target = new Date(etNow);
+  target.setUTCHours(6, 0, 0, 0);
+
+  // If 6am already passed today, schedule for tomorrow
+  if (etNow.getUTCHours() >= 6) {
+    target.setUTCDate(target.getUTCDate() + 1);
+  }
+
+  // Convert back to UTC
+  const targetUTC = new Date(target.getTime() - offsetMs);
+  return targetUTC.getTime() - now.getTime();
 }
 
-module.exports.schedulePriceRefresh = schedulePriceRefresh;
+/**
+ * Schedules volume refresh to run daily at 6am ET.
+ */
+function scheduleVolumeRefresh() {
+  const ms = msUntil6amET();
+  const hours = Math.round(ms / 1000 / 60 / 60);
+  console.log(`[VolumeJob] Next refresh in ~${hours}h (6am ET)`);
+
+  setTimeout(() => {
+    refreshAllVolumes();
+    // Schedule next day
+    setInterval(refreshAllVolumes, 24 * 60 * 60 * 1000);
+  }, ms);
+}
+
+/**
+ * Starts the volume job — runs immediately on server start
+ * then schedules daily at 6am ET.
+ */
+function startVolumeJob() {
+  refreshAllVolumes();
+  scheduleVolumeRefresh();
+}
+
+module.exports.startVolumeJob = startVolumeJob;
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
 
 // GET all stocks with cached prices from DB (excludes priceHistory for performance)
 router.get("/", async (req, res) => {
@@ -130,23 +162,5 @@ router.get("/:symbol", async (req, res) => {
   }
 });
 
-// GET refresh status
-router.get("/refresh/status", async (req, res) => {
-  const sample = await Stock.findOne({ price: { $ne: null } }, "priceUpdatedAt");
-  res.json({
-    isRefreshing,
-    lastUpdated: sample?.priceUpdatedAt || null,
-  });
-});
-
-// POST manually trigger a price refresh
-router.post("/refresh", async (req, res) => {
-  if (isRefreshing) {
-    return res.json({ message: "Refresh already in progress" });
-  }
-  refreshAllPrices();
-  res.json({ message: "Price refresh started — takes ~4 minutes" });
-});
-
-router.schedulePriceRefresh = schedulePriceRefresh;
+router.startVolumeJob = startVolumeJob;
 module.exports = router;

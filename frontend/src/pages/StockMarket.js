@@ -1,13 +1,14 @@
 /**
  * StockMarket Page
  *
- * Displays a browsable, filterable grid of all available stocks with EOD pricing.
+ * Displays a browsable, filterable grid of all available stocks with pricing.
  *
  * Key behaviours:
  * - Polls stock data every 24 hours automatically
  * - Supports filtering by search term, sector, and exchange
  * - Shows loading skeletons while fetching initial data
  * - Displays price, change, and volume metrics per stock
+ * - Shows "Market closed · Last price as of [date]" when market is closed
  * - Clicking a stock card navigates to /stocks/:symbol for full detail
  * - Handles error states with retry functionality
  */
@@ -15,8 +16,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { isMarketOpen } from "../utils/marketHours";
 
-const POLL_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+const POLL_INTERVAL = 24 * 60 * 60 * 1000;
 
 function StockMarket() {
   const [stocks, setStocks] = useState([]);
@@ -25,9 +27,9 @@ function StockMarket() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sectorFilter, setSectorFilter] = useState("All");
   const [exchangeFilter, setExchangeFilter] = useState("All");
+  const [marketOpen, setMarketOpen] = useState(isMarketOpen());
   const navigate = useNavigate();
 
-  // Fetch stock data from API
   const fetchStocks = useCallback(async () => {
     try {
       setError(null);
@@ -35,6 +37,7 @@ function StockMarket() {
       if (!res.ok) throw new Error("Failed to load stocks");
       const data = await res.json();
       setStocks(data);
+      setMarketOpen(isMarketOpen());
     } catch (err) {
       setError(err.message);
     } finally {
@@ -42,17 +45,14 @@ function StockMarket() {
     }
   }, []);
 
-  // Initial fetch and polling setup
   useEffect(() => {
     fetchStocks();
     const interval = setInterval(fetchStocks, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchStocks]);
 
-  // Build sector filter options from available data
   const sectors = ["All", ...Array.from(new Set(stocks.map((s) => s.sector))).sort()];
 
-  // Apply all active filters to stock list
   const filtered = stocks.filter((s) => {
     const matchesSearch =
       s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,7 +62,6 @@ function StockMarket() {
     return matchesSearch && matchesSector && matchesExchange;
   });
 
-  // Format price with locale for large numbers
   function formatPrice(price) {
     if (price === null || price === undefined) return "—";
     return "$" + (price >= 1000
@@ -70,21 +69,16 @@ function StockMarket() {
       : price.toFixed(2));
   }
 
-  // Format change value with sign
   function formatChange(change) {
     if (change === null || change === undefined) return "—";
-    const sign = change >= 0 ? "+" : "";
-    return `${sign}${change.toFixed(2)}`;
+    return `${change >= 0 ? "+" : ""}${change.toFixed(2)}`;
   }
 
-  // Format percentage change with sign
   function formatChangePct(pct) {
     if (pct === null || pct === undefined) return "—";
-    const sign = pct >= 0 ? "+" : "";
-    return `${sign}${pct.toFixed(2)}%`;
+    return `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`;
   }
 
-  // Format volume with K/M suffixes
   function formatVolume(vol) {
     if (!vol) return "—";
     if (vol >= 1_000_000) return (vol / 1_000_000).toFixed(1) + "M";
@@ -92,8 +86,14 @@ function StockMarket() {
     return vol.toString();
   }
 
-  const hasPrices = stocks.some((s) => s.price !== null);
-  const priceDate = stocks.find((s) => s.priceDate)?.priceDate || null;
+  function formatPriceDate(priceUpdatedAt) {
+    if (!priceUpdatedAt) return null;
+    return new Date(priceUpdatedAt).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
 
   return (
     <div style={styles.pageLayout}>
@@ -101,15 +101,14 @@ function StockMarket() {
       <Header />
 
       <main style={styles.mainContent}>
-
         <header style={styles.pageHeader}>
-          <h1 style={styles.pageTitle}>Stock Market</h1>
-          <div style={styles.refreshControls}>
-            {priceDate && (
-              <span style={styles.lastUpdated}>Updated: {priceDate}</span>
+          <div style={styles.pageTitleRow}>
+            <h1 style={styles.pageTitle}>Stock Market</h1>
+            {!marketOpen && (
+              <span style={styles.marketClosedBadge}>Market Closed</span>
             )}
-            <button style={styles.refreshButton} onClick={fetchStocks} title="Refresh now">↻</button>
           </div>
+          <button style={styles.refreshButton} onClick={fetchStocks} title="Refresh now">↻</button>
         </header>
 
         <section style={styles.filterBar}>
@@ -143,12 +142,6 @@ function StockMarket() {
           </div>
         )}
 
-        {!loading && !hasPrices && (
-          <div style={styles.infoAlert}>
-            ⏳ Price data is being fetched in the background (~4 min). Refresh the page once complete.
-          </div>
-        )}
-
         {loading ? (
           <div style={styles.stockGrid}>
             {Array.from({ length: 20 }).map((_, i) => (
@@ -162,6 +155,7 @@ function StockMarket() {
               const isNegative = stock.change < 0;
               const changeColor = isPositive ? "#00C076" : isNegative ? "#FF4D4D" : "#888";
               const changeBg = isPositive ? "rgba(0,192,118,0.08)" : isNegative ? "rgba(255,77,77,0.08)" : "transparent";
+              const priceDate = formatPriceDate(stock.priceUpdatedAt);
 
               return (
                 <article
@@ -196,16 +190,22 @@ function StockMarket() {
                     </span>
                   </div>
 
-                  <footer style={styles.volumeDisplay}>
-                    <span style={styles.volumeLabel}>Vol</span>
-                    <span style={styles.volumeValue}>{formatVolume(stock.volume)}</span>
+                  <footer style={styles.cardFooter}>
+                    <div style={styles.volumeDisplay}>
+                      <span style={styles.volumeLabel}>Vol</span>
+                      <span style={styles.volumeValue}>{formatVolume(stock.volume)}</span>
+                    </div>
+                    {!marketOpen && priceDate && (
+                      <span style={styles.marketClosedNote}>
+                        Market closed · {priceDate}
+                      </span>
+                    )}
                   </footer>
                 </article>
               );
             })}
           </div>
         )}
-
       </main>
     </div>
   );
@@ -227,11 +227,14 @@ const styles = {
   pageHeader: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
     marginBottom: "2rem", paddingBottom: "1.5rem", borderBottom: `1px solid ${BORDER}`,
-    flexWrap: "wrap", gap: "1rem",
   },
+  pageTitleRow: { display: "flex", alignItems: "center", gap: "1rem" },
   pageTitle: { margin: 0, fontSize: "2rem", fontWeight: "700", letterSpacing: "-0.02em" },
-  refreshControls: { display: "flex", alignItems: "center", gap: "0.75rem" },
-  lastUpdated: { fontSize: "0.85rem", color: MUTED },
+  marketClosedBadge: {
+    fontSize: "0.75rem", fontWeight: "600", color: MUTED,
+    backgroundColor: SURFACE, padding: "0.25rem 0.625rem",
+    borderRadius: "1rem", border: `1px solid ${BORDER}`,
+  },
   refreshButton: {
     background: "none", border: `1px solid ${BORDER}`, color: MUTED, borderRadius: "0.375rem",
     width: "2rem", height: "2rem", cursor: "pointer", fontSize: "1rem",
@@ -253,10 +256,6 @@ const styles = {
   errorAlert: {
     backgroundColor: "rgba(255,77,77,0.1)", border: "1px solid rgba(255,77,77,0.3)",
     color: "#FF4D4D", padding: "0.75rem 1rem", borderRadius: "0.5rem", marginBottom: "1.5rem", fontSize: "0.9rem",
-  },
-  infoAlert: {
-    backgroundColor: "rgba(15,159,234,0.08)", border: "1px solid rgba(15,159,234,0.2)",
-    color: BLUE, padding: "0.75rem 1rem", borderRadius: "0.5rem", marginBottom: "1.5rem", fontSize: "0.9rem",
   },
   retryButton: { background: "none", border: "none", color: "#FF4D4D", textDecoration: "underline", cursor: "pointer", fontFamily: "inherit", fontSize: "0.9rem" },
   stockGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(16rem, 1fr))", gap: "1rem" },
@@ -284,9 +283,11 @@ const styles = {
   changeIndicator: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0.6rem", borderRadius: "0.4rem", border: "1px solid transparent" },
   changeValue: { fontSize: "0.9rem", fontWeight: "600", fontFamily: "'IBM Plex Mono', monospace" },
   changePercent: { fontSize: "0.9rem", fontWeight: "600", fontFamily: "'IBM Plex Mono', monospace" },
-  volumeDisplay: { display: "flex", justifyContent: "space-between", marginTop: "0.25rem" },
+  cardFooter: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.25rem" },
+  volumeDisplay: { display: "flex", gap: "0.375rem" },
   volumeLabel: { fontSize: "0.72rem", color: MUTED, textTransform: "uppercase", letterSpacing: "0.06em" },
   volumeValue: { fontSize: "0.72rem", color: MUTED, fontFamily: "'IBM Plex Mono', monospace" },
+  marketClosedNote: { fontSize: "0.65rem", color: MUTED, fontStyle: "italic" },
 };
 
 export default StockMarket;

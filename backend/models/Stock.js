@@ -1,14 +1,14 @@
 /**
  * Stock Model
  *
- * Mongoose schema representing a stock with both static metadata
- * and cached price data from Polygon.
+ * Mongoose schema representing a stock with static metadata and Finnhub price data.
  *
  * Key behaviours:
  * - Static fields (symbol, name, sector, industry, exchange) seeded once
- * - Price fields updated by background job in stocks route
- * - priceUpdatedAt tracks when prices were last refreshed
- * - Single collection serves both metadata and price queries
+ * - All price fields owned and updated by Finnhub via priceQueue
+ * - previousClose stores yesterday's EOD price (Finnhub `pc` field)
+ * - priceHistory stores intraday [timestamp, price] tuples during market hours
+ * - Polygon handles historical candles only (future work)
  */
 
 const mongoose = require("mongoose");
@@ -39,15 +39,15 @@ const StockSchema = new mongoose.Schema(
       required: true,
       enum: ["NASDAQ", "NYSE"],
     },
-    // Price fields — updated by background job
+    // All price fields owned by Finnhub
     price: { type: Number, default: null },
+    previousClose: { type: Number, default: null },
     open: { type: Number, default: null },
     high: { type: Number, default: null },
     low: { type: Number, default: null },
     volume: { type: Number, default: null },
     change: { type: Number, default: null },
     changePct: { type: Number, default: null },
-    priceDate: { type: String, default: null },
     priceUpdatedAt: { type: Date, default: null },
 
     // Intraday price history — array of [timestamp, price] tuples

@@ -7,6 +7,9 @@
  * Key behaviours:
  * - Fetches single stock with priceHistory from /api/stocks/:symbol
  * - Shows price, change, changePct with green/red coloring
+ * - All stats (open, high, low) are today's intraday data from Finnhub
+ * - Volume is previous trading day from Polygon
+ * - Shows "Market closed · Last price as of [date]" when market is closed
  * - Renders line chart from priceHistory tuples — green if up, red if down
  * - Shows "Price history unavailable" if no history yet
  * - Back button navigates to /stock-market
@@ -16,6 +19,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import Header from "../components/Header";
+import { isMarketOpen } from "../utils/marketHours";
 
 function StockDetail() {
   const { symbol } = useParams();
@@ -23,6 +27,7 @@ function StockDetail() {
   const [stock, setStock] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [marketOpen] = useState(isMarketOpen());
 
   useEffect(() => {
     async function fetchStock() {
@@ -67,7 +72,6 @@ function StockDetail() {
   const changeColor = isPositive ? GREEN : isNegative ? RED : MUTED;
   const chartColor = isPositive ? GREEN : isNegative ? RED : MUTED;
 
-  // Format priceHistory tuples into recharts friendly objects
   const chartData = (stock.priceHistory || []).map(([timestamp, price]) => ({
     time: new Date(timestamp).toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -79,7 +83,6 @@ function StockDetail() {
 
   const hasHistory = chartData.length > 0;
 
-  // Format helpers
   function formatPrice(price) {
     if (price === null || price === undefined) return "—";
     return "$" + (price >= 1000
@@ -104,7 +107,13 @@ function StockDetail() {
     return vol.toString();
   }
 
-  // Custom tooltip for chart
+  function formatPriceDate(priceUpdatedAt) {
+    if (!priceUpdatedAt) return null;
+    return new Date(priceUpdatedAt).toLocaleDateString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
+    });
+  }
+
   function CustomTooltip({ active, payload, label }) {
     if (!active || !payload || !payload.length) return null;
     return (
@@ -116,6 +125,8 @@ function StockDetail() {
       </div>
     );
   }
+
+  const priceDate = formatPriceDate(stock.priceUpdatedAt);
 
   return (
     <div style={styles.page}>
@@ -129,6 +140,13 @@ function StockDetail() {
             ← Back to Stock Market
           </button>
         </nav>
+
+        {/* Market closed disclaimer */}
+        {!marketOpen && priceDate && (
+          <div style={styles.marketClosedBanner}>
+            Market closed · Last price as of {priceDate}
+          </div>
+        )}
 
         {/* Stock header */}
         <header style={styles.stockHeader}>
@@ -155,13 +173,13 @@ function StockDetail() {
             <span style={{ ...styles.changePct, color: changeColor }}>
               {formatChangePct(stock.changePct)}
             </span>
-            <span style={styles.priceLabel}>today</span>
+            <span style={styles.priceLabel}>vs prev close</span>
           </div>
         </section>
 
         {/* Chart section */}
         <section style={styles.chartSection}>
-          <h2 style={styles.chartTitle}>Price History</h2>
+          <h2 style={styles.chartTitle}>Today's Price</h2>
           {hasHistory ? (
             <div style={styles.chartWrapper}>
               <ResponsiveContainer width="100%" height={280}>
@@ -203,18 +221,21 @@ function StockDetail() {
         {/* Stats section */}
         <section style={styles.statsSection}>
           {[
-            { label: "Open",   value: formatPrice(stock.open) },
-            { label: "High",   value: formatPrice(stock.high) },
-            { label: "Low",    value: formatPrice(stock.low) },
-            { label: "Volume", value: formatVolume(stock.volume) },
-          ].map(({ label, value }) => (
+            { label: "Open",          value: formatPrice(stock.open),         note: "Today" },
+            { label: "High",          value: formatPrice(stock.high),         note: "Today" },
+            { label: "Low",           value: formatPrice(stock.low),          note: "Today" },
+            { label: "Prev Close",    value: formatPrice(stock.previousClose), note: null   },
+            { label: "Volume",        value: formatVolume(stock.volume),       note: "Prev day" },
+          ].map(({ label, value, note }) => (
             <div key={label} style={styles.statCard}>
-              <span style={styles.statLabel}>{label}</span>
+              <div style={styles.statLabelRow}>
+                <span style={styles.statLabel}>{label}</span>
+                {note && <span style={styles.statNote}>{note}</span>}
+              </div>
               <span style={styles.statValue}>{value}</span>
             </div>
           ))}
         </section>
-
       </main>
     </div>
   );
@@ -234,202 +255,99 @@ const BLUE = "#0F9FEA";
 
 const styles = {
   page: {
-    minHeight: "100vh",
-    backgroundColor: BG,
-    color: TEXT,
+    minHeight: "100vh", backgroundColor: BG, color: TEXT,
     fontFamily: "'IBM Plex Sans', sans-serif",
   },
-  main: {
-    maxWidth: "56rem",
-    margin: "0 auto",
-    padding: "2.5rem 1.5rem 5rem",
-  },
-  statusMessage: {
-    textAlign: "center",
-    padding: "5rem",
-    color: MUTED,
-  },
-
-  // Navigation
+  main: { maxWidth: "56rem", margin: "0 auto", padding: "2.5rem 1.5rem 5rem" },
+  statusMessage: { textAlign: "center", padding: "5rem", color: MUTED },
   backNav: { marginBottom: "1.5rem" },
   backButton: {
-    background: "none",
-    border: "none",
-    color: BLUE,
-    fontWeight: "600",
-    fontSize: "0.9rem",
-    cursor: "pointer",
-    padding: 0,
-    fontFamily: "inherit",
+    background: "none", border: "none", color: BLUE, fontWeight: "600",
+    fontSize: "0.9rem", cursor: "pointer", padding: 0, fontFamily: "inherit",
   },
-
-  // Header
+  marketClosedBanner: {
+    backgroundColor: SURFACE, border: `1px solid ${BORDER}`,
+    borderRadius: "0.5rem", padding: "0.625rem 1rem",
+    fontSize: "0.82rem", color: MUTED, marginBottom: "1.5rem",
+    fontStyle: "italic",
+  },
   stockHeader: { marginBottom: "1.5rem" },
   titleRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "0.5rem",
-    flexWrap: "wrap",
-    gap: "0.75rem",
+    display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+    marginBottom: "0.5rem", flexWrap: "wrap", gap: "0.75rem",
   },
-  titleLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.75rem",
-  },
+  titleLeft: { display: "flex", alignItems: "center", gap: "0.75rem" },
   symbol: {
-    margin: 0,
-    fontSize: "2.5rem",
-    fontWeight: "700",
-    fontFamily: "'IBM Plex Mono', monospace",
-    letterSpacing: "-0.02em",
-    color: TEXT,
+    margin: 0, fontSize: "2.5rem", fontWeight: "700",
+    fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "-0.02em", color: TEXT,
   },
   exchangeBadge: {
-    fontSize: "0.7rem",
-    fontWeight: "600",
-    color: BLUE,
-    backgroundColor: "rgba(15,159,234,0.1)",
-    padding: "0.2rem 0.5rem",
-    borderRadius: "0.25rem",
-    letterSpacing: "0.04em",
+    fontSize: "0.7rem", fontWeight: "600", color: BLUE,
+    backgroundColor: "rgba(15,159,234,0.1)", padding: "0.2rem 0.5rem",
+    borderRadius: "0.25rem", letterSpacing: "0.04em",
   },
-  titleRight: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    gap: "0.375rem",
-  },
+  titleRight: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.375rem" },
   sectorTag: {
-    fontSize: "0.75rem",
-    color: MUTED,
-    backgroundColor: SURFACE,
-    padding: "0.2rem 0.6rem",
-    borderRadius: "0.25rem",
-    border: `1px solid ${BORDER}`,
+    fontSize: "0.75rem", color: MUTED, backgroundColor: SURFACE,
+    padding: "0.2rem 0.6rem", borderRadius: "0.25rem", border: `1px solid ${BORDER}`,
   },
   industryTag: {
-    fontSize: "0.75rem",
-    color: MUTED,
-    backgroundColor: SURFACE,
-    padding: "0.2rem 0.6rem",
-    borderRadius: "0.25rem",
-    border: `1px solid ${BORDER}`,
+    fontSize: "0.75rem", color: MUTED, backgroundColor: SURFACE,
+    padding: "0.2rem 0.6rem", borderRadius: "0.25rem", border: `1px solid ${BORDER}`,
   },
-  companyName: {
-    margin: 0,
-    fontSize: "1rem",
-    color: MUTED,
-    fontWeight: "400",
-  },
-
-  // Price
+  companyName: { margin: 0, fontSize: "1rem", color: MUTED, fontWeight: "400" },
   priceSection: {
-    marginBottom: "2rem",
-    paddingBottom: "2rem",
-    borderBottom: `1px solid ${BORDER}`,
+    marginBottom: "2rem", paddingBottom: "2rem", borderBottom: `1px solid ${BORDER}`,
   },
   currentPrice: {
-    display: "block",
-    fontSize: "3rem",
-    fontWeight: "600",
-    fontFamily: "'IBM Plex Mono', monospace",
-    letterSpacing: "-0.03em",
-    color: TEXT,
-    marginBottom: "0.5rem",
+    display: "block", fontSize: "3rem", fontWeight: "600",
+    fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "-0.03em",
+    color: TEXT, marginBottom: "0.5rem",
   },
-  changeRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.75rem",
-  },
-  change: {
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    fontFamily: "'IBM Plex Mono', monospace",
-  },
-  changePct: {
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    fontFamily: "'IBM Plex Mono', monospace",
-  },
-  priceLabel: {
-    fontSize: "0.8rem",
-    color: MUTED,
-  },
-
-  // Chart
+  changeRow: { display: "flex", alignItems: "center", gap: "0.75rem" },
+  change: { fontSize: "1.1rem", fontWeight: "600", fontFamily: "'IBM Plex Mono', monospace" },
+  changePct: { fontSize: "1.1rem", fontWeight: "600", fontFamily: "'IBM Plex Mono', monospace" },
+  priceLabel: { fontSize: "0.8rem", color: MUTED },
   chartSection: {
-    backgroundColor: CARD_BG,
-    border: `1px solid ${BORDER}`,
-    borderRadius: "0.75rem",
-    padding: "1.5rem",
-    marginBottom: "1.5rem",
+    backgroundColor: CARD_BG, border: `1px solid ${BORDER}`,
+    borderRadius: "0.75rem", padding: "1.5rem", marginBottom: "1.5rem",
   },
   chartTitle: {
-    margin: "0 0 1.25rem 0",
-    fontSize: "0.85rem",
-    fontWeight: "600",
-    color: MUTED,
-    textTransform: "uppercase",
-    letterSpacing: "0.08em",
+    margin: "0 0 1.25rem 0", fontSize: "0.85rem", fontWeight: "600",
+    color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em",
   },
-  chartWrapper: {
-    width: "100%",
-  },
-  noHistory: {
-    textAlign: "center",
-    padding: "3rem 1rem",
-    color: MUTED,
-    fontSize: "0.9rem",
-  },
+  chartWrapper: { width: "100%" },
+  noHistory: { textAlign: "center", padding: "3rem 1rem", color: MUTED, fontSize: "0.9rem" },
   tooltip: {
-    backgroundColor: SURFACE,
-    border: `1px solid ${BORDER}`,
-    borderRadius: "0.5rem",
-    padding: "0.5rem 0.875rem",
+    backgroundColor: SURFACE, border: `1px solid ${BORDER}`,
+    borderRadius: "0.5rem", padding: "0.5rem 0.875rem",
   },
   tooltipTime: {
-    margin: "0 0 0.2rem",
-    fontSize: "0.75rem",
-    color: MUTED,
+    margin: "0 0 0.2rem", fontSize: "0.75rem", color: MUTED,
     fontFamily: "'IBM Plex Mono', monospace",
   },
-  tooltipPrice: {
-    margin: 0,
-    fontSize: "0.95rem",
-    fontWeight: "600",
-    fontFamily: "'IBM Plex Mono', monospace",
-  },
-
-  // Stats
+  tooltipPrice: { margin: 0, fontSize: "0.95rem", fontWeight: "600", fontFamily: "'IBM Plex Mono', monospace" },
   statsSection: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "0.75rem",
+    display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem",
   },
   statCard: {
-    backgroundColor: CARD_BG,
-    border: `1px solid ${BORDER}`,
-    borderRadius: "0.5rem",
-    padding: "0.875rem 1rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.375rem",
+    backgroundColor: CARD_BG, border: `1px solid ${BORDER}`,
+    borderRadius: "0.5rem", padding: "0.875rem 1rem",
+    display: "flex", flexDirection: "column", gap: "0.375rem",
+  },
+  statLabelRow: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
   },
   statLabel: {
-    fontSize: "0.7rem",
-    color: MUTED,
-    textTransform: "uppercase",
-    letterSpacing: "0.08em",
-    fontWeight: "600",
+    fontSize: "0.7rem", color: MUTED, textTransform: "uppercase",
+    letterSpacing: "0.08em", fontWeight: "600",
+  },
+  statNote: {
+    fontSize: "0.6rem", color: BORDER, fontStyle: "italic",
   },
   statValue: {
-    fontSize: "1rem",
-    fontWeight: "600",
-    fontFamily: "'IBM Plex Mono', monospace",
-    color: TEXT,
+    fontSize: "1rem", fontWeight: "600",
+    fontFamily: "'IBM Plex Mono', monospace", color: TEXT,
   },
 };
 

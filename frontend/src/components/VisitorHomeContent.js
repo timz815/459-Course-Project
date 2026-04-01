@@ -121,17 +121,17 @@ function VisitorHomeContent() {
 
   const livePool = useMemo(() => {
     if (!liveArena) return 0;
-
+    // If prize_pool is explicitly set and valid, use it
     const explicitPool = Number(liveArena.prize_pool);
     if (Number.isFinite(explicitPool) && explicitPool > 0) {
       return explicitPool;
     }
-
+    // Otherwise, calculate pool as starting_balance * participants
     const startingBalance = Number(liveArena.starting_balance);
     if (!Number.isFinite(startingBalance) || startingBalance <= 0) {
       return 0;
     }
-
+    //  If we have a live arena and participants, calculate the pool; otherwise, just return starting balance
     if (liveParticipants > 0) {
       return startingBalance * liveParticipants;
     }
@@ -158,9 +158,9 @@ function VisitorHomeContent() {
             <div className="vh-hero-bottom">
               <div className="vh-hero-left">
                 <p className="vh-subtitle">
-                  Compete against global traders in high-stakes, zero-risk
-                  environments. Execute strategies with real-time data and climb
-                  the leaderboard.
+                  Compete in zero-risk paper-trading tournaments using live
+                  market quotes, fair order processing, and dynamic
+                  leaderboards.
                 </p>
 
                 <div className="vh-hero-actions">

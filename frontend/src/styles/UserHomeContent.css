@@ -1,0 +1,592 @@
+/* ─── User Home Content ─────────────────────────────────────────────────────── */
+
+.user-home {
+  min-height: calc(100vh - 6rem);
+  background: var(--color-neutral-950);
+  color: var(--color-neutral-100);
+  padding: 6rem 2rem;
+}
+
+.user-home-inner {
+  width: min(74.125rem, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* ─── Hero ──────────────────────────────────────────────────────────────────── */
+
+.uh-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  padding: 3.0625rem;
+  border: 1px solid var(--color-border-default);
+  background: linear-gradient(159deg, #1c1b1b 0%, #0e0e0e 100%);
+}
+
+.uh-hero-gradient {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 50%;
+  opacity: 0.2;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(144, 205, 255, 0.3) 0%,
+    rgba(144, 205, 255, 0) 50%
+  );
+  pointer-events: none;
+}
+
+.uh-hero-content {
+  position: relative;
+  max-width: 42rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.uh-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  background: rgba(0, 192, 118, 0.1);
+  width: fit-content;
+}
+
+.uh-chip-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--color-success-400);
+}
+
+.uh-chip-text {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: 0.0625rem;
+  text-transform: uppercase;
+  color: var(--color-tertiary-500);
+}
+
+.uh-hero-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 3.75rem;
+  font-weight: 800;
+  line-height: 3.75rem;
+  letter-spacing: -0.1875rem;
+  color: var(--color-neutral-100);
+}
+
+.uh-hero-title span {
+  color: var(--color-primary-300);
+}
+
+.uh-hero-subtitle {
+  margin: 0;
+  max-width: 32rem;
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.828125rem;
+  color: var(--color-body);
+}
+
+.uh-hero-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+/* ─── Section Header (shared for competitions & watchlist) ──────────────────── */
+
+.uh-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.uh-section-eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  line-height: 1.03125rem;
+  letter-spacing: 0.1375rem;
+  text-transform: uppercase;
+  color: var(--color-body);
+}
+
+.uh-section-title {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 2.25rem;
+  letter-spacing: -0.09375rem;
+  color: #cbe6ff;
+}
+
+.uh-section-title.primary {
+  color: var(--color-primary-300);
+}
+
+.uh-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5rem;
+  color: var(--color-primary-300);
+}
+
+.uh-view-all-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ─── Competition Cards Grid ────────────────────────────────────────────────── */
+
+.uh-comp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.uh-comp-card {
+  background: var(--color-neutral-900);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 18.125rem;
+}
+
+.uh-comp-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.uh-comp-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uh-comp-icon.blue {
+  background: rgba(144, 205, 255, 0.1);
+}
+
+.uh-comp-icon.green {
+  background: rgba(68, 224, 146, 0.1);
+}
+
+.uh-comp-icon img {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.uh-comp-rank {
+  text-align: right;
+}
+
+.uh-comp-rank-label {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 0.875rem;
+  letter-spacing: 0.06875rem;
+  text-transform: uppercase;
+  color: var(--color-body);
+}
+
+.uh-comp-rank-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  font-family: var(--font-sans);
+  font-weight: 700;
+}
+
+.uh-comp-rank-num {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.uh-comp-rank-num.good {
+  color: var(--color-success-400);
+}
+
+.uh-comp-rank-num.bad {
+  color: var(--color-danger-500);
+}
+
+.uh-comp-rank-total {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.04375rem;
+  color: var(--color-body);
+}
+
+.uh-comp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.uh-comp-name {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.75rem;
+  color: var(--color-neutral-100);
+}
+
+.uh-comp-ends {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--color-body);
+}
+
+/* Buying power + progress bar */
+
+.uh-comp-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.uh-comp-buying-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.uh-comp-buying-label {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  color: var(--color-neutral-300);
+}
+
+.uh-comp-buying-value {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: var(--color-neutral-100);
+}
+
+.uh-comp-progress {
+  width: 100%;
+  height: 0.25rem;
+  border-radius: 0.75rem;
+  background: #353535;
+  overflow: hidden;
+}
+
+.uh-comp-progress-bar {
+  height: 100%;
+  border-radius: 0.75rem;
+  transition: width 0.3s ease;
+}
+
+.uh-comp-progress-bar.blue {
+  background: var(--color-primary-300);
+}
+
+.uh-comp-progress-bar.green {
+  background: var(--color-success-400);
+}
+
+/* Resume Trading button */
+
+.uh-comp-resume {
+  width: 100%;
+  padding: 0.5rem 0;
+  border: none;
+  border-radius: 0.125rem;
+  background: var(--color-neutral-850);
+  color: var(--color-neutral-100);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  letter-spacing: 0.0875rem;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+}
+
+.uh-comp-resume:hover {
+  background: #333;
+}
+
+/* ─── Join New Tournament Card ──────────────────────────────────────────────── */
+
+.uh-comp-new {
+  background: rgba(28, 27, 27, 0.4);
+  border: 2px dashed rgba(63, 72, 81, 0.2);
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  cursor: pointer;
+  min-height: 18.125rem;
+}
+
+.uh-comp-new:hover {
+  border-color: rgba(63, 72, 81, 0.4);
+}
+
+.uh-comp-new-plus {
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.uh-comp-new-plus img {
+  width: 1rem;
+  height: 1rem;
+}
+
+.uh-comp-new-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  letter-spacing: 0.04375rem;
+  text-align: center;
+  color: var(--color-neutral-100);
+}
+
+.uh-comp-new-sub {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  text-align: center;
+  color: var(--color-body);
+}
+
+/* ─── Watchlist ─────────────────────────────────────────────────────────────── */
+
+.uh-wl-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.uh-wl-icon-btn {
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.125rem;
+  background: var(--color-neutral-850);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.uh-wl-icon-btn img {
+  width: 1rem;
+  height: 1rem;
+}
+
+.uh-wl-table {
+  background: var(--color-neutral-900);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.uh-wl-header {
+  display: grid;
+  grid-template-columns: 4fr 3fr 2fr 2fr 1fr;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.uh-wl-header span {
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 0.875rem;
+  letter-spacing: 0.06875rem;
+  text-transform: uppercase;
+  color: var(--color-body);
+}
+
+.uh-wl-header span:nth-child(n + 3) {
+  text-align: right;
+}
+
+.uh-wl-row {
+  display: grid;
+  grid-template-columns: 4fr 3fr 2fr 2fr 1fr;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+}
+
+.uh-wl-row + .uh-wl-row {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.uh-wl-asset {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.uh-wl-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.125rem;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-neutral-100);
+  flex-shrink: 0;
+}
+
+.uh-wl-asset-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.uh-wl-symbol {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  letter-spacing: 0.04375rem;
+  color: var(--color-primary-300);
+}
+
+.uh-wl-name {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  color: var(--color-body);
+}
+
+.uh-wl-tags {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.uh-wl-tag {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  background: #353535;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: 0.0625rem;
+  text-transform: uppercase;
+  color: #e8e8e8;
+}
+
+.uh-wl-price {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: var(--color-neutral-100);
+}
+
+.uh-wl-change {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.uh-wl-change.positive {
+  color: var(--color-success-400);
+}
+
+.uh-wl-change.negative {
+  color: var(--color-danger-500);
+}
+
+.uh-wl-delete {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.uh-wl-delete-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+
+.uh-wl-delete-btn:hover {
+  opacity: 1;
+}
+
+.uh-wl-delete-btn img {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ─── Empty States ──────────────────────────────────────────────────────────── */
+
+.uh-empty {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--color-body);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}

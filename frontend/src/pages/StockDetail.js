@@ -23,6 +23,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Header from "../components/Header";
+import { isMarketOpen } from "../utils/marketHours";
 
 function StockDetail() {
   const { symbol } = useParams();
@@ -282,16 +283,12 @@ function StockDetail() {
   );
 }
 
-const googleFonts = `@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');`;
-
 const BG = "#1A1A1A";
 const SURFACE = "#242424";
 const CARD_BG = "#2a2a2a";
 const BORDER = "#333";
 const TEXT = "#F9F9F9";
 const MUTED = "#888";
-const GREEN = "#00C076";
-const RED = "#FF4D4D";
 const BLUE = "#0F9FEA";
 
 const styles = {

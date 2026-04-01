@@ -19,6 +19,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
+import { isPendingUntilOpen } from "../utils/marketHours";
 
 function BuyStock() {
   const { id: tournamentId, symbol } = useParams();
@@ -32,7 +33,7 @@ function BuyStock() {
   const [submitting, setSubmitting] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [warningAcknowledged, setWarningAcknowledged] = useState(false);
+  const [warningAcknowledged] = useState(false);
 
   const pendingUntilOpen = isPendingUntilOpen();
 
@@ -93,6 +94,7 @@ function BuyStock() {
     stock?.price && amount > 0 ? (amount / stock.price).toFixed(1) : null;
   const cashBalance = participant?.cash_balance ?? 0;
   const isValid = amount > 0 && amount <= cashBalance;
+  const canSubmit = isValid && (!pendingUntilOpen || warningAcknowledged);
 
   // Submit trade to queue
   async function handleBuy() {

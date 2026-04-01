@@ -16,6 +16,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { isMarketOpen } from "../utils/marketHours";
 
 const POLL_INTERVAL = 24 * 60 * 60 * 1000;
 
@@ -66,6 +67,15 @@ function StockMarket() {
     return matchesSearch && matchesSector && matchesExchange;
   });
 
+  const hasPrices = stocks.some((s) => s.price != null);
+  const priceDate = stocks[0]?.priceUpdatedAt
+    ? new Date(stocks[0].priceUpdatedAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
   function formatPrice(price) {
     if (price === null || price === undefined) return "\u2014";
     return (
@@ -106,15 +116,6 @@ function StockMarket() {
     return "stock-market-change";
   }
 
-  function formatPriceDate(priceUpdatedAt) {
-    if (!priceUpdatedAt) return null;
-    return new Date(priceUpdatedAt).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-
   return (
     <div className="stock-market-page">
       <Header />
@@ -134,22 +135,21 @@ function StockMarket() {
               ↻
             </button>
           </div>
-          <button
-            style={styles.refreshButton}
-            onClick={fetchStocks}
-            title="Refresh now"
-          >
-            ↻
-          </button>
         </header>
 
+        {!marketOpen && priceDate && (
+          <div className="stock-market-info">
+            Market closed · Last price as of {priceDate}
+          </div>
+        )}
+
         <section className="stock-market-filters">
-          <Input
+          <input
             type="text"
-            placeholder="Search symbol or name…"
+            placeholder="Search symbol or name\u2026"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            inputClassName="stock-market-search-input"
+            className="stock-market-search-input"
           />
 
           <select
@@ -204,19 +204,6 @@ function StockMarket() {
         ) : (
           <div style={styles.stockGrid}>
             {filtered.map((stock) => {
-              const isPositive = stock.change > 0;
-              const isNegative = stock.change < 0;
-              const changeColor = isPositive
-                ? "#00C076"
-                : isNegative
-                  ? "#FF4D4D"
-                  : "#888";
-              const changeBg = isPositive
-                ? "rgba(0,192,118,0.08)"
-                : isNegative
-                  ? "rgba(255,77,77,0.08)"
-                  : "transparent";
-
               return (
                 <article
                   key={stock.symbol}
@@ -273,8 +260,6 @@ function StockMarket() {
     </div>
   );
 }
-
-const googleFonts = `@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');`;
 
 const BG = "#1A1A1A";
 const SURFACE = "#242424";

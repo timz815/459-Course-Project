@@ -20,6 +20,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
+import { isPendingUntilOpen } from "../utils/marketHours";
 
 function SellStock() {
   const { id: tournamentId, symbol } = useParams();
@@ -33,7 +34,7 @@ function SellStock() {
   const [submitting, setSubmitting] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [warningAcknowledged, setWarningAcknowledged] = useState(false);
+  const [warningAcknowledged] = useState(false);
 
   const pendingUntilOpen = isPendingUntilOpen();
 

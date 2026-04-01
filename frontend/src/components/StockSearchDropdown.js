@@ -1,261 +1,132 @@
 /**
-* StockSearchDropdown Component
-*
-* Searchable dropdown for selecting a stock from the tournament universe.
-*
-* Key behaviours:
-* - Shows top 5 stocks by default when no search term
-* - Filters all 20 stocks live as user types
-* - Locks in selection on click, displays selected stock
-* - Closes on outside click
-* - Calls onSelect(stock) with full stock object when selected
-*/
+ * StockSearchDropdown Component
+ *
+ * Searchable dropdown for selecting a stock from the tournament universe.
+ *
+ * Key behaviours:
+ * - Shows top 5 stocks by default when no search term
+ * - Filters all 20 stocks live as user types
+ * - Locks in selection on click, displays selected stock
+ * - Closes on outside click
+ * - Calls onSelect(stock) with full stock object when selected
+ */
 
 import { useState, useEffect, useRef } from "react";
+import Input from "./UI/Input";
+import "../styles/StockSearchDropdown.css";
 
 const DEFAULT_SYMBOLS = ["AAPL", "NVDA", "MSFT", "AMZN", "TSLA"];
 
 function StockSearchDropdown({ stocks, onSelect, selected }) {
- const [query, setQuery] = useState("");
- const [isOpen, setIsOpen] = useState(false);
- const containerRef = useRef(null);
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
 
- // Close dropdown when clicking outside the component
- useEffect(() => {
-   function handleOutside(e) {
-     if (containerRef.current && !containerRef.current.contains(e.target)) {
-       setIsOpen(false);
-     }
-   }
-   document.addEventListener("mousedown", handleOutside);
-   return () => document.removeEventListener("mousedown", handleOutside);
- }, []);
+  // Close dropdown when clicking outside the component
+  useEffect(() => {
+    function handleOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
- // Filter stocks based on search query or show defaults
- const filtered = query.trim()
-   ? stocks.filter(
-       (s) =>
-         s.symbol.toLowerCase().includes(query.toLowerCase()) ||
-         s.name.toLowerCase().includes(query.toLowerCase())
-     ).slice(0, 8)
-   : stocks.filter((s) => DEFAULT_SYMBOLS.includes(s.symbol));
+  // Filter stocks based on search query or show defaults
+  const filtered = query.trim()
+    ? stocks
+        .filter(
+          (s) =>
+            s.symbol.toLowerCase().includes(query.toLowerCase()) ||
+            s.name.toLowerCase().includes(query.toLowerCase()),
+        )
+        .slice(0, 8)
+    : stocks.filter((s) => DEFAULT_SYMBOLS.includes(s.symbol));
 
- // Handle stock selection from dropdown
- function handleSelect(stock) {
-   onSelect(stock);
-   setQuery("");
-   setIsOpen(false);
- }
+  // Handle stock selection from dropdown
+  function handleSelect(stock) {
+    onSelect(stock);
+    setQuery("");
+    setIsOpen(false);
+  }
 
- // Handle input changes and clear previous selection
- function handleInputChange(e) {
-   setQuery(e.target.value);
-   setIsOpen(true);
-   if (selected) onSelect(null);
- }
+  // Handle input changes and clear previous selection
+  function handleInputChange(e) {
+    setQuery(e.target.value);
+    setIsOpen(true);
+    if (selected) onSelect(null);
+  }
 
- return (
-   <div ref={containerRef} style={styles.searchContainer}>
-     <div style={styles.inputField}>
-       <svg style={styles.searchIcon} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
-         <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-       </svg>
+  return (
+    <div ref={containerRef} className="stock-search">
+      {selected ? (
+        <div className="stock-search-selected">
+          <span className="stock-search-selected-symbol">
+            {selected.symbol}
+          </span>
+          <span className="stock-search-selected-name">{selected.name}</span>
+          <button
+            type="button"
+            className="stock-search-remove"
+            onClick={() => {
+              onSelect(null);
+              setQuery("");
+            }}
+            aria-label="Clear selection"
+          >
+            ×
+          </button>
+        </div>
+      ) : (
+        <Input
+          type="text"
+          placeholder="Search stocks…"
+          value={query}
+          onChange={handleInputChange}
+          onFocus={() => setIsOpen(true)}
+          inputClassName="stock-search-input"
+          autoComplete="off"
+        />
+      )}
 
-       {selected ? (
-         // Display selected stock as removable tag
-         <div style={styles.selectedStock}>
-           <span style={styles.selectedSymbol}>{selected.symbol}</span>
-           <span style={styles.selectedName}>{selected.name}</span>
-           <button
-             type="button"
-             style={styles.removeButton}
-             onClick={() => { onSelect(null); setQuery(""); }}
-             aria-label="Clear selection"
-           >
-             ×
-           </button>
-         </div>
-       ) : (
-         <input
-           type="text"
-           placeholder="Search stocks…"
-           value={query}
-           onChange={handleInputChange}
-           onFocus={() => setIsOpen(true)}
-           style={styles.textInput}
-           autoComplete="off"
-         />
-       )}
-     </div>
-
-     {isOpen && !selected && (
-       <div style={styles.resultsList}>
-         {filtered.length === 0 ? (
-           <div style={styles.emptyState}>No stocks found</div>
-         ) : (
-           <>
-             {!query.trim() && (
-               <div style={styles.sectionLabel}>Popular</div>
-             )}
-             {filtered.map((stock) => (
-               <button
-                 key={stock.symbol}
-                 type="button"
-                 style={styles.resultItem}
-                 onClick={() => handleSelect(stock)}
-                 onMouseEnter={e => e.currentTarget.style.backgroundColor = "#3a3a3a"}
-                 onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
-               >
-                 <div style={styles.stockInfo}>
-                   <span style={styles.stockSymbol}>{stock.symbol}</span>
-                   <span style={styles.stockName}>{stock.name}</span>
-                 </div>
-                 <div style={styles.priceContainer}>
-                   {stock.price ? (
-                     <span style={styles.stockPrice}>${stock.price.toFixed(2)}</span>
-                   ) : (
-                     <span style={styles.priceUnavailable}>—</span>
-                   )}
-                 </div>
-               </button>
-             ))}
-           </>
-         )}
-       </div>
-     )}
-   </div>
- );
+      {isOpen && !selected && (
+        <div className="stock-search-results">
+          {filtered.length === 0 ? (
+            <div className="stock-search-empty">No stocks found</div>
+          ) : (
+            <>
+              {!query.trim() && (
+                <div className="stock-search-section-label">Popular</div>
+              )}
+              {filtered.map((stock) => (
+                <button
+                  key={stock.symbol}
+                  type="button"
+                  className="stock-search-item"
+                  onClick={() => handleSelect(stock)}
+                >
+                  <div className="stock-search-info">
+                    <span className="stock-search-symbol">{stock.symbol}</span>
+                    <span className="stock-search-name">{stock.name}</span>
+                  </div>
+                  <div className="stock-search-price-wrap">
+                    {stock.price ? (
+                      <span className="stock-search-price">
+                        ${stock.price.toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="stock-search-price--unavailable">—</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
-
-const styles = {
- searchContainer: {
-   position: "relative",
-   width: "100%",
- },
- inputField: {
-   display: "flex",
-   alignItems: "center",
-   backgroundColor: "#1f1f1f",
-   border: "1px solid #444",
-   borderRadius: "0.5rem",
-   padding: "0 0.75rem",
-   minHeight: "2.75rem",
- },
- searchIcon: {
-   flexShrink: 0,
-   marginRight: "0.5rem",
- },
- textInput: {
-   flex: 1,
-   background: "none",
-   border: "none",
-   outline: "none",
-   color: "#F9F9F9",
-   fontSize: "1rem",
-   padding: "0.625rem 0",
-   fontFamily: "inherit",
- },
- selectedStock: {
-   display: "flex",
-   alignItems: "center",
-   gap: "0.5rem",
-   flex: 1,
-   padding: "0.375rem 0",
- },
- selectedSymbol: {
-   fontWeight: "700",
-   color: "#F9F9F9",
-   fontSize: "0.95rem",
- },
- selectedName: {
-   color: "#888",
-   fontSize: "0.85rem",
-   flex: 1,
-   overflow: "hidden",
-   textOverflow: "ellipsis",
-   whiteSpace: "nowrap",
- },
- removeButton: {
-   background: "none",
-   border: "none",
-   color: "#666",
-   fontSize: "1.2rem",
-   cursor: "pointer",
-   padding: "0 0.25rem",
-   lineHeight: 1,
-   fontFamily: "inherit",
- },
- resultsList: {
-   position: "absolute",
-   top: "calc(100% + 0.375rem)",
-   left: 0,
-   right: 0,
-   backgroundColor: "#2a2a2a",
-   border: "1px solid #444",
-   borderRadius: "0.5rem",
-   boxShadow: "0 0.5rem 1.5rem rgba(0,0,0,0.5)",
-   zIndex: 200,
-   overflow: "hidden",
- },
- sectionLabel: {
-   padding: "0.5rem 0.875rem 0.25rem",
-   fontSize: "0.7rem",
-   fontWeight: "600",
-   color: "#555",
-   textTransform: "uppercase",
-   letterSpacing: "0.08em",
- },
- resultItem: {
-   width: "100%",
-   display: "flex",
-   justifyContent: "space-between",
-   alignItems: "center",
-   padding: "0.625rem 0.875rem",
-   background: "transparent",
-   border: "none",
-   cursor: "pointer",
-   textAlign: "left",
-   transition: "background-color 0.1s",
-   fontFamily: "inherit",
- },
- stockInfo: {
-   display: "flex",
-   alignItems: "center",
-   gap: "0.625rem",
-   overflow: "hidden",
- },
- stockSymbol: {
-   fontWeight: "700",
-   color: "#F9F9F9",
-   fontSize: "0.9rem",
-   minWidth: "3.5rem",
- },
- stockName: {
-   color: "#888",
-   fontSize: "0.82rem",
-   overflow: "hidden",
-   textOverflow: "ellipsis",
-   whiteSpace: "nowrap",
- },
- priceContainer: {
-   flexShrink: 0,
-   marginLeft: "0.5rem",
- },
- stockPrice: {
-   color: "#F9F9F9",
-   fontSize: "0.85rem",
-   fontWeight: "600",
- },
- priceUnavailable: {
-   color: "#555",
-   fontSize: "0.85rem",
- },
- emptyState: {
-   padding: "1rem",
-   color: "#666",
-   fontSize: "0.9rem",
-   textAlign: "center",
- },
-};
 
 export default StockSearchDropdown;

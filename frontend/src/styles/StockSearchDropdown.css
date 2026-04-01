@@ -1,0 +1,155 @@
+/* ── StockSearchDropdown ──────────────────────────────── */
+
+.stock-search {
+  position: relative;
+  width: 100%;
+}
+
+.stock-search-field {
+  display: flex;
+  align-items: center;
+  background-color: #1f1f1f;
+  border: 1px solid #444;
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  min-height: 2.75rem;
+}
+
+.stock-search-icon {
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+}
+
+.stock-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--color-neutral-100);
+  font-size: 1rem;
+  padding: 0.625rem 0;
+  font-family: inherit;
+}
+
+/* ── Selected tag ─────────────────────────────────────── */
+
+.stock-search-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.375rem 0;
+}
+
+.stock-search-selected-symbol {
+  font-weight: 700;
+  color: var(--color-neutral-100);
+  font-size: 0.95rem;
+}
+
+.stock-search-selected-name {
+  color: #888;
+  font-size: 0.85rem;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-search-remove {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  font-family: inherit;
+}
+
+/* ── Results dropdown ─────────────────────────────────── */
+
+.stock-search-results {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  right: 0;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.stock-search-section-label {
+  padding: 0.5rem 0.875rem 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stock-search-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.1s;
+  font-family: inherit;
+}
+
+.stock-search-item:hover {
+  background-color: #3a3a3a;
+}
+
+.stock-search-info {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  overflow: hidden;
+}
+
+.stock-search-symbol {
+  font-weight: 700;
+  color: var(--color-neutral-100);
+  font-size: 0.9rem;
+  min-width: 3.5rem;
+}
+
+.stock-search-name {
+  color: #888;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-search-price-wrap {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.stock-search-price {
+  color: var(--color-neutral-100);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stock-search-price--unavailable {
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.stock-search-empty {
+  padding: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+  text-align: center;
+}

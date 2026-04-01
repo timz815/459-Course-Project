@@ -1,0 +1,84 @@
+/* Snackbar Component Styles */
+
+.ui-snackbar {
+  position: fixed;
+  left: 50%;
+  bottom: 0.375rem;
+  transform: translateX(-50%);
+  z-index: 1200;
+  width: min(43.75rem, calc(100vw - 2rem));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(26, 26, 26, 0.9);
+  padding: 0.5rem 1rem 0.5rem 1.125rem;
+  border-left: 2px solid transparent;
+  box-sizing: border-box;
+}
+
+.ui-snackbar-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.ui-snackbar-success {
+  border-left-color: rgba(68, 224, 146, 0.5);
+}
+
+.ui-snackbar-error {
+  border-left-color: var(--color-error);
+}
+
+.ui-snackbar-notification {
+  border-left-color: transparent;
+  padding: 1rem;
+}
+
+.ui-snackbar-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.ui-snackbar-text {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-body-3-size);
+  font-weight: var(--type-body-3-weight);
+  line-height: var(--type-body-3-line);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-snackbar-success .ui-snackbar-text,
+.ui-snackbar-notification .ui-snackbar-text {
+  color: var(--color-success-400);
+}
+
+.ui-snackbar-error .ui-snackbar-text {
+  color: var(--color-error);
+}
+
+.ui-snackbar-dismiss {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-body);
+  font-family: var(--font-ui);
+  font-size: var(--type-body-3-size);
+  font-weight: var(--type-body-3-weight);
+  line-height: var(--type-body-3-line);
+  text-decoration: underline;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ui-snackbar-dismiss:hover {
+  color: var(--color-neutral-300);
+}

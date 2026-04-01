@@ -1,0 +1,207 @@
+.sell-stock-page {
+  min-height: 100vh;
+  background: var(--color-neutral-950);
+}
+
+.sell-stock-main {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1.25rem;
+}
+
+.sell-stock-status {
+  color: var(--color-neutral-400);
+  text-align: center;
+  padding: 5rem;
+}
+
+.sell-stock-card {
+  width: 100%;
+  max-width: 30rem;
+  background: var(--color-neutral-850);
+  border-radius: 1rem;
+  padding: 2rem;
+  border: 1px solid var(--color-border-default);
+  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sell-stock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.sell-stock-symbol {
+  margin: 0;
+  color: var(--color-neutral-100);
+}
+
+.sell-stock-name {
+  margin: 0.25rem 0 0;
+  color: var(--color-neutral-400);
+}
+
+.sell-stock-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.sell-stock-price-label {
+  color: var(--color-neutral-500);
+}
+
+.sell-stock-price-value {
+  color: var(--color-neutral-100);
+  font: 700 1.25rem/1.75rem var(--font-sans);
+}
+
+.sell-stock-price-note {
+  color: var(--color-neutral-500);
+  font: 400 0.6875rem/1rem var(--font-sans);
+}
+
+.sell-stock-position {
+  background: var(--color-neutral-900);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.sell-stock-position-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1;
+}
+
+.sell-stock-position-metric {
+  color: var(--color-neutral-500);
+}
+
+.sell-stock-position-value {
+  color: var(--color-neutral-100);
+  font: 700 1rem/1.5rem var(--font-sans);
+}
+
+.sell-stock-position-divider {
+  width: 1px;
+  height: 2rem;
+  background: var(--color-border-default);
+}
+
+.sell-stock-label {
+  margin-top: 0.25rem;
+  color: var(--color-neutral-400);
+}
+
+.sell-stock-amount-wrap {
+  position: relative;
+}
+
+.sell-stock-dollar-sign {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-neutral-500);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.sell-stock-amount {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem 0.75rem 1.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-100);
+  font: 500 1.125rem/1.5rem var(--font-sans);
+  outline: none;
+}
+
+.sell-stock-amount::placeholder {
+  color: var(--color-placeholder);
+}
+
+.sell-stock-error {
+  color: var(--color-danger-500);
+  margin: 0;
+}
+
+.sell-stock-estimate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  background: rgba(255, 77, 77, 0.08);
+  border: 1px solid rgba(255, 77, 77, 0.2);
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+}
+
+.sell-stock-estimate-label {
+  color: var(--color-neutral-400);
+}
+
+.sell-stock-estimate-value {
+  color: var(--color-danger-500);
+  font: 700 1.125rem/1.5rem var(--font-sans);
+}
+
+.sell-stock-estimate-note {
+  color: var(--color-neutral-500);
+  font: 400 0.6875rem/1rem var(--font-sans);
+}
+
+.sell-stock-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.sell-stock-actions .ui-btn {
+  flex: 1;
+}
+
+.sell-stock-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem;
+}
+
+.sell-stock-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--color-border-default);
+  border-top: 3px solid var(--color-danger-500);
+  border-radius: 50%;
+  animation: sell-spin 1s linear infinite;
+}
+
+.sell-stock-pending-text {
+  margin: 0;
+  color: var(--color-neutral-100);
+}
+
+.sell-stock-pending-subtext {
+  margin: 0;
+  color: var(--color-neutral-400);
+  text-align: center;
+}
+
+@keyframes sell-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

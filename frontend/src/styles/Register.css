@@ -1,0 +1,261 @@
+.register-page {
+  min-height: 100vh;
+  background: var(--color-neutral-950);
+  display: flex;
+  flex-direction: column;
+}
+
+.register-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 6rem 1rem;
+}
+
+.register-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 30rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Decorative background blurs */
+.register-blur-blue {
+  position: absolute;
+  left: -5rem;
+  top: 25%;
+  bottom: 42%;
+  width: 24rem;
+  background: rgba(144, 205, 255, 0.1);
+  border-radius: 0.75rem;
+  filter: blur(3.75rem);
+  pointer-events: none;
+}
+
+.register-blur-green {
+  position: absolute;
+  right: -5rem;
+  top: 42%;
+  bottom: 25%;
+  width: 24rem;
+  background: rgba(68, 224, 146, 0.1);
+  border-radius: 0.75rem;
+  filter: blur(3.75rem);
+  pointer-events: none;
+}
+
+/* Card */
+.register-card {
+  position: relative;
+  width: 28rem;
+  max-width: 100%;
+  background: var(--color-neutral-850);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 0.5rem;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  box-shadow: var(--shadow-card-strong);
+}
+
+/* Header */
+.register-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.register-title {
+  margin: 0;
+  font:
+    800 1.875rem/2.25rem "Manrope",
+    sans-serif;
+  letter-spacing: -0.09375rem;
+  color: var(--color-primary-300);
+  text-align: center;
+}
+
+.register-subtitle {
+  margin: 0;
+  font:
+    400 0.6875rem/1.03125rem "IBM Plex Mono",
+    monospace;
+  letter-spacing: 0.1375rem;
+  text-transform: uppercase;
+  color: var(--color-neutral-400);
+  text-align: center;
+}
+
+/* Form */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Field group */
+.register-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.register-label {
+  font-family: var(--font-ui);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
+  letter-spacing: 0.06875rem;
+  text-transform: uppercase;
+  color: var(--color-neutral-400);
+}
+
+.register-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--color-neutral-900);
+  border-radius: 0.25rem;
+  padding: 0.75rem 1rem;
+}
+
+.register-input-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.register-input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-100);
+  font:
+    500 0.875rem/1.25rem "Manrope",
+    sans-serif;
+  outline: none;
+  min-width: 0;
+}
+
+.register-input::placeholder {
+  color: var(--color-placeholder);
+}
+
+/* Terms */
+.register-terms {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.5rem 0 1rem;
+}
+
+.register-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  min-width: 1rem;
+  min-height: 1rem;
+  padding: 0;
+  margin-top: 0.25rem;
+  background: var(--color-neutral-900);
+  border: 1px solid #3f4851;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.register-checkbox:hover {
+  border-color: #4a5560;
+}
+
+.register-checkbox:active {
+  transform: scale(0.95);
+}
+
+.register-checkbox-checked {
+  border-color: #3f4851;
+}
+
+.register-checkbox-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  object-fit: contain;
+}
+
+.register-terms-text {
+  font-family: var(--font-ui);
+  font-size: var(--type-body-3-size);
+  font-weight: var(--type-body-3-weight);
+  line-height: var(--type-body-3-line);
+  color: var(--color-neutral-400);
+  margin: 0;
+}
+
+.register-terms-link {
+  color: var(--color-primary-300);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.register-terms-link:hover {
+  text-decoration: underline;
+}
+
+/* Divider + footer */
+.register-footer {
+  border-top: 1px solid var(--color-border-default);
+  padding-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.register-footer-hint {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--type-body-3-size);
+  font-weight: var(--type-body-3-weight);
+  line-height: var(--type-body-3-line);
+  color: var(--color-neutral-400);
+  text-align: center;
+}
+
+.register-footer-link {
+  font-family: var(--font-display);
+  font-size: var(--type-body-2-size);
+  font-weight: var(--type-body-2-weight);
+  line-height: var(--type-body-2-line);
+  color: var(--color-primary-300);
+  text-decoration: none;
+}
+
+.register-footer-link:hover {
+  text-decoration: underline;
+}
+
+/* Error alert */
+.register-error {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  background: rgba(255, 77, 77, 0.12);
+  color: var(--color-danger-500);
+  font:
+    500 0.875rem/1.25rem "Manrope",
+    sans-serif;
+  text-align: center;
+}

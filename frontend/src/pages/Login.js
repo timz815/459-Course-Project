@@ -2,31 +2,50 @@
  * Login Component
  *
  * Authentication form for existing users to access their accounts.
+ * Matches Figma design with ticker tape, full header, status indicators, and footer.
  *
  * Key behaviours:
+ * - Displays scrolling ticker tape at top
  * - Redirects authenticated users to dashboard immediately
  * - Validates credentials against backend API
  * - Displays server-side and client-side error messages
  * - Stores auth token via context on successful login
- * - Provides navigation link to registration page
+ * - Shows network status and encryption indicators
+ * - Provides navigation to registration page
  */
 
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
+import Input from "../components/UI/Input";
+import Snackbar from "../components/UI/Snackbar";
+import { AUTH_SNACKBAR_MESSAGES } from "../constants/authSnackbarMessages";
+import ProfileIcon from "../assets/Icon_16x16/Profile_16x16.svg";
+import LockIcon from "../assets/Icon_16x16/Lock_16x16.svg";
+import "../styles/Login.css";
 
 function Login() {
   const [formData, setFormData] = useState({ username: "", password: "" });
-  const [error, setError] = useState("");
+  const [snackbar, setSnackbar] = useState(null);
+  const [isDelayingRedirect, setIsDelayingRedirect] = useState(false);
+  const redirectTimerRef = useRef(null);
   const { token, login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (token) navigate("/dashboard");
-  }, [token, navigate]);
+    if (token && !isDelayingRedirect) navigate("/dashboard");
+  }, [token, isDelayingRedirect, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
 
   // Update form state on input change
   function handleChange(e) {
@@ -36,7 +55,8 @@ function Login() {
   // Submit credentials to API and handle response
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
+    setSnackbar(null);
+    setIsDelayingRedirect(false);
     try {
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
@@ -46,155 +66,124 @@ function Login() {
       const data = await response.json();
       if (response.ok) {
         login(data.token);
-        navigate("/dashboard");
+        setSnackbar({
+          type: "success",
+          message: AUTH_SNACKBAR_MESSAGES.login.success,
+        });
+        setIsDelayingRedirect(true);
+        if (redirectTimerRef.current) {
+          clearTimeout(redirectTimerRef.current);
+        }
+        redirectTimerRef.current = setTimeout(() => {
+          navigate("/dashboard");
+        }, 3000);
       } else {
-        setError(data.message || "Invalid credentials");
+        setSnackbar({
+          type: "error",
+          message: AUTH_SNACKBAR_MESSAGES.login.error,
+        });
       }
     } catch (err) {
-      setError("Server error. Please try again later.");
+      setSnackbar({
+        type: "error",
+        message: AUTH_SNACKBAR_MESSAGES.login.error,
+      });
     }
   }
 
   return (
-    <div style={styles.page}>
+    <div className="login-page">
       <Header />
-      <main style={styles.main}>
-        <article style={styles.card}>
-          <h1 style={styles.title}>Login</h1>
 
-          {error && (
-            <p role="alert" style={styles.error}>
-              {error}
-            </p>
-          )}
+      <main className="login-main">
+        <div className="login-content-wrapper">
+          {/* Main login card section */}
+          <div className="login-form-section">
+            <div className="login-header">
+              <div className="login-header-text">
+                <h1 className="login-title">Authentication</h1>
+                <p className="login-subtitle">Access Terminal</p>
+              </div>
+            </div>
 
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <label htmlFor="username" style={styles.label}>
-              Username
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="Your username"
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
+            <div className="login-card-stack">
+              <article className="login-card">
+                <form onSubmit={handleSubmit} className="login-form">
+                  {/* Username field */}
+                  <Input
+                    label="Username"
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="TRADER_01"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                    icon={<img src={ProfileIcon} alt="" />}
+                  />
 
-            <label htmlFor="password" style={styles.label}>
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Your password"
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
+                  {/* Password field */}
+                  <Input
+                    label="Password"
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••••••"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    icon={<img src={LockIcon} alt="" />}
+                    helper={
+                      <Link to="/forgot-password" className="login-forgot-link">
+                        Forgot your Password?
+                      </Link>
+                    }
+                  />
 
-            <Button type="submit" variant="primary">
-              Sign In
-            </Button>
-          </form>
+                  {/* Login button */}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="login-submit"
+                  >
+                    Login
+                  </Button>
 
-          <footer style={styles.footer}>
-            <p style={styles.footerText}>
-              Need an account?{" "}
-              <Link to="/register" style={styles.link}>
-                Register here
-              </Link>
-            </p>
-          </footer>
-        </article>
+                  {/* Register link */}
+                  <div className="login-register-link">
+                    <span className="login-register-text">New operative?</span>
+                    <Link to="/register" className="login-register-btn">
+                      Register terminal
+                    </Link>
+                  </div>
+                </form>
+              </article>
+
+              {snackbar && (
+                <Snackbar
+                  message={snackbar.message}
+                  type={snackbar.type}
+                  onDismiss={() => setSnackbar(null)}
+                />
+              )}
+            </div>
+
+            {/* Status indicators */}
+            <div className="login-status-bar">
+              <div className="login-status-item">
+                <div className="login-status-dot"></div>
+                <p className="login-status-text">Network: Operational</p>
+              </div>
+              <div className="login-status-divider"></div>
+              <div className="login-status-item">
+                <p className="login-status-text">BCRYPT Encrypted</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
 }
-
-const BLUE = "#0F9FEA";
-const TEXT = "#F9F9F9";
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#1A1A1A",
-  },
-  main: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "calc(100vh - 4rem)",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "25rem",
-    padding: "2rem",
-    backgroundColor: "#333333",
-    borderRadius: "0.5rem",
-    boxShadow: "0 0.25rem 1.25rem rgba(0,0,0,0.4)",
-  },
-  title: {
-    textAlign: "center",
-    color: TEXT,
-    marginBottom: "1.5rem",
-  },
-  error: {
-    backgroundColor: "#4a1a1a",
-    color: "#ff6b6b",
-    padding: "0.625rem",
-    borderRadius: "0.375rem",
-    marginBottom: "1rem",
-    fontSize: "0.9rem",
-    textAlign: "center",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.375rem",
-  },
-  label: {
-    fontSize: "0.8rem",
-    fontWeight: "600",
-    color: "#aaa",
-    marginTop: "0.625rem",
-  },
-  input: {
-    padding: "0.625rem 0.875rem",
-    borderRadius: "0.375rem",
-    border: "1px solid #444",
-    backgroundColor: "#2a2a2a",
-    color: TEXT,
-    fontSize: "1rem",
-    outline: "none",
-  },
-  submit: {
-    marginTop: "1rem",
-    backgroundColor: BLUE,
-    color: "#fff",
-    border: "none",
-    padding: "0.625rem",
-    borderRadius: "0.375rem",
-    cursor: "pointer",
-    width: "100%",
-    fontWeight: "600",
-    fontSize: "1rem",
-  },
-  footer: {
-    marginTop: "1.5rem",
-  },
-  footerText: {
-    textAlign: "center",
-    fontSize: "0.9rem",
-    color: "#888",
-  },
-  link: {
-    color: BLUE,
-    fontWeight: "bold",
-    textDecoration: "none",
-  },
-};
 
 export default Login;

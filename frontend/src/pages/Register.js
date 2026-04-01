@@ -10,168 +10,233 @@
  * - Provides navigation link for existing users to access login page
  */
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
+import Input from "../components/UI/Input";
+import Snackbar from "../components/UI/Snackbar";
+import { AUTH_SNACKBAR_MESSAGES } from "../constants/authSnackbarMessages";
+import ProfileIcon from "../assets/Icon_16x16/Profile_16x16.svg";
+import MailIcon from "../assets/Icon_16x16/Mail_16x16.svg";
+import LockIcon from "../assets/Icon_16x16/Lock_16x16.svg";
+import CompletedIcon from "../assets/Icon_16x16/Completed_16x16.svg";
+import "../styles/Register.css";
 
 function Register() {
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [agreed, setAgreed] = useState(false);
+  const [snackbar, setSnackbar] = useState(null);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Update form state on input change
   function handleChange(e) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   }
 
-  // Submit registration data to API and handle response
   async function handleSubmit(e) {
     e.preventDefault();
+    setSnackbar(null);
+
+    // TODO(backend): Keep backend-side validation for password/confirmPassword equality.
+    // Frontend checks improve UX, but backend must remain source of truth.
+    if (formData.password !== formData.confirmPassword) {
+      setSnackbar({ message: "Passwords do not match", type: "error" });
+      return;
+    }
+    // TODO(backend): Persist terms acceptance (e.g., agreedToTerms + acceptedAt) if compliance is required.
+    if (!agreed) {
+      setSnackbar({ message: "You must agree to the terms", type: "error" });
+      return;
+    }
+
     try {
+      // TODO(backend): Ensure /api/auth/register accepts { username, email, password }.
+      // Current frontend already sends email; backend must validate, normalize, and store it.
       const res = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          username: formData.username,
+          // TODO(backend): Add unique email constraint and duplicate-email error messaging.
+          email: formData.email,
+          password: formData.password,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
-        alert("Registration successful! Please log in.");
-        navigate("/login");
+        // Auto-login after successful registration
+        const loginRes = await fetch("http://localhost:5000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: formData.username,
+            password: formData.password,
+          }),
+        });
+        const loginData = await loginRes.json();
+        if (loginRes.ok) {
+          login(loginData.token);
+          navigate("/register-completed");
+        } else {
+          // Fallback: registration succeeded but auto-login failed
+          navigate("/login");
+        }
       } else {
-        alert(data.message || "Registration failed");
+        // Map backend message to specific snackbar error
+        const msg = data.message || "";
+        if (
+          msg.toLowerCase().includes("user already exists") ||
+          msg.toLowerCase().includes("username")
+        ) {
+          setSnackbar({
+            message: AUTH_SNACKBAR_MESSAGES.register.duplicateName,
+            type: "error",
+          });
+        } else if (msg.toLowerCase().includes("email")) {
+          setSnackbar({
+            message: AUTH_SNACKBAR_MESSAGES.register.duplicateEmail,
+            type: "error",
+          });
+        } else {
+          setSnackbar({
+            message: msg || AUTH_SNACKBAR_MESSAGES.register.generic,
+            type: "error",
+          });
+        }
       }
     } catch (err) {
-      console.error("Registration error:", err);
+      setSnackbar({
+        message: AUTH_SNACKBAR_MESSAGES.register.generic,
+        type: "error",
+      });
     }
   }
 
   return (
-    <div style={styles.page}>
-      <Header />
-      <main style={styles.main}>
-        <article style={styles.card}>
-          <h1 style={styles.title}>Create Account</h1>
+    <div className="register-page">
+      <Header minimal />
+      <main className="register-main">
+        <div className="register-blur-blue" aria-hidden="true" />
+        <div className="register-blur-green" aria-hidden="true" />
 
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <label htmlFor="username" style={styles.label}>
-              Username
-            </label>
-            <input
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              placeholder="Choose a username"
-              style={styles.input}
-            />
+        <div className="register-card-stack">
+          <article className="register-card">
+            {/* Header */}
+            <div className="register-header">
+              <h1 className="register-title">Create Account</h1>
+              <p className="register-subtitle">Join the Institutional Arena</p>
+            </div>
 
-            <label htmlFor="password" style={styles.label}>
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Choose a password"
-              style={styles.input}
-            />
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="register-form">
+              {/* Username */}
+              <Input
+                label="Username"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                placeholder="alpha.trader"
+                icon={<img src={ProfileIcon} alt="" />}
+              />
 
-            <Button type="submit" variant="primary">
-              Register
-            </Button>
-          </form>
+              {/* Email */}
+              <Input
+                label="Email Address"
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder="alpha.trader@terminal.io"
+                icon={<img src={MailIcon} alt="" />}
+              />
 
-          <footer style={styles.footer}>
-            <p style={styles.footerText}>
-              Already have an account?{" "}
-              <Link to="/login" style={styles.link}>
-                Login here
+              {/* Password */}
+              <Input
+                label="Secure Password"
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="••••••••••••"
+                icon={<img src={LockIcon} alt="" />}
+              />
+
+              {/* Confirm Password */}
+              <Input
+                label="Confirm Password"
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                placeholder="••••••••••••"
+                icon={<img src={LockIcon} alt="" />}
+              />
+
+              {/* Terms */}
+              <div className="register-terms">
+                <button
+                  type="button"
+                  className={`register-checkbox ${agreed ? "register-checkbox-checked" : ""}`}
+                  onClick={() => setAgreed(!agreed)}
+                  aria-label="Agree to terms"
+                >
+                  {agreed && (
+                    <img
+                      src={CompletedIcon}
+                      alt="Completed"
+                      className="register-checkbox-icon"
+                    />
+                  )}
+                </button>
+                <label htmlFor="terms" className="register-terms-text">
+                  I agree to the{" "}
+                  <span className="register-terms-link">Terms of Service</span>{" "}
+                  and acknowledge the{" "}
+                  <span className="register-terms-link">
+                    Trading Integrity Policy
+                  </span>
+                  .
+                </label>
+              </div>
+
+              <Button type="submit" variant="primary" style={{ width: "100%" }}>
+                Register
+              </Button>
+            </form>
+
+            {/* Footer */}
+            <div className="register-footer">
+              <p className="register-footer-hint">Already a member?</p>
+              <Link to="/login" className="register-footer-link">
+                Login to Terminal
               </Link>
-            </p>
-          </footer>
-        </article>
+            </div>
+          </article>
+
+          <Snackbar
+            message={snackbar?.message}
+            type={snackbar?.type}
+            onDismiss={() => setSnackbar(null)}
+          />
+        </div>
       </main>
     </div>
   );
 }
-
-const BLUE = "#0F9FEA";
-const TEXT = "#F9F9F9";
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#1A1A1A",
-  },
-  main: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "calc(100vh - 4rem)",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "25rem",
-    padding: "2rem",
-    backgroundColor: "#333333",
-    borderRadius: "0.5rem",
-    boxShadow: "0 0.25rem 1.25rem rgba(0,0,0,0.4)",
-  },
-  title: {
-    textAlign: "center",
-    color: TEXT,
-    marginBottom: "1.5rem",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.375rem",
-  },
-  label: {
-    fontSize: "0.8rem",
-    fontWeight: "600",
-    color: "#aaa",
-    marginTop: "0.625rem",
-  },
-  input: {
-    padding: "0.625rem 0.875rem",
-    borderRadius: "0.375rem",
-    border: "1px solid #444",
-    backgroundColor: "#2a2a2a",
-    color: TEXT,
-    fontSize: "1rem",
-    outline: "none",
-  },
-  submit: {
-    marginTop: "1.2rem",
-    backgroundColor: BLUE,
-    color: "#fff",
-    border: "none",
-    padding: "0.625rem",
-    borderRadius: "0.375rem",
-    cursor: "pointer",
-    width: "100%",
-    fontWeight: "600",
-    fontSize: "1rem",
-  },
-  footer: {
-    marginTop: "1.5rem",
-  },
-  footerText: {
-    textAlign: "center",
-    fontSize: "0.9rem",
-    color: "#888",
-  },
-  link: {
-    color: BLUE,
-    cursor: "pointer",
-    fontWeight: "bold",
-    textDecoration: "underline",
-  },
-};
 
 export default Register;

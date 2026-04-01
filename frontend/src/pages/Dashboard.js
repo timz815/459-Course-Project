@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
+import "../styles/Dashboard.css";
 
 function Dashboard() {
   const [tournaments, setTournaments] = useState([]);
@@ -57,27 +58,31 @@ function Dashboard() {
   }
 
   return (
-    <div style={styles.page}>
+    <div className="dashboard-page">
       <Header />
 
-      <main style={styles.main}>
+      <main className="dashboard-main">
         {/* User Greeting */}
         {user && (
-          <section style={styles.greeting}>
-            <h1 style={styles.greetingTitle}>Welcome back, {user.username}</h1>
+          <section className="dashboard-greeting">
+            <h1 className="dashboard-greeting-title ds-type-title-l">
+              Welcome back, {user.username}
+            </h1>
           </section>
         )}
 
         {/* Tournaments Section */}
-        <section style={styles.section}>
+        <section className="dashboard-section">
           {/* Section Header with Controls */}
-          <div style={styles.sectionHeader}>
-            <div style={styles.divider}></div>
+          <div>
+            <div className="dashboard-divider"></div>
 
-            <div style={styles.headerContent}>
-              <h2 style={styles.sectionTitle}>My Tournaments</h2>
+            <div className="dashboard-header">
+              <h2 className="dashboard-section-title ds-type-title-m">
+                My Tournaments
+              </h2>
 
-              <nav style={styles.headerActions}>
+              <nav className="dashboard-actions">
                 <Button
                   variant="secondary"
                   onClick={() => navigate("/tournaments")}
@@ -96,40 +101,45 @@ function Dashboard() {
           </div>
 
           {/* Tournament Cards */}
-          <div style={styles.grid}>
+          <div className="dashboard-grid">
             {tournaments.length > 0 ? (
               tournaments.map((t) => (
                 <article
                   key={t._id}
-                  style={styles.card}
+                  className="dashboard-card"
                   onClick={() => navigate(`/tournaments/${t._id}`)}
                 >
-                  <div style={styles.cardContent}>
-                    <h3 style={styles.cardTitle}>{t.name}</h3>
+                  <div className="dashboard-card-content">
+                    <h3 className="dashboard-card-title">{t.name}</h3>
 
-                    <dl style={styles.cardMeta}>
-                      <dt style={styles.visuallyHidden}>Date Range</dt>
-                      <dd style={styles.metaItem}>
+                    <dl className="dashboard-card-meta">
+                      <dt className="ds-visually-hidden">Date Range</dt>
+                      <dd className="dashboard-meta-item">
                         {t.start_date?.slice(0, 10)} →{" "}
                         {t.end_date?.slice(0, 10)}
                       </dd>
 
-                      <span aria-hidden="true" style={styles.metaSeparator}>
+                      <span
+                        aria-hidden="true"
+                        className="dashboard-meta-separator"
+                      >
                         ·
                       </span>
 
-                      <dt style={styles.visuallyHidden}>Starting Balance</dt>
-                      <dd style={styles.metaItem}>
+                      <dt className="ds-visually-hidden">Starting Balance</dt>
+                      <dd className="dashboard-meta-item">
                         ${t.starting_balance} starting balance
                       </dd>
                     </dl>
 
                     {t.description && (
-                      <p style={styles.cardDescription}>{t.description}</p>
+                      <p className="dashboard-card-description">
+                        {t.description}
+                      </p>
                     )}
                   </div>
 
-                  <div style={styles.cardActions}>
+                  <div className="dashboard-card-actions">
                     <Button
                       variant="cancel"
                       size="small"
@@ -144,7 +154,7 @@ function Dashboard() {
                 </article>
               ))
             ) : (
-              <div style={styles.emptyState}>
+              <div className="dashboard-empty ds-type-body-2">
                 <p>You have no tournaments yet.</p>
                 <p>Create your own or join other tournaments</p>
               </div>
@@ -155,174 +165,5 @@ function Dashboard() {
     </div>
   );
 }
-
-const BLUE = "#0F9FEA";
-const BG = "#1A1A1A";
-const TEXT = "#F9F9F9";
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: BG,
-    fontFamily: "'Segoe UI', sans-serif",
-    color: TEXT,
-  },
-
-  main: {
-    maxWidth: "78.125rem",
-    margin: "0 auto",
-    padding: "2.5rem 1.25rem",
-  },
-
-  greeting: {
-    marginBottom: "3.125rem",
-  },
-
-  greetingTitle: {
-    margin: 0,
-    fontSize: "2rem",
-    fontWeight: "700",
-  },
-
-  section: {
-    marginBottom: "1.5rem",
-  },
-
-  sectionHeader: {
-    marginBottom: "1.5rem",
-  },
-
-  divider: {
-    height: "1px",
-    backgroundColor: "#3a3a3a",
-    marginBottom: "1.5rem",
-  },
-
-  headerContent: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  sectionTitle: {
-    margin: 0,
-    fontSize: "1.4rem",
-    fontWeight: "600",
-  },
-
-  headerActions: {
-    display: "flex",
-    gap: "0.75rem",
-  },
-
-  primaryBtn: {
-    padding: "0.75rem 1.5rem",
-    backgroundColor: BLUE,
-    color: "#fff",
-    border: "none",
-    borderRadius: "0.5rem",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-
-  secondaryBtn: {
-    padding: "0.75rem 1.5rem",
-    backgroundColor: "transparent",
-    border: "1px solid #444",
-    color: "#ccc",
-    borderRadius: "0.5rem",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-
-  grid: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem",
-  },
-
-  card: {
-    backgroundColor: "#333333",
-    borderRadius: "0.625rem",
-    padding: "1.25rem 1.5rem",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "1.25rem",
-    cursor: "pointer",
-  },
-
-  cardContent: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.375rem",
-  },
-
-  cardTitle: {
-    margin: 0,
-    fontSize: "1rem",
-    color: TEXT,
-    fontWeight: "600",
-  },
-
-  cardMeta: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    flexWrap: "wrap",
-    margin: 0,
-  },
-
-  metaItem: {
-    fontSize: "0.85rem",
-    color: "#aaa",
-    margin: 0,
-  },
-
-  metaSeparator: {
-    color: "#555",
-  },
-
-  cardDescription: {
-    margin: "0.25rem 0 0",
-    fontSize: "0.85rem",
-    color: "#777",
-  },
-
-  cardActions: {
-    flexShrink: 0,
-  },
-
-  deleteBtn: {
-    padding: "0.5rem 1.25rem",
-    backgroundColor: "transparent",
-    color: "#ff6b6b",
-    border: "1px solid #ff6b6b",
-    borderRadius: "0.375rem",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "0.85rem",
-  },
-
-  emptyState: {
-    textAlign: "center",
-    padding: "3.75rem 2.5rem",
-    color: "#666",
-  },
-
-  visuallyHidden: {
-    position: "absolute",
-    width: "1px",
-    height: "1px",
-    padding: 0,
-    margin: "-1px",
-    overflow: "hidden",
-    clip: "rect(0, 0, 0, 0)",
-    whiteSpace: "nowrap",
-    border: 0,
-  },
-};
 
 export default Dashboard;

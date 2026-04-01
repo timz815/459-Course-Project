@@ -2,7 +2,9 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import Register from "./pages/Register";
+import RegisterCompleted from "./pages/RegisterCompleted";
 import Tournaments from "./pages/Tournaments";
 import AddTournament from "./pages/AddTournament";
 import StockMarket from "./pages/StockMarket";
@@ -12,6 +14,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import TournamentDetail from "./pages/TournamentDetail";
 import BuyStock from "./pages/BuyStock";
 import SellStock from "./pages/SellStock";
+import AccountSettings from "./pages/AccountSettings";
 import Footer from "./components/Footer";
 
 function App() {
@@ -22,7 +25,9 @@ function App() {
           {/* public routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/register-completed" element={<RegisterCompleted />} />
           <Route path="/tournaments" element={<Tournaments />} />
           <Route path="/stock-market" element={<StockMarket />} />
           <Route path="/stocks/:symbol" element={<StockDetail />} />
@@ -58,6 +63,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AddTournament />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account-settings"
+            element={
+              <ProtectedRoute>
+                <AccountSettings />
               </ProtectedRoute>
             }
           />

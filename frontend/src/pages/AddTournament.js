@@ -17,8 +17,10 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
+import Input from "../components/UI/Input";
 import DatePicker from "../components/DatePicker";
 import TimePicker from "../components/TimePicker";
+import "../styles/AddTournament.css";
 
 // Returns current time rounded up to nearest 15 minutes in ISO format
 function getRoundedNow() {
@@ -123,32 +125,34 @@ function AddTournament() {
   }
 
   return (
-    <div style={styles.page}>
+    <div className="add-tournament-page">
       <Header />
-      <main style={styles.main}>
-        <article style={styles.card}>
-          <h1 style={styles.title}>Create Tournament</h1>
+      <main className="add-tournament-main">
+        <article className="add-tournament-card">
+          <h1 className="add-tournament-title ds-type-title-l">
+            Create Tournament
+          </h1>
 
-          <form onSubmit={handleSubmit} style={styles.form}>
+          <form onSubmit={handleSubmit} className="add-tournament-form">
             {/* Tournament Name Field */}
-            <label htmlFor="name" style={styles.label}>
-              Tournament Name
-            </label>
-            <input
+            <Input
+              label="Tournament Name"
               id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
               placeholder="e.g. S&P 500 Challenge"
               required
-              style={styles.input}
+              inputClassName="add-tournament-input"
               autoFocus
             />
 
             {/* Start Date & Time Group */}
-            <fieldset style={styles.fieldset}>
-              <legend style={styles.legend}>Start Date & Time</legend>
-              <div style={styles.dateTimeGroup}>
+            <fieldset className="add-tournament-fieldset">
+              <legend className="add-tournament-legend ds-type-label">
+                Start Date & Time
+              </legend>
+              <div className="add-tournament-date-time">
                 <DatePicker
                   name="start_date"
                   value={formData.start_date}
@@ -162,15 +166,17 @@ function AddTournament() {
               </div>
             </fieldset>
             {validationErrors.start_date && (
-              <p role="alert" style={styles.error}>
+              <p role="alert" className="add-tournament-error">
                 {validationErrors.start_date}
               </p>
             )}
 
             {/* End Date & Time Group */}
-            <fieldset style={styles.fieldset}>
-              <legend style={styles.legend}>End Date & Time</legend>
-              <div style={styles.dateTimeGroup}>
+            <fieldset className="add-tournament-fieldset">
+              <legend className="add-tournament-legend ds-type-label">
+                End Date & Time
+              </legend>
+              <div className="add-tournament-date-time">
                 <DatePicker
                   name="end_date"
                   value={formData.end_date}
@@ -184,39 +190,41 @@ function AddTournament() {
               </div>
             </fieldset>
             {validationErrors.end_date && (
-              <p role="alert" style={styles.error}>
+              <p role="alert" className="add-tournament-error">
                 {validationErrors.end_date}
               </p>
             )}
 
             {/* Live Duration Display */}
-            <div style={styles.duration}>
-              <span style={styles.durationLabel}>Duration:</span>
-              <output style={styles.durationValue}>{getDuration()}</output>
+            <div className="add-tournament-duration">
+              <span className="add-tournament-duration-label ds-type-body-2">
+                Duration:
+              </span>
+              <output className="add-tournament-duration-value">
+                {getDuration()}
+              </output>
             </div>
 
             {/* Starting Balance Field with Dollar Prefix */}
-            <label htmlFor="starting_balance" style={styles.label}>
-              Player Starting Balance
-            </label>
-            <div style={styles.currencyInput}>
-              <span style={styles.currencySymbol}>$</span>
-              <input
-                id="starting_balance"
-                name="starting_balance"
-                type="number"
-                value={formData.starting_balance}
-                onChange={handleChange}
-                placeholder="10000"
-                required
-                min="0"
-                step="1000"
-                style={styles.currencyField}
-              />
-            </div>
+            <Input
+              label="Player Starting Balance"
+              id="starting_balance"
+              name="starting_balance"
+              type="number"
+              value={formData.starting_balance}
+              onChange={handleChange}
+              placeholder="10000"
+              required
+              min="0"
+              step="1000"
+              inputClassName="add-tournament-currency-field"
+            />
 
             {/* Description Field */}
-            <label htmlFor="description" style={styles.label}>
+            <label
+              htmlFor="description"
+              className="add-tournament-label ds-type-label"
+            >
               Game Description
             </label>
             <textarea
@@ -226,19 +234,25 @@ function AddTournament() {
               onChange={handleChange}
               placeholder="Describe the rules and goals of this tournament…"
               rows={4}
-              style={styles.textarea}
+              className="add-tournament-textarea"
             />
 
             {/* Action Buttons */}
-            <div style={styles.actions}>
+            <div className="add-tournament-actions">
               <Button
+                className="add-tournament-action-cancel"
                 variant="cancel"
                 type="button"
                 onClick={() => navigate("/dashboard")}
               >
                 Cancel
               </Button>
-              <Button variant="primary" type="submit" disabled={hasErrors}>
+              <Button
+                className="add-tournament-action-submit"
+                variant="primary"
+                type="submit"
+                disabled={hasErrors}
+              >
                 Create Tournament
               </Button>
             </div>
@@ -248,171 +262,5 @@ function AddTournament() {
     </div>
   );
 }
-
-const BLUE = "#0F9FEA";
-const BG = "#1A1A1A";
-const TEXT = "#F9F9F9";
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: BG,
-    fontFamily: "'Segoe UI', sans-serif",
-  },
-  main: {
-    display: "flex",
-    justifyContent: "center",
-    padding: "2.5rem 1.25rem",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "37.5rem",
-    backgroundColor: "#2a2a2a",
-    borderRadius: "1rem",
-    padding: "2.5rem",
-    boxShadow: "0 0.5rem 2rem rgba(0,0,0,0.4)",
-    border: "1px solid #333",
-  },
-  title: {
-    margin: "0 0 0.25rem",
-    color: TEXT,
-    fontSize: "1.8rem",
-    fontWeight: "700",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.25rem",
-  },
-  fieldset: {
-    border: "none",
-    padding: 0,
-    margin: "1rem 0 0 0",
-  },
-  legend: {
-    fontSize: "0.85rem",
-    fontWeight: "600",
-    color: "#aaa",
-    marginBottom: "0.5rem",
-    padding: 0,
-  },
-  label: {
-    fontSize: "0.85rem",
-    fontWeight: "600",
-    color: "#aaa",
-    marginTop: "1rem",
-    marginBottom: "0.5rem",
-    display: "block",
-  },
-  input: {
-    padding: "0.75rem 1rem",
-    borderRadius: "0.5rem",
-    border: "1px solid #444",
-    backgroundColor: "#1f1f1f",
-    color: TEXT,
-    fontSize: "1rem",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  currencyInput: {
-    position: "relative",
-  },
-  currencySymbol: {
-    position: "absolute",
-    left: "0.875rem",
-    top: "50%",
-    transform: "translateY(-50%)",
-    color: "#666",
-    fontWeight: "600",
-    pointerEvents: "none",
-  },
-  currencyField: {
-    padding: "0.75rem 1rem",
-    paddingLeft: "1.75rem",
-    borderRadius: "0.5rem",
-    border: "1px solid #444",
-    backgroundColor: "#1f1f1f",
-    color: TEXT,
-    fontSize: "1rem",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  dateTimeGroup: {
-    display: "flex",
-    gap: "0.75rem",
-    alignItems: "flex-start",
-  },
-  duration: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    backgroundColor: "#252525",
-    padding: "0.625rem 1rem",
-    borderRadius: "0.5rem",
-    marginTop: "0.5rem",
-    border: "1px solid #333",
-  },
-  durationLabel: {
-    color: "#888",
-    fontSize: "0.85rem",
-  },
-  durationValue: {
-    color: "#00D084",
-    fontWeight: "700",
-    fontSize: "1rem",
-  },
-  textarea: {
-    padding: "0.75rem 1rem",
-    borderRadius: "0.5rem",
-    border: "1px solid #444",
-    backgroundColor: "#1f1f1f",
-    color: TEXT,
-    fontSize: "1rem",
-    outline: "none",
-    resize: "vertical",
-    fontFamily: "'Segoe UI', sans-serif",
-    minHeight: "6.25rem",
-  },
-  actions: {
-    display: "flex",
-    gap: "0.75rem",
-    marginTop: "1.5rem",
-  },
-  cancelButton: {
-    flex: 1,
-    padding: "0.875rem",
-    backgroundColor: "transparent",
-    color: "#888",
-    border: "1px solid #444",
-    borderRadius: "0.5rem",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  submitButton: {
-    flex: 2,
-    padding: "0.875rem",
-    backgroundColor: BLUE,
-    color: "#fff",
-    border: "none",
-    borderRadius: "0.5rem",
-    fontSize: "1rem",
-    fontWeight: "700",
-    cursor: "pointer",
-  },
-  submitButtonDisabled: {
-    backgroundColor: "#555",
-    cursor: "not-allowed",
-    opacity: 0.6,
-  },
-  error: {
-    color: "#ff6b6b",
-    fontSize: "0.8rem",
-    marginTop: "0.25rem",
-    marginBottom: "0.5rem",
-  },
-};
 
 export default AddTournament;

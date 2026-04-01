@@ -1,0 +1,123 @@
+.dashboard-page {
+  min-height: 100vh;
+  background: var(--color-neutral-950);
+  color: var(--color-neutral-100);
+}
+
+.dashboard-main {
+  max-width: 78.125rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem;
+}
+
+.dashboard-greeting {
+  margin-bottom: 3rem;
+}
+
+.dashboard-greeting-title {
+  margin: 0;
+}
+
+.dashboard-section {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-divider {
+  height: 1px;
+  margin-bottom: 1.5rem;
+  background: var(--color-border-default);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-section-title {
+  margin: 0;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.625rem;
+  background: var(--color-neutral-850);
+  border: 1px solid var(--color-border-default);
+  cursor: pointer;
+}
+
+.dashboard-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.dashboard-card-title {
+  margin: 0;
+  color: var(--color-neutral-100);
+  font: 600 1rem/1.5rem var(--font-sans);
+}
+
+.dashboard-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.dashboard-card-meta dd {
+  margin: 0;
+}
+
+.dashboard-meta-item {
+  color: var(--color-neutral-400);
+  font: var(--type-body-2-weight) var(--type-body-2-size) /
+    var(--type-body-2-line) var(--font-sans);
+}
+
+.dashboard-meta-separator {
+  color: rgba(136, 146, 156, 0.5);
+}
+
+.dashboard-card-description {
+  margin: 0.25rem 0 0;
+  color: var(--color-neutral-400);
+  font: 400 0.875rem/1.25rem var(--font-sans);
+}
+
+.dashboard-card-actions {
+  flex-shrink: 0;
+}
+
+.dashboard-empty {
+  padding: 3.75rem 2.5rem;
+  color: var(--color-neutral-400);
+  text-align: center;
+}
+
+.dashboard-empty p {
+  margin: 0;
+}
+
+.dashboard-empty p + p {
+  margin-top: 0.5rem;
+}

@@ -21,6 +21,23 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  displayName: {
+    type: String,
+    default: "",
+  },
+  email: {
+    type: String,
+    default: "",
+  },
+  avatarUrl: {
+    type: String,
+    default: "",
+  },
+  // TODO: Add API route to update accountBalance when trades are executed
+  accountBalance: {
+    type: Number,
+    default: 100000,
+  },
 });
 
 module.exports = mongoose.model("User", UserSchema);

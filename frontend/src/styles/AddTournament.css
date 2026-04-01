@@ -1,0 +1,140 @@
+.add-tournament-page {
+  min-height: 100vh;
+  background: var(--color-neutral-950);
+}
+
+.add-tournament-main {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1.25rem;
+}
+
+.add-tournament-card {
+  width: 100%;
+  max-width: 37.5rem;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-neutral-850);
+  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.4);
+}
+
+.add-tournament-title {
+  margin: 0 0 0.25rem;
+  color: var(--color-neutral-100);
+}
+
+.add-tournament-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.add-tournament-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.add-tournament-legend,
+.add-tournament-label {
+  color: var(--color-neutral-400);
+}
+
+.add-tournament-legend {
+  margin-bottom: 0.5rem;
+}
+
+.add-tournament-label {
+  display: block;
+  margin: 1rem 0 0.5rem;
+}
+
+.add-tournament-input,
+.add-tournament-currency-field,
+.add-tournament-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-100);
+  font: var(--type-body-2-weight) 1rem/1.5rem var(--font-sans);
+  outline: none;
+}
+
+.add-tournament-input::placeholder,
+.add-tournament-currency-field::placeholder,
+.add-tournament-textarea::placeholder {
+  color: var(--color-placeholder);
+}
+
+.add-tournament-currency-input {
+  position: relative;
+}
+
+.add-tournament-currency-symbol {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-neutral-400);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.add-tournament-currency-field {
+  padding-left: 1.75rem;
+}
+
+.add-tournament-date-time {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.add-tournament-duration {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-default);
+  background: rgba(15, 159, 234, 0.08);
+}
+
+.add-tournament-duration-label {
+  color: var(--color-neutral-400);
+}
+
+.add-tournament-duration-value {
+  color: var(--color-success-500);
+  font: 700 1rem/1.5rem var(--font-sans);
+}
+
+.add-tournament-textarea {
+  resize: vertical;
+  min-height: 6.25rem;
+}
+
+.add-tournament-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.add-tournament-action-cancel {
+  flex: 1;
+}
+
+.add-tournament-action-submit {
+  flex: 2;
+}
+
+.add-tournament-error {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--color-danger-500);
+  font: 400 0.75rem/1rem var(--font-ui);
+}

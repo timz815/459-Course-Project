@@ -13,8 +13,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-
-const BLUE = "#0F9FEA";
+import "../styles/TimePicker.css";
 
 function TimePicker({ name, value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -77,43 +76,31 @@ function TimePicker({ name, value, onChange }) {
   // Individual scrollable column component
   function Column({ options, selected, onSelect, format = (x) => x }) {
     return (
-      <div style={columnStyles.container}>
-        <div style={columnStyles.scroll}>
-          {options.map((opt) => {
-            const isSelected = opt === selected;
-
-            return (
-              <button
-                type="button"
-                key={opt}
-                onClick={() => onSelect(opt)}
-                style={{
-                  ...columnStyles.item,
-                  ...(isSelected ? columnStyles.selected : {}),
-                }}
-              >
-                {format(opt)}
-              </button>
-            );
-          })}
+      <div className="timepicker-col">
+        <div className="timepicker-col-scroll">
+          {options.map((opt) => (
+            <button
+              type="button"
+              key={opt}
+              onClick={() => onSelect(opt)}
+              className={`timepicker-col-item${opt === selected ? " timepicker-col-item--selected" : ""}`}
+            >
+              {format(opt)}
+            </button>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} style={styles.container}>
-      <style>{css}</style>
-
+    <div ref={containerRef} className="timepicker">
       <button
         type="button"
         onClick={() => setIsOpen((o) => !o)}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        style={{
-          ...styles.trigger,
-          ...(isOpen ? styles.triggerActive : {}),
-        }}
+        className={`timepicker-trigger${isOpen ? " timepicker-trigger--active" : ""}`}
       >
         <svg
           width="15"
@@ -128,7 +115,7 @@ function TimePicker({ name, value, onChange }) {
           <polyline points="12 6 12 12 16 14" />
         </svg>
 
-        <span style={styles.timeDisplay}>{displayTime}</span>
+        <span className="timepicker-time-display">{displayTime}</span>
 
         <svg
           width="13"
@@ -138,27 +125,23 @@ function TimePicker({ name, value, onChange }) {
           stroke="currentColor"
           strokeWidth="2.5"
           aria-hidden="true"
-          style={{
-            opacity: 0.35,
-            transform: isOpen ? "rotate(180deg)" : "none",
-            transition: "transform 0.2s",
-          }}
+          className={`timepicker-caret${isOpen ? " timepicker-caret--open" : ""}`}
         >
           <polyline points="6,9 12,15 18,9" />
         </svg>
       </button>
 
       {isOpen && (
-        <div role="dialog" aria-label="Time picker" style={styles.panel}>
-          <div style={styles.header}>
-            <span style={styles.headerLabel}>Hour</span>
-            <span style={styles.headerSpacer} />
-            <span style={styles.headerLabel}>Min</span>
-            <span style={styles.headerSpacer} />
-            <span style={styles.headerLabel}></span>
+        <div role="dialog" aria-label="Time picker" className="timepicker-panel">
+          <div className="timepicker-panel-header">
+            <span className="timepicker-panel-label">Hour</span>
+            <span className="timepicker-panel-spacer" />
+            <span className="timepicker-panel-label">Min</span>
+            <span className="timepicker-panel-spacer" />
+            <span className="timepicker-panel-label"></span>
           </div>
 
-          <div style={styles.columns}>
+          <div className="timepicker-columns">
             <Column
               options={hoursOptions}
               selected={hours12}
@@ -166,7 +149,7 @@ function TimePicker({ name, value, onChange }) {
               format={(h) => h.toString().padStart(2, "0")}
             />
 
-            <div role="separator" style={styles.divider} />
+            <div role="separator" className="timepicker-divider" />
 
             <Column
               options={minutesOptions}
@@ -175,7 +158,7 @@ function TimePicker({ name, value, onChange }) {
               format={(m) => m.toString().padStart(2, "0")}
             />
 
-            <div role="separator" style={styles.divider} />
+            <div role="separator" className="timepicker-divider" />
 
             <Column
               options={ampmOptions}
@@ -187,7 +170,7 @@ function TimePicker({ name, value, onChange }) {
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            style={styles.doneButton}
+            className="timepicker-done"
           >
             Done
           </button>
@@ -196,126 +179,5 @@ function TimePicker({ name, value, onChange }) {
     </div>
   );
 }
-
-const css = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
-`;
-
-const styles = {
-  container: {
-    position: "relative",
-    display: "inline-block",
-    fontFamily: "'DM Mono', monospace",
-  },
-
-  trigger: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    padding: "0.5625rem 0.875rem",
-    backgroundColor: "#1e1e1e",
-    border: "1px solid #333",
-    borderRadius: "0.625rem",
-    color: "#e8e8e8",
-    cursor: "pointer",
-    fontSize: "0.95rem",
-    transition: "all 0.15s",
-    fontFamily: "inherit",
-  },
-
-  triggerActive: {
-    borderColor: BLUE,
-    backgroundColor: "#1a2a33",
-    boxShadow: "0 0 0 0.1875rem rgba(15,159,234,0.12)",
-  },
-
-  timeDisplay: {
-    letterSpacing: "0.05em",
-  },
-
-  panel: {
-    position: "absolute",
-    top: "calc(100% + 0.5rem)",
-    left: 0,
-    backgroundColor: "#1a1a1a",
-    border: "1px solid #2e2e2e",
-    borderRadius: "0.875rem",
-    boxShadow: "0 1rem 3rem rgba(0,0,0,0.6)",
-    zIndex: 1000,
-    minWidth: "14.375rem",
-    overflow: "hidden",
-  },
-
-  header: {
-    display: "flex",
-    padding: "0.625rem 1rem 0.25rem",
-  },
-
-  headerLabel: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: "0.65rem",
-    color: "#555",
-    letterSpacing: "0.12em",
-    textTransform: "uppercase",
-  },
-
-  headerSpacer: {
-    width: "1px",
-  },
-
-  columns: {
-    display: "flex",
-  },
-
-  divider: {
-    width: "1px",
-    backgroundColor: "#252525",
-  },
-
-  doneButton: {
-    width: "100%",
-    padding: "0.6875rem",
-    backgroundColor: "transparent",
-    border: "none",
-    borderTop: "1px solid #252525",
-    color: BLUE,
-    cursor: "pointer",
-    fontSize: "0.85rem",
-    letterSpacing: "0.08em",
-    fontFamily: "inherit",
-  },
-};
-
-const columnStyles = {
-  container: {
-    flex: 1,
-    height: "11.25rem",
-  },
-
-  scroll: {
-    height: "100%",
-    overflowY: "auto",
-  },
-
-  item: {
-    padding: "0.625rem",
-    textAlign: "center",
-    cursor: "pointer",
-    color: "#888",
-    fontSize: "0.95rem",
-    transition: "all 0.12s",
-    background: "none",
-    border: "none",
-    width: "100%",
-    fontFamily: "inherit",
-  },
-
-  selected: {
-    color: "#fff",
-    background: "rgba(15,159,234,0.15)",
-    fontWeight: "500",
-  },
-};
 
 export default TimePicker;

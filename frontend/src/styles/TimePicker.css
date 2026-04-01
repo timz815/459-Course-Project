@@ -1,0 +1,131 @@
+/* ── TimePicker ───────────────────────────────────────── */
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap");
+
+.timepicker {
+  position: relative;
+  display: inline-block;
+  font-family: "DM Mono", monospace;
+}
+
+.timepicker-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5625rem 0.875rem;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 0.625rem;
+  color: #e8e8e8;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.timepicker-trigger--active {
+  border-color: var(--color-primary-500);
+  background-color: #1a2a33;
+  box-shadow: 0 0 0 0.1875rem rgba(15, 159, 234, 0.12);
+}
+
+.timepicker-time-display {
+  letter-spacing: 0.05em;
+}
+
+.timepicker-caret {
+  opacity: 0.35;
+  transition: transform 0.2s;
+}
+
+.timepicker-caret--open {
+  transform: rotate(180deg);
+}
+
+/* ── Panel ────────────────────────────────────────────── */
+
+.timepicker-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  background-color: #1a1a1a;
+  border: 1px solid #2e2e2e;
+  border-radius: 0.875rem;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  min-width: 14.375rem;
+  overflow: hidden;
+}
+
+.timepicker-panel-header {
+  display: flex;
+  padding: 0.625rem 1rem 0.25rem;
+}
+
+.timepicker-panel-label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.65rem;
+  color: #555;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.timepicker-panel-spacer {
+  width: 1px;
+}
+
+.timepicker-columns {
+  display: flex;
+}
+
+.timepicker-divider {
+  width: 1px;
+  background-color: #252525;
+}
+
+/* ── Column items ─────────────────────────────────────── */
+
+.timepicker-col {
+  flex: 1;
+  height: 11.25rem;
+}
+
+.timepicker-col-scroll {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.timepicker-col-item {
+  padding: 0.625rem;
+  text-align: center;
+  cursor: pointer;
+  color: #888;
+  font-size: 0.95rem;
+  transition: all 0.12s;
+  background: none;
+  border: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+.timepicker-col-item--selected {
+  color: #fff;
+  background: rgba(15, 159, 234, 0.15);
+  font-weight: 500;
+}
+
+/* ── Done button ──────────────────────────────────────── */
+
+.timepicker-done {
+  width: 100%;
+  padding: 0.6875rem;
+  background-color: transparent;
+  border: none;
+  border-top: 1px solid #252525;
+  color: var(--color-primary-500);
+  cursor: pointer;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  font-family: inherit;
+}

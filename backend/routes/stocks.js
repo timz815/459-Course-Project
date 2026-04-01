@@ -1,13 +1,16 @@
 /**
  * Stock Routes
  *
- * Express router for stock data. Volume is fetched from Polygon once daily
- * at 6am ET and stored in MongoDB. All other price data is owned by Finnhub.
+ * Express router for stock data. Volume and daily history candle are fetched
+ * from Polygon once daily at 6am ET and stored in MongoDB. All other price
+ * data is owned by Finnhub.
  *
  * Key behaviours:
- * - GET /api/stocks           → returns all stocks with cached prices from DB (excludes priceHistory)
- * - GET /api/stocks/:symbol   → returns single stock with full priceHistory for detail page
- * - Volume refresh job runs on server start then daily at 6am ET
+ * - GET /api/stocks           → returns all stocks with cached prices from DB (excludes priceHistory, history3M)
+ * - GET /api/stocks/:symbol   → returns single stock with full priceHistory and history3M for detail page
+ * - Daily job runs on server start then daily at 6am ET
+ * - Fetches /prev from Polygon per symbol — stores volume AND appends [timestamp, close] to history3M
+ * - history3M trimmed to max 63 entries (≈3 months of trading days) on each append
  * - Sequential fetching with 13s delay between calls (5 req/min free tier)
  * - Frontend reads from DB — always instant, never waits for Polygon
  */
@@ -20,30 +23,37 @@ const { isEasternDST } = require("../utils/marketHours");
 const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
 const POLYGON_BASE = "https://api.polygon.io";
 const DELAY_MS = 13000;
+const MAX_HISTORY_CANDLES = 63;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ─── Polygon Volume Job ───────────────────────────────────────────────────────
+// ─── Polygon Daily Job ────────────────────────────────────────────────────────
 
 /**
- * Fetches previous day's volume for one symbol from Polygon.
+ * Fetches previous day's volume and close price for one symbol from Polygon.
+ * Returns { volume, close, timestamp } or null on failure.
  */
-async function fetchVolume(symbol) {
+async function fetchPrevDay(symbol) {
   try {
     const url = `${POLYGON_BASE}/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`;
     const res = await fetch(url);
     const data = await res.json();
 
     if (!res.ok || !data.results || data.results.length === 0) {
-      console.log(`[VolumeJob] No data for ${symbol} (status ${res.status})`);
+      console.log(`[DailyJob] No data for ${symbol} (status ${res.status})`);
       return null;
     }
 
-    return data.results[0].v || null;
+    const result = data.results[0];
+    return {
+      volume:    result.v  ?? null,
+      close:     result.c  ?? null,
+      timestamp: result.t  ?? null, // Unix ms timestamp for start of that day
+    };
   } catch (err) {
-    console.error(`[VolumeJob] Error fetching ${symbol}:`, err.message);
+    console.error(`[DailyJob] Error fetching ${symbol}:`, err.message);
     return null;
   }
 }
@@ -51,36 +61,70 @@ async function fetchVolume(symbol) {
 let isRefreshing = false;
 
 /**
- * Fetches and stores previous day volume for all stocks sequentially.
+ * Fetches and stores previous day volume + close candle for all stocks sequentially.
+ * Appends [timestamp, close] to history3M and trims to MAX_HISTORY_CANDLES.
+ * Piggybacks both writes in one DB call per symbol.
  * Takes ~4 minutes due to rate limiting.
  */
-async function refreshAllVolumes() {
+async function refreshAllDailyData() {
   if (isRefreshing) {
-    console.log("[VolumeJob] Already running, skipping");
+    console.log("[DailyJob] Already running, skipping");
     return;
   }
 
   isRefreshing = true;
-  console.log("[VolumeJob] Starting volume refresh...");
+  console.log("[DailyJob] Starting daily refresh (volume + history)...");
 
   try {
-    const stocks = await Stock.find({}, "symbol");
+    const stocks = await Stock.find({}, "symbol history3M");
 
     for (let i = 0; i < stocks.length; i++) {
-      const { symbol } = stocks[i];
-      const volume = await fetchVolume(symbol);
+      const { symbol, history3M = [] } = stocks[i];
+      const prev = await fetchPrevDay(symbol);
 
-      if (volume !== null) {
-        await Stock.findOneAndUpdate({ symbol }, { $set: { volume } });
-        console.log(`[VolumeJob] ✓ ${symbol} volume = ${volume}`);
+      if (prev !== null) {
+        const { volume, close, timestamp } = prev;
+
+        // Build the updated history — append new candle and trim to max
+        let updatedHistory = [...history3M];
+        if (close !== null && timestamp !== null) {
+          // Avoid duplicates — don't append if last entry has the same timestamp
+          const lastTs = updatedHistory.length > 0
+            ? updatedHistory[updatedHistory.length - 1][0]
+            : null;
+
+          if (lastTs !== timestamp) {
+            updatedHistory.push([timestamp, close]);
+          }
+        }
+
+        // Trim to keep only the most recent MAX_HISTORY_CANDLES entries
+        if (updatedHistory.length > MAX_HISTORY_CANDLES) {
+          updatedHistory = updatedHistory.slice(-MAX_HISTORY_CANDLES);
+        }
+
+        await Stock.findOneAndUpdate(
+          { symbol },
+          {
+            $set: {
+              volume,
+              history3M:        updatedHistory,
+              historyUpdatedAt: new Date(),
+            },
+          }
+        );
+
+        console.log(
+          `[DailyJob] ✓ ${symbol} — vol: ${volume}, close: $${close}, history: ${updatedHistory.length} candles`
+        );
       }
 
       if (i < stocks.length - 1) await sleep(DELAY_MS);
     }
 
-    console.log("[VolumeJob] ✅ Volume refresh complete");
+    console.log("[DailyJob] ✅ Daily refresh complete");
   } catch (err) {
-    console.error("[VolumeJob] ❌ Error:", err.message);
+    console.error("[DailyJob] ❌ Error:", err.message);
   } finally {
     isRefreshing = false;
   }
@@ -97,64 +141,66 @@ function msUntil6amET() {
   const offsetMs = (isDST ? -4 : -5) * 60 * 60 * 1000;
   const etNow = new Date(now.getTime() + offsetMs);
 
-  // Target: next 6am ET
   const target = new Date(etNow);
   target.setUTCHours(6, 0, 0, 0);
 
-  // If 6am already passed today, schedule for tomorrow
   if (etNow.getUTCHours() >= 6) {
     target.setUTCDate(target.getUTCDate() + 1);
   }
 
-  // Convert back to UTC
   const targetUTC = new Date(target.getTime() - offsetMs);
   return targetUTC.getTime() - now.getTime();
 }
 
 /**
- * Schedules volume refresh to run daily at 6am ET.
+ * Schedules daily refresh to run every day at 6am ET.
  */
-function scheduleVolumeRefresh() {
+function scheduleDailyRefresh() {
   const ms = msUntil6amET();
   const hours = Math.round(ms / 1000 / 60 / 60);
-  console.log(`[VolumeJob] Next refresh in ~${hours}h (6am ET)`);
+  console.log(`[DailyJob] Next refresh in ~${hours}h (6am ET)`);
 
   setTimeout(() => {
-    refreshAllVolumes();
-    // Schedule next day
-    setInterval(refreshAllVolumes, 24 * 60 * 60 * 1000);
+    refreshAllDailyData();
+    setInterval(refreshAllDailyData, 24 * 60 * 60 * 1000);
   }, ms);
 }
 
 /**
- * Starts the volume job — runs immediately on server start
+ * Starts the daily job — runs immediately on server start
  * then schedules daily at 6am ET.
  */
 function startVolumeJob() {
-  refreshAllVolumes();
-  scheduleVolumeRefresh();
+  refreshAllDailyData();
+  scheduleDailyRefresh();
 }
 
 module.exports.startVolumeJob = startVolumeJob;
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// GET all stocks with cached prices from DB (excludes priceHistory for performance)
+// GET all stocks — excludes priceHistory and history3M for performance
 router.get("/", async (req, res) => {
   try {
-    const stocks = await Stock.find().sort({ symbol: 1 }).select("-priceHistory");
+    const stocks = await Stock.find()
+      .sort({ symbol: 1 })
+      .select("-priceHistory -history3M");
     res.json(stocks);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET single stock by symbol with full priceHistory for detail page
+// GET single stock — includes full priceHistory and history3M for detail page
 router.get("/:symbol", async (req, res) => {
   try {
-    const stock = await Stock.findOne({ symbol: req.params.symbol.toUpperCase() });
+    const stock = await Stock.findOne({
+      symbol: req.params.symbol.toUpperCase(),
+    });
     if (!stock) {
-      return res.status(404).json({ message: `Stock ${req.params.symbol.toUpperCase()} not found` });
+      return res
+        .status(404)
+        .json({ message: `Stock ${req.params.symbol.toUpperCase()} not found` });
     }
     res.json(stock);
   } catch (err) {

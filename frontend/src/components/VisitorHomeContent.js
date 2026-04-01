@@ -13,19 +13,19 @@ import trophyIcon32 from "../assets/Icon_32x32/Trophy_32x32.svg";
 const FEATURE_CARDS = [
   {
     title: "Institutional Grade",
-    text: "Used by universities and trading desks for elite talent scouting.",
+    text: "Built for serious, competitive paper trading in classroom and team environments.",
     icon: defenseIcon24,
     iconAlt: "Institutional grade icon",
   },
   {
     title: "Social Hub",
-    text: "Follow top traders, copy strategies, and join active trading guilds.",
+    text: "Compete on live leaderboards, track participants, and climb the rankings.",
     icon: groupIcon24,
     iconAlt: "Social hub icon",
   },
   {
     title: "Advanced Analytics",
-    text: "Detailed performance metrics including Sharpe Ratio and Max Drawdown.",
+    text: "Track portfolio value, cash balance, and holdings with live tournament updates.",
     icon: riseStarsIcon32,
     iconAlt: "Advanced analytics icon",
   },
@@ -219,21 +219,22 @@ function VisitorHomeContent() {
             <div className="vh-icon" aria-hidden="true">
               <img src={riseDiagramIcon32} alt="" className="vh-icon-img" />
             </div>
-            <h2>Real-Time Engine</h2>
+            <h2>Market Data Engine</h2>
             <p>
-              Our proprietary matching engine mirrors actual exchange latency.
-              Experience slippage, liquidity constraints, and true market
-              dynamics without the capital risk.
+              We ingest live market quotes from Finnhub and process them through
+              a server-side queue built for fair tournament play. Orders are
+              handled in timestamp order with market-hour rules, so every
+              participant competes on the same synchronized data.
             </p>
 
             <div className="vh-metrics">
               <div>
-                <label>Latency</label>
-                <strong>14ms</strong>
+                <label>Update Cycle</label>
+                <strong>1s Queue</strong>
               </div>
               <div>
-                <label>Refresh</label>
-                <strong>100Hz</strong>
+                <label>Source</label>
+                <strong>Finnhub Quotes</strong>
               </div>
             </div>
           </article>

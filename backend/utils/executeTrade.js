@@ -1,35 +1,32 @@
 /**
  * executeTrade Utility
  *
- * Core trade execution logic extracted from the trades route.
- * Called by the two queue system when processing queued trades.
+ * Core trade execution logic called by the price queue system.
  *
  * Key behaviours:
  * - Validates tournament, participant, and stock exist
- * - Fetches live price from Finnhub at moment of execution
+ * - If isPendingUntilOpen (weekend, Friday after close, Monday pre-market,
+ *   holiday) → returns pending, trade stays in queue
+ * - Weekday during or outside market hours → fetches live price from Finnhub
+ *   falls back to previousClose if Finnhub returns null
  * - Handles buy and sell logic including balance and holdings updates
  * - Creates a Trade record on success
  * - Returns a result object — never throws to the caller
  * - No HTTP dependencies (no req/res) — pure business logic
- *
- * Usage:
- *   const { executeTrade } = require('../utils/executeTrade');
- *   const result = await executeTrade({ userId, tournamentId, symbol, side, dollar_amount });
- *   if (result.success) { ... } else { console.error(result.message) }
  */
 
 const Tournament = require("../models/Tournament");
 const Participant = require("../models/Participant");
 const Trade = require("../models/Trade");
 const Stock = require("../models/Stock");
+const { isPendingUntilOpen } = require("./marketHours");
 
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 const FINNHUB_BASE = "https://finnhub.io/api/v1";
 
 /**
  * Fetches the current live price for a symbol from Finnhub.
- * @param {string} symbol
- * @returns {number|null}
+ * Returns null on failure — never throws.
  */
 async function fetchLivePrice(symbol) {
   try {
@@ -48,14 +45,15 @@ async function fetchLivePrice(symbol) {
  * Executes a buy or sell trade for a tournament participant.
  *
  * @param {Object} params
- * @param {string} params.userId       - The user's MongoDB ObjectId string
- * @param {string} params.tournamentId - The tournament's MongoDB ObjectId string
- * @param {string} params.symbol       - Stock ticker symbol (e.g. "AAPL")
- * @param {string} params.side         - "buy" or "sell"
- * @param {number} params.dollar_amount - Dollar amount to buy or sell
+ * @param {string} params.userId
+ * @param {string} params.tournamentId
+ * @param {string} params.symbol
+ * @param {string} params.side
+ * @param {number} params.dollar_amount
  *
  * @returns {Promise<{
  *   success: boolean,
+ *   pending?: boolean,
  *   message: string,
  *   trade?: object,
  *   new_cash_balance?: number,
@@ -64,6 +62,15 @@ async function fetchLivePrice(symbol) {
  */
 async function executeTrade({ userId, tournamentId, symbol, side, dollar_amount }) {
   try {
+    // Hold pending over weekend, holidays, Friday after close, Monday pre-market
+    if (isPendingUntilOpen()) {
+      return {
+        success: false,
+        pending: true,
+        message: "Market is closed — trade will execute at next market open",
+      };
+    }
+
     // Validate dollar amount
     const amount = parseFloat(dollar_amount);
     if (isNaN(amount) || amount <= 0) {
@@ -99,14 +106,26 @@ async function executeTrade({ userId, tournamentId, symbol, side, dollar_amount 
       return { success: false, message: `${symbol.toUpperCase()} is not available in this tournament` };
     }
 
-    // Fetch live price from Finnhub
-    const livePrice = await fetchLivePrice(symbol.toUpperCase());
-    if (!livePrice) {
-      return { success: false, message: `Could not fetch live price for ${symbol.toUpperCase()}. Please try again.` };
+    // Get execution price — live price during market hours
+    // falls back to previousClose for weekday after hours
+    let executionPrice = await fetchLivePrice(symbol.toUpperCase());
+    let usedPreviousClose = false;
+
+    if (!executionPrice) {
+      if (stock.previousClose) {
+        executionPrice = stock.previousClose;
+        usedPreviousClose = true;
+        console.log(`[executeTrade] Using previousClose for ${symbol}: $${executionPrice}`);
+      } else {
+        return {
+          success: false,
+          message: `Could not fetch price for ${symbol.toUpperCase()}. Please try again.`,
+        };
+      }
     }
 
     // Calculate shares from dollar amount
-    const shares = parseFloat((amount / livePrice).toFixed(1));
+    const shares = parseFloat((amount / executionPrice).toFixed(1));
     if (shares <= 0) {
       return { success: false, message: "Dollar amount too small to purchase any shares" };
     }
@@ -117,7 +136,6 @@ async function executeTrade({ userId, tournamentId, symbol, side, dollar_amount 
     );
 
     if (side === "buy") {
-      // Check sufficient cash
       if (participant.cash_balance < amount) {
         return {
           success: false,
@@ -125,10 +143,8 @@ async function executeTrade({ userId, tournamentId, symbol, side, dollar_amount 
         };
       }
 
-      // Deduct cash balance
       participant.cash_balance = parseFloat((participant.cash_balance - amount).toFixed(2));
 
-      // Add to existing position or create new holding
       if (holdingIndex >= 0) {
         participant.holdings[holdingIndex].shares = parseFloat(
           (participant.holdings[holdingIndex].shares + shares).toFixed(1)
@@ -144,14 +160,12 @@ async function executeTrade({ userId, tournamentId, symbol, side, dollar_amount 
         });
       }
     } else {
-      // Validate position exists for sell
       if (holdingIndex < 0) {
         return { success: false, message: `You don't own any shares of ${symbol.toUpperCase()}` };
       }
 
       const holding = participant.holdings[holdingIndex];
 
-      // Check sufficient shares
       if (shares > holding.shares) {
         return {
           success: false,
@@ -159,10 +173,8 @@ async function executeTrade({ userId, tournamentId, symbol, side, dollar_amount 
         };
       }
 
-      // Credit cash balance
       participant.cash_balance = parseFloat((participant.cash_balance + amount).toFixed(2));
 
-      // Reduce position or remove if fully closed
       const newShares = parseFloat((holding.shares - shares).toFixed(1));
       const newAmountInvested = parseFloat((holding.amount_invested - amount).toFixed(2));
 
@@ -174,25 +186,25 @@ async function executeTrade({ userId, tournamentId, symbol, side, dollar_amount 
       }
     }
 
-    // Persist updated participant
     participant.markModified("holdings");
     await participant.save();
 
-    // Record trade in history
     const trade = new Trade({
       tournament: tournamentId,
       user: userId,
       symbol: symbol.toUpperCase(),
       side,
       shares,
-      price: livePrice,
+      price: executionPrice,
       dollar_amount: amount,
     });
     await trade.save();
 
+    const priceNote = usedPreviousClose ? " (previous close price)" : "";
+
     return {
       success: true,
-      message: `${side === "buy" ? "Bought" : "Sold"} ${shares} share(s) of ${symbol.toUpperCase()} at $${livePrice} per share`,
+      message: `${side === "buy" ? "Bought" : "Sold"} ${shares} share(s) of ${symbol.toUpperCase()} at $${executionPrice} per share${priceNote}`,
       trade,
       new_cash_balance: participant.cash_balance,
       holdings: participant.holdings,

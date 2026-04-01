@@ -1,25 +1,15 @@
 /**
- * Market Hours Utility
+ * Market Hours Utility (Frontend)
  *
- * Determines whether the US stock market is currently open,
- * and whether trades should be held pending until next market open.
+ * Client-side replica of backend marketHours.js
+ * Used to determine market status for UI display and trade warnings.
+ * All calculations based on UTC → ET conversion.
  *
- * Handles:
- * - Weekday check (Mon-Fri only)
- * - Market hours: 9:30am - 4:00pm ET
- * - DST: 2nd Sunday of March / 1st Sunday of November
- * - NYSE market holidays including Good Friday via Computus algorithm
- * - Weekend shift rules for holidays falling on Saturday/Sunday
- * - isPendingUntilOpen: covers Friday after close, weekends,
- *   Monday pre-market, and market holidays
- *
- * Usage:
- *   const { isMarketOpen, isPendingUntilOpen } = require('../utils/marketHours');
+ * Exports:
+ *   isMarketOpen()      → live trading, show live prices
+ *   isPendingUntilOpen() → trades queue until next market open
  */
 
-/**
- * Returns the nth occurrence of a given weekday in a given month/year.
- */
 function getNthWeekday(year, month, weekday, n) {
   if (n > 0) {
     const first = new Date(year, month, 1);
@@ -35,9 +25,6 @@ function getNthWeekday(year, month, weekday, n) {
   }
 }
 
-/**
- * Calculates Easter Sunday for a given year using the Computus algorithm.
- */
 function getEaster(year) {
   const a = year % 19;
   const b = Math.floor(year / 100);
@@ -56,11 +43,6 @@ function getEaster(year) {
   return new Date(year, month - 1, day);
 }
 
-/**
- * Applies weekend shift rules:
- * - Saturday holiday → observed Friday
- * - Sunday holiday → observed Monday
- */
 function applyWeekendShift(date) {
   const day = date.getDay();
   if (day === 6) return new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
@@ -68,34 +50,24 @@ function applyWeekendShift(date) {
   return date;
 }
 
-/**
- * Returns a Set of market holiday date strings (YYYY-MM-DD) for a given year.
- */
 function getMarketHolidays(year) {
   const holidays = [];
-
-  holidays.push(new Date(year, 0, 1));   // New Year's Day
-  holidays.push(new Date(year, 5, 19));  // Juneteenth
-  holidays.push(new Date(year, 6, 4));   // Independence Day
-  holidays.push(new Date(year, 11, 25)); // Christmas
-
-  holidays.push(getNthWeekday(year, 0, 1, 3));  // MLK Day
-  holidays.push(getNthWeekday(year, 1, 1, 3));  // Presidents Day
-  holidays.push(getNthWeekday(year, 4, 1, -1)); // Memorial Day
-  holidays.push(getNthWeekday(year, 8, 1, 1));  // Labor Day
-  holidays.push(getNthWeekday(year, 10, 4, 4)); // Thanksgiving
-
+  holidays.push(new Date(year, 0, 1));
+  holidays.push(new Date(year, 5, 19));
+  holidays.push(new Date(year, 6, 4));
+  holidays.push(new Date(year, 11, 25));
+  holidays.push(getNthWeekday(year, 0, 1, 3));
+  holidays.push(getNthWeekday(year, 1, 1, 3));
+  holidays.push(getNthWeekday(year, 4, 1, -1));
+  holidays.push(getNthWeekday(year, 8, 1, 1));
+  holidays.push(getNthWeekday(year, 10, 4, 4));
   const easter = getEaster(year);
   const goodFriday = new Date(easter.getFullYear(), easter.getMonth(), easter.getDate() - 2);
   holidays.push(goodFriday);
-
   const shifted = holidays.map(applyWeekendShift);
-  return new Set(shifted.map((d) => toDateString(d)));
+  return new Set(shifted.map(toDateString));
 }
 
-/**
- * Converts a Date to YYYY-MM-DD string using local date parts.
- */
 function toDateString(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -103,9 +75,6 @@ function toDateString(date) {
   return `${y}-${m}-${d}`;
 }
 
-/**
- * Determines whether DST is currently active in Eastern Time.
- */
 function isEasternDST(utcDate) {
   const year = utcDate.getUTCFullYear();
   const dstStart = getNthWeekday(year, 2, 0, 2);
@@ -115,9 +84,6 @@ function isEasternDST(utcDate) {
   return utcDate >= dstStartUTC && utcDate < dstEndUTC;
 }
 
-/**
- * Converts a UTC Date to Eastern Time date parts.
- */
 function toEasternTime(utcDate) {
   const offsetHours = isEasternDST(utcDate) ? -4 : -5;
   const etMs = utcDate.getTime() + offsetHours * 60 * 60 * 1000;
@@ -132,55 +98,29 @@ function toEasternTime(utcDate) {
   };
 }
 
-/**
- * Returns true if the US stock market is currently open.
- */
-function isMarketOpen(now = new Date()) {
+export function isMarketOpen(now = new Date()) {
   const et = toEasternTime(now);
-
   if (et.weekday === 0 || et.weekday === 6) return false;
-
   const minutesSinceMidnight = et.hours * 60 + et.minutes;
   const marketOpen = 9 * 60 + 30;
   const marketClose = 16 * 60;
   if (minutesSinceMidnight < marketOpen || minutesSinceMidnight >= marketClose) return false;
-
   const dateStr = `${et.year}-${String(et.month + 1).padStart(2, "0")}-${String(et.day).padStart(2, "0")}`;
   const holidays = getMarketHolidays(et.year);
   if (holidays.has(dateStr)) return false;
-
   return true;
 }
 
-/**
- * Returns true if trades should be held pending until next market open.
- * Covers:
- * - Weekends (Saturday, Sunday)
- * - Friday after 4pm ET
- * - Monday before 9:30am ET
- * - Market holidays
- */
-function isPendingUntilOpen(now = new Date()) {
+export function isPendingUntilOpen(now = new Date()) {
   const et = toEasternTime(now);
   const minutesSinceMidnight = et.hours * 60 + et.minutes;
-  const marketOpen = 9 * 60 + 30;   // 9:30am
-  const marketClose = 16 * 60;       // 4:00pm
+  const marketOpen = 9 * 60 + 30;
+  const marketClose = 16 * 60;
   const dateStr = `${et.year}-${String(et.month + 1).padStart(2, "0")}-${String(et.day).padStart(2, "0")}`;
   const holidays = getMarketHolidays(et.year);
-
-  // Market holiday
   if (holidays.has(dateStr)) return true;
-
-  // Saturday or Sunday
   if (et.weekday === 0 || et.weekday === 6) return true;
-
-  // Friday after market close
   if (et.weekday === 5 && minutesSinceMidnight >= marketClose) return true;
-
-  // Monday before market open
   if (et.weekday === 1 && minutesSinceMidnight < marketOpen) return true;
-
   return false;
 }
-
-module.exports = { isMarketOpen, isPendingUntilOpen, getMarketHolidays, isEasternDST };

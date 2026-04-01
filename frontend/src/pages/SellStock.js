@@ -2,6 +2,17 @@
  * SellStock Page
  *
  * Allows a tournament participant to sell a stock they own by entering a dollar amount.
+ *
+ * Key behaviours:
+ * - Reads tournamentId and symbol from URL params
+ * - Fetches participant data to show holding info (shares, amount_invested)
+ * - Fetches cached EOD price for estimated shares display only
+ * - Updates estimated shares in real-time as user types dollar amount
+ * - No frontend cap on dollar amount — backend validates against actual shares held
+ * - On submit, pushes trade to queue and polls until executed
+ * - Shows pending spinner while trade is in queue
+ * - Navigates back to tournament detail on success with toast
+ * - Stays on page and shows error on failure
  */
 
 import { useContext, useEffect, useState } from "react";
@@ -9,8 +20,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
-import Input from "../components/UI/Input";
-import "../styles/SellStock.css";
 
 function SellStock() {
   const { id: tournamentId, symbol } = useParams();
@@ -24,6 +33,9 @@ function SellStock() {
   const [submitting, setSubmitting] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [warningAcknowledged, setWarningAcknowledged] = useState(false);
+
+  const pendingUntilOpen = isPendingUntilOpen();
 
   useEffect(() => {
     async function fetchData() {
@@ -68,8 +80,8 @@ function SellStock() {
             `http://localhost:5000/api/tournaments/${tournamentId}/trades/queue`,
             { headers: { Authorization: token } },
           );
-          const pendingTrades = await res.json();
-          const stillPending = pendingTrades.some((t) => t._id === queueId);
+          const pending = await res.json();
+          const stillPending = pending.some((t) => t._id === queueId);
 
           if (!stillPending) {
             clearInterval(interval);
@@ -87,9 +99,10 @@ function SellStock() {
   const estimatedShares =
     stock?.price && amount > 0 ? (amount / stock.price).toFixed(1) : null;
   const isValid = amount > 0;
+  const canSubmit = isValid && (!pendingUntilOpen || warningAcknowledged);
 
   async function handleSell() {
-    if (!isValid) return;
+    if (!canSubmit) return;
     setSubmitting(true);
     setError("");
 
@@ -98,10 +111,7 @@ function SellStock() {
         `http://localhost:5000/api/tournaments/${tournamentId}/trades`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token,
-          },
+          headers: { "Content-Type": "application/json", Authorization: token },
           body: JSON.stringify({
             symbol: symbol.toUpperCase(),
             side: "sell",
@@ -122,6 +132,7 @@ function SellStock() {
       setPending(true);
       await pollUntilExecuted(data.queueId);
 
+      // Trade executed — navigate back with toast
       navigate(`/tournaments/${tournamentId}`, {
         state: { toast: `Sell order for ${symbol.toUpperCase()} executed!` },
       });
@@ -161,9 +172,10 @@ function SellStock() {
   return (
     <div className="sell-stock-page">
       <Header />
-      <main className="sell-stock-main">
-        <article className="sell-stock-card">
-          <header className="sell-stock-header">
+      <main style={styles.mainContent}>
+        <article style={styles.saleCard}>
+          {/* Stock header with price */}
+          <header style={styles.stockHeader}>
             <div>
               <h1 className="sell-stock-symbol ds-type-title-m">
                 Sell {stock.symbol}
@@ -173,13 +185,11 @@ function SellStock() {
             <div className="sell-stock-price">
               {stock.price ? (
                 <>
-                  <span className="sell-stock-price-label ds-type-label">
-                    ~Price
-                  </span>
-                  <span className="sell-stock-price-value">
+                  <span style={styles.priceLabel}>~Price</span>
+                  <span style={styles.priceAmount}>
                     ${stock.price.toFixed(2)}
                   </span>
-                  <span className="sell-stock-price-note">EOD est.</span>
+                  <span style={styles.priceDisclaimer}>EOD est.</span>
                 </>
               ) : (
                 <span className="sell-stock-price-note">Price unavailable</span>
@@ -187,21 +197,16 @@ function SellStock() {
             </div>
           </header>
 
-          <section className="sell-stock-position">
-            <div className="sell-stock-position-detail">
-              <span className="sell-stock-position-metric ds-type-label">
-                Shares Held
-              </span>
-              <span className="sell-stock-position-value">
-                {holding.shares}
-              </span>
+          {/* Current position summary */}
+          <section style={styles.positionSummary}>
+            <div style={styles.positionDetail}>
+              <span style={styles.positionMetric}>Shares Held</span>
+              <span style={styles.positionValue}>{holding.shares}</span>
             </div>
-            <div className="sell-stock-position-divider" />
-            <div className="sell-stock-position-detail">
-              <span className="sell-stock-position-metric ds-type-label">
-                Amount Invested
-              </span>
-              <span className="sell-stock-position-value">
+            <div style={styles.positionDivider} />
+            <div style={styles.positionDetail}>
+              <span style={styles.positionMetric}>Amount Invested</span>
+              <span style={styles.positionValue}>
                 $
                 {holding.amount_invested.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -210,50 +215,55 @@ function SellStock() {
             </div>
           </section>
 
+          {/* Pending state */}
           {pending ? (
-            <div className="sell-stock-pending">
-              <div className="sell-stock-spinner" />
-              <p className="sell-stock-pending-text ds-type-subtitle-l">
-                Executing trade...
-              </p>
-              <p className="sell-stock-pending-subtext ds-type-body-2">
+            <div style={styles.pendingState}>
+              <div style={styles.spinner} />
+              <p style={styles.pendingText}>Executing trade...</p>
+              <p style={styles.pendingSubtext}>
                 Fetching live price and processing your order
               </p>
             </div>
           ) : (
             <>
-              <Input
-                label="Amount to Sell"
-                id="dollar_amount"
-                type="number"
-                min="0"
-                step="100"
-                placeholder="0.00"
-                value={dollarAmount}
-                onChange={(e) => setDollarAmount(e.target.value)}
-                inputClassName="sell-stock-amount"
-                autoFocus
-              />
+              {/* Sale amount input */}
+              <label htmlFor="dollar_amount" style={styles.inputLabel}>
+                Amount to Sell
+              </label>
+              <div style={styles.amountInput}>
+                <span style={styles.dollarSign}>$</span>
+                <input
+                  id="dollar_amount"
+                  type="number"
+                  min="0"
+                  step="100"
+                  placeholder="0.00"
+                  value={dollarAmount}
+                  onChange={(e) => setDollarAmount(e.target.value)}
+                  style={styles.amountField}
+                  autoFocus
+                />
+              </div>
 
               {estimatedShares && isValid && (
-                <aside className="sell-stock-estimate">
-                  <span className="sell-stock-estimate-label ds-type-label">
+                <aside style={styles.estimatePreview}>
+                  <span style={styles.estimateLabel}>
                     Estimated shares to sell
                   </span>
-                  <span className="sell-stock-estimate-value">
+                  <span style={styles.estimateValue}>
                     ~{estimatedShares} shares
                   </span>
-                  <span className="sell-stock-estimate-note">
+                  <span style={styles.estimateDisclaimer}>
                     Final amount calculated at execution price
                   </span>
                 </aside>
               )}
 
-              {error && (
-                <p className="sell-stock-error ds-type-body-2">{error}</p>
-              )}
+              {/* Server error display */}
+              {error && <p style={styles.validationError}>{error}</p>}
 
-              <footer className="sell-stock-actions">
+              {/* Action buttons */}
+              <footer style={styles.actionBar}>
                 <Button
                   variant="cancel"
                   type="button"
@@ -265,9 +275,9 @@ function SellStock() {
                   variant="cancel"
                   type="button"
                   onClick={handleSell}
-                  disabled={!isValid || submitting}
+                  disabled={!canSubmit || submitting}
                 >
-                  {submitting ? "Queuing..." : `Sell ${stock.symbol}`}
+                  {submitting ? "Queuing\u2026" : `Sell ${stock.symbol}`}
                 </Button>
               </footer>
             </>
@@ -277,5 +287,191 @@ function SellStock() {
     </div>
   );
 }
+
+const RED = "#FF4D4D";
+const BG = "#1A1A1A";
+const TEXT = "#F9F9F9";
+
+const styles = {
+  pageLayout: {
+    minHeight: "100vh",
+    backgroundColor: BG,
+    fontFamily: "'Segoe UI', sans-serif",
+  },
+  mainContent: {
+    display: "flex",
+    justifyContent: "center",
+    padding: "2.5rem 1.25rem",
+  },
+  statusMessage: { color: "#888", textAlign: "center", padding: "5rem" },
+  saleCard: {
+    width: "100%",
+    maxWidth: "30rem",
+    backgroundColor: "#2a2a2a",
+    borderRadius: "1rem",
+    padding: "2rem",
+    border: "1px solid #333",
+    boxShadow: "0 0.5rem 2rem rgba(0,0,0,0.4)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem",
+  },
+  stockHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: "0.5rem",
+  },
+  stockSymbol: {
+    margin: 0,
+    fontSize: "1.6rem",
+    fontWeight: "700",
+    color: TEXT,
+  },
+  companyName: { margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#888" },
+  priceDisplay: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: "0.1rem",
+  },
+  priceLabel: {
+    fontSize: "0.7rem",
+    color: "#555",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
+  priceAmount: { fontSize: "1.2rem", fontWeight: "700", color: TEXT },
+  priceDisclaimer: { fontSize: "0.65rem", color: "#555" },
+  positionSummary: {
+    backgroundColor: "#252525",
+    border: "1px solid #333",
+    borderRadius: "0.5rem",
+    padding: "0.75rem 0.875rem",
+    display: "flex",
+    gap: "0.75rem",
+    alignItems: "center",
+  },
+  positionDetail: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.15rem",
+    flex: 1,
+  },
+  positionMetric: {
+    fontSize: "0.72rem",
+    color: "#666",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
+  positionValue: { fontSize: "1rem", fontWeight: "700", color: TEXT },
+  positionDivider: { width: "1px", height: "2rem", backgroundColor: "#333" },
+  inputLabel: {
+    fontSize: "0.82rem",
+    fontWeight: "600",
+    color: "#aaa",
+    marginTop: "0.25rem",
+  },
+  amountInput: { position: "relative" },
+  dollarSign: {
+    position: "absolute",
+    left: "0.875rem",
+    top: "50%",
+    transform: "translateY(-50%)",
+    color: "#666",
+    fontWeight: "600",
+    pointerEvents: "none",
+  },
+  amountField: {
+    width: "100%",
+    padding: "0.75rem 1rem 0.75rem 1.75rem",
+    borderRadius: "0.5rem",
+    border: "1px solid #444",
+    backgroundColor: "#1f1f1f",
+    color: TEXT,
+    fontSize: "1.1rem",
+    outline: "none",
+    boxSizing: "border-box",
+    fontFamily: "inherit",
+  },
+  estimatePreview: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.15rem",
+    backgroundColor: "rgba(255,77,77,0.06)",
+    border: "1px solid rgba(255,77,77,0.2)",
+    padding: "0.625rem 0.875rem",
+    borderRadius: "0.5rem",
+  },
+  estimateLabel: {
+    fontSize: "0.72rem",
+    color: "#888",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
+  estimateValue: { fontSize: "1.1rem", fontWeight: "700", color: RED },
+  estimateDisclaimer: { fontSize: "0.7rem", color: "#555" },
+  validationError: { color: "#ff6b6b", fontSize: "0.82rem", margin: 0 },
+  actionBar: { display: "flex", gap: "0.75rem", marginTop: "0.75rem" },
+  secondaryButton: {
+    flex: 1,
+    padding: "0.875rem",
+    backgroundColor: "transparent",
+    color: "#888",
+    border: "1px solid #444",
+    borderRadius: "0.5rem",
+    fontSize: "1rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontFamily: "inherit",
+  },
+  primaryButton: {
+    flex: 2,
+    padding: "0.875rem",
+    backgroundColor: RED,
+    color: "#fff",
+    border: "none",
+    borderRadius: "0.5rem",
+    fontSize: "1rem",
+    fontWeight: "700",
+    cursor: "pointer",
+    fontFamily: "inherit",
+  },
+  buttonDisabled: { opacity: 0.5, cursor: "not-allowed" },
+
+  // Pending state
+  pendingState: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "0.75rem",
+    padding: "2rem 1rem",
+  },
+  spinner: {
+    width: "2.5rem",
+    height: "2.5rem",
+    border: "3px solid #333",
+    borderTop: `3px solid ${RED}`,
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  },
+  pendingText: {
+    margin: 0,
+    color: TEXT,
+    fontWeight: "600",
+    fontSize: "1rem",
+  },
+  pendingSubtext: {
+    margin: 0,
+    color: "#888",
+    fontSize: "0.82rem",
+    textAlign: "center",
+  },
+};
+
+// Inject spinner animation
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+document.head.appendChild(styleSheet);
 
 export default SellStock;

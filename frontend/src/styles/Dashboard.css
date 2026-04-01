@@ -1,3 +1,9 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dashboard — Figma node 27-700
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Page Shell ───────────────────────────────────────────────────────────── */
+
 .dashboard-page {
   min-height: 100vh;
   background: var(--color-neutral-950);
@@ -5,119 +11,509 @@
 }
 
 .dashboard-main {
-  max-width: 78.125rem;
-  margin: 0 auto;
-  padding: 2.5rem 1.25rem;
-}
-
-.dashboard-greeting {
-  margin-bottom: 3rem;
-}
-
-.dashboard-greeting-title {
-  margin: 0;
-}
-
-.dashboard-section {
-  margin-bottom: 1.5rem;
-}
-
-.dashboard-divider {
-  height: 1px;
-  margin-bottom: 1.5rem;
-  background: var(--color-border-default);
-}
-
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.dashboard-section-title {
-  margin: 0;
-}
-
-.dashboard-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.dashboard-grid {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 3rem;
+  max-width: 78.125rem;
+  margin: 0 auto;
+  padding: 3rem 2rem 9rem;
 }
 
-.dashboard-card {
+/* ─── Hero Greeting ────────────────────────────────────────────────────────── */
+
+.dash-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dash-hero-title {
+  margin: 0;
+  font: 800 3.125rem / 3.125rem var(--font-sans);
+  letter-spacing: -0.1875rem;
+  color: var(--color-neutral-100);
+}
+
+.dash-hero-username {
+  color: var(--color-primary-300);
+}
+
+.dash-hero-subtitle {
+  margin: 0;
+  max-width: 42rem;
+  font: 400 1.125rem / 1.828125rem var(--font-sans);
+  color: var(--color-body);
+}
+
+.dash-hero-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+/* ─── Stats Overview (Asymmetric Grid) ─────────────────────────────────────── */
+
+.dash-stats {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Net Liquidity card */
+.dash-stats-liquidity {
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-900);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.dash-stats-liquidity-glow {
+  position: absolute;
+  top: -5.0625rem;
+  right: -5.0625rem;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 0.75rem;
+  background: rgba(144, 205, 255, 0.05);
+  filter: blur(2rem);
+  pointer-events: none;
+}
+
+.dash-stats-liquidity-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.dash-stats-liquidity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.dash-stats-liquidity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dash-currency-l {
+  font: 600 2.25rem / 2.75rem var(--font-mono);
+  color: var(--color-neutral-100);
+}
+
+/* Mini bar chart */
+.dash-bar-chart {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  height: 6rem;
+  padding-top: 3rem;
+}
+
+.dash-bar {
+  flex: 1;
+  border-radius: 0.125rem 0.125rem 0 0;
+  background: var(--color-neutral-850);
+  min-height: 0.25rem;
+}
+
+.dash-bar--active {
+  background: var(--color-primary-300);
+  box-shadow: 0 0 1.25rem rgba(144, 205, 255, 0.3);
+}
+
+/* Side stats card */
+.dash-stats-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: center;
+  padding: 3.375rem 2.0625rem;
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-850);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.dash-stats-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dash-stats-divider {
+  height: 1px;
+  background: rgba(63, 72, 81, 0.2);
+}
+
+.dash-stats-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.dash-stats-value {
+  font: 800 1.875rem / 2.25rem var(--font-sans);
+  letter-spacing: -0.09375rem;
+  color: var(--color-neutral-100);
+}
+
+.dash-stats-hint {
+  font: 500 0.875rem / 1.25rem var(--font-sans);
+}
+
+.dash-stats-hint--muted {
+  color: var(--color-body);
+}
+
+/* ─── Shared Primitives ────────────────────────────────────────────────────── */
+
+.dash-label {
+  font: 400 0.75rem / 1rem var(--font-mono);
+  text-transform: uppercase;
+  color: var(--color-body);
+  letter-spacing: 0.0625rem;
+}
+
+.dash-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font: 700 0.625rem / normal var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.0625rem;
+}
+
+.dash-chip--green {
+  background: rgba(0, 192, 118, 0.1);
+  color: var(--color-success-500);
+}
+
+.dash-chip--blue {
+  background: rgba(15, 159, 234, 0.1);
+  color: var(--color-primary-300);
+}
+
+.dash-color-success {
+  color: var(--color-success-400);
+}
+
+.dash-color-danger {
+  color: var(--color-danger-500);
+}
+
+.dash-color-primary {
+  color: var(--color-primary-300);
+}
+
+/* ─── My Tournaments Section ───────────────────────────────────────────────── */
+
+.dash-tournaments {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dash-tournaments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.dash-tournaments-heading {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-tournaments-title {
+  margin: 0;
+  font: 800 1.875rem / 2.25rem var(--font-sans);
+  letter-spacing: -0.09375rem;
+  color: var(--color-neutral-100);
+}
+
+.dash-tournaments-subtitle {
+  margin: 0;
+  font: 500 0.875rem / 1.25rem var(--font-sans);
+  color: var(--color-body);
+}
+
+.dash-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: 700 1rem / 1.5rem var(--font-sans);
+  color: var(--color-primary-300);
+}
+
+.dash-link-icon {
+  width: 1rem;
+  height: 1rem;
+  fill: var(--color-primary-300);
+}
+
+/* Tournament card scroll row */
+.dash-tournaments-scroll {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.dash-tournaments-scroll::-webkit-scrollbar {
+  height: 0.25rem;
+}
+
+.dash-tournaments-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 0.125rem;
+}
+
+/* Tournament card */
+.dash-tcard {
+  flex-shrink: 0;
+  width: 20rem;
+  min-width: 20rem;
+  height: 14.625rem;
+  display: flex;
+  flex-direction: column;
+  padding: 1.375rem 1.375rem 1.375rem 1.625rem;
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-900);
+  cursor: pointer;
+  box-shadow:
+    0 0.125rem 0.375rem rgba(0, 0, 0, 0.15),
+    0 0.0625rem 0.125rem rgba(0, 0, 0, 0.3);
+}
+
+.dash-tcard--active {
+  border-left: 0.25rem solid #03c177;
+}
+
+.dash-tcard--open {
+  border-left: 0.25rem solid var(--color-primary-500);
+}
+
+.dash-tcard-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1.25rem 1.5rem;
-  border-radius: 0.625rem;
-  background: var(--color-neutral-850);
-  border: 1px solid var(--color-border-default);
+}
+
+.dash-tcard-kebab {
+  width: 1rem;
+  height: 1rem;
+  fill: var(--color-body);
   cursor: pointer;
 }
 
-.dashboard-card-content {
+.dash-tcard-info {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.25rem;
+  margin-top: 1.3125rem;
 }
 
-.dashboard-card-title {
+.dash-tcard-name {
   margin: 0;
+  font: 700 1.125rem / 1.75rem var(--font-sans);
   color: var(--color-neutral-100);
-  font: 600 1rem/1.5rem var(--font-sans);
 }
 
-.dashboard-card-meta {
+.dash-tcard-date {
+  font: 400 0.75rem / 1rem var(--font-mono);
+  text-transform: uppercase;
+  color: var(--color-body);
+}
+
+.dash-tcard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: #0e0e0e;
+}
+
+.dash-tcard-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-tcard-stat--right {
+  align-items: flex-end;
+}
+
+.dash-tcard-stat-label {
+  font: 500 0.625rem / normal var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.0625rem;
+  color: var(--color-body);
+}
+
+.dash-tcard-stat-value {
+  font: 500 1.25rem / 1.75rem var(--font-mono);
+  color: var(--color-neutral-100);
+}
+
+.dash-tcard-stat-accent {
+  font: 700 1.125rem / 1.75rem var(--font-sans);
+}
+
+.dash-tournaments-empty {
+  padding: 3.75rem 2.5rem;
+  color: var(--color-body);
+  text-align: center;
+  font: 500 0.875rem / 1.25rem var(--font-sans);
+}
+
+.dash-tournaments-empty p {
+  margin: 0;
+}
+
+.dash-tournaments-empty p + p {
+  margin-top: 0.5rem;
+}
+
+/* ─── Market Insights (Bento Grid) ─────────────────────────────────────────── */
+
+.dash-insights {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1.5rem;
+}
+
+.dash-insights-movers,
+.dash-insights-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5625rem;
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-900);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.dash-insights-activity {
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-insights-heading {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+}
+
+.dash-insights-icon {
+  width: 1rem;
+  height: 1rem;
+  fill: var(--color-body);
+}
+
+.dash-insights-title {
   margin: 0;
+  font: 700 0.875rem / 1.25rem var(--font-sans);
+  letter-spacing: 0.04375rem;
+  color: var(--color-neutral-100);
 }
 
-.dashboard-card-meta dd {
-  margin: 0;
+/* Top Movers list */
+.dash-movers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.dashboard-meta-item {
-  color: var(--color-neutral-400);
-  font: var(--type-body-2-weight) var(--type-body-2-size) /
-    var(--type-body-2-line) var(--font-sans);
+.dash-movers-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
 }
 
-.dashboard-meta-separator {
-  color: rgba(136, 146, 156, 0.5);
+.dash-movers-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.dashboard-card-description {
-  margin: 0.25rem 0 0;
-  color: var(--color-neutral-400);
-  font: 400 0.875rem/1.25rem var(--font-sans);
+.dash-movers-symbol {
+  font: 700 0.875rem / 1.25rem var(--font-sans);
+  letter-spacing: 0.04375rem;
+  color: var(--color-primary-300);
 }
 
-.dashboard-card-actions {
+.dash-movers-name {
+  font: 500 0.875rem / 1.25rem var(--font-sans);
+  color: var(--color-neutral-100);
+}
+
+.dash-movers-change {
+  font: 600 0.875rem / 1.25rem var(--font-mono);
+}
+
+/* Recent Activity */
+.dash-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dash-activity-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.dash-activity-dot {
   flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.25rem;
+  border-radius: 50%;
 }
 
-.dashboard-empty {
-  padding: 3.75rem 2.5rem;
-  color: var(--color-neutral-400);
-  text-align: center;
+.dash-activity-dot--primary {
+  background: var(--color-primary-300);
+  box-shadow: 0 0 0.5rem rgba(144, 205, 255, 0.8);
 }
 
-.dashboard-empty p {
+.dash-activity-dot--muted {
+  background: rgba(136, 146, 156, 0.3);
+}
+
+.dash-activity-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-activity-message {
   margin: 0;
+  font: 400 0.75rem / 1rem var(--font-ui);
+  color: var(--color-neutral-100);
 }
 
-.dashboard-empty p + p {
-  margin-top: 0.5rem;
+.dash-activity-time {
+  font: 500 0.625rem / normal var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.0625rem;
+  color: var(--color-body);
+}
+
+.dash-empty-hint {
+  margin: 0;
+  font: 500 0.875rem / 1.25rem var(--font-sans);
+  color: var(--color-body);
 }

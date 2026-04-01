@@ -226,7 +226,7 @@ function UserHomeContent() {
           <div className="uh-hero-content">
             <div className="uh-chip">
               <span className="uh-chip-dot" />
-              <span className="uh-chip-text">Live Trading Floor Active</span>
+              <span className="uh-chip-text">Live Market Quotes Enabled</span>
             </div>
 
             <h1 className="uh-hero-title">
@@ -236,9 +236,9 @@ function UserHomeContent() {
             </h1>
 
             <p className="uh-hero-subtitle">
-              Compete in high-stakes simulated trading arenas. Sharpen your
-              edge, climb the leaderboard, and dominate the paper trading
-              circuit.
+              Compete in zero-risk paper-trading arenas. Sharpen your strategy,
+              climb the leaderboard, and track performance in active
+              tournaments.
             </p>
 
             <div className="uh-hero-actions">

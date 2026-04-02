@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ReactComponent as MagnifyIcon } from "../assets/Icon_16x16/Magnify_16x16.svg";
-import { ReactComponent as DropdownIcon } from "../assets/Icon_16x16/Dropdown_16x16.svg";
 import { ReactComponent as SettingIcon } from "../assets/Icon_16x16/Setting-Horizontal_16x16.svg";
 import { ReactComponent as AddIcon } from "../assets/Icon_16x16/Add_16x16.svg";
+import FilterDropdown from "./UI/FilterDropdown";
 import Button from "./UI/Button";
 import "../styles/TournamentsContent.css";
 
@@ -19,8 +19,6 @@ function TournamentsContent({ isLoggedIn = false }) {
   const [tournaments, setTournaments] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,17 +28,6 @@ function TournamentsContent({ isLoggedIn = false }) {
         if (Array.isArray(data)) setTournaments(data);
       })
       .catch((err) => console.error("Error fetching tournaments:", err));
-  }, []);
-
-  /* Close dropdown on outside click */
-  useEffect(() => {
-    function handleClick(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   const filtered = tournaments.filter((t) => {
@@ -59,8 +46,6 @@ function TournamentsContent({ isLoggedIn = false }) {
     (sum, t) => sum + (t.starting_balance || 0),
     0,
   );
-
-  const currentOption = STATUS_OPTIONS.find((o) => o.value === statusFilter);
 
   function formatDate(dateStr) {
     if (!dateStr) return "";
@@ -140,42 +125,12 @@ function TournamentsContent({ isLoggedIn = false }) {
 
         <div className="vtc-filter-actions">
           {/* Status dropdown */}
-          <div className="vtc-dropdown-wrap" ref={dropdownRef}>
-            <button
-              className="vtc-dropdown-trigger"
-              onClick={() => setDropdownOpen((v) => !v)}
-            >
-              <span
-                className="vtc-dropdown-label"
-                style={
-                  currentOption?.color
-                    ? { color: currentOption.color }
-                    : undefined
-                }
-              >
-                {currentOption?.label}
-              </span>
-              <DropdownIcon className="vtc-dropdown-chevron" />
-            </button>
-
-            {dropdownOpen && (
-              <div className="vtc-dropdown-menu">
-                {STATUS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    className={`vtc-dropdown-option ${statusFilter === opt.value ? "vtc-dropdown-option--selected" : ""}`}
-                    style={opt.color ? { color: opt.color } : undefined}
-                    onClick={() => {
-                      setStatusFilter(opt.value);
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <FilterDropdown
+            value={statusFilter}
+            options={STATUS_OPTIONS}
+            onChange={setStatusFilter}
+            className="vtc-dropdown-wrap"
+          />
 
           {/* Settings / advanced filter button */}
           <button className="vtc-settings-btn" aria-label="Filter settings">

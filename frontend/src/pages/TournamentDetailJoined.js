@@ -5,8 +5,7 @@
  * leaderboard, trading console sidebar, holdings, and community discussion.
  */
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
 import StockSearchDropdown from "../components/StockSearchDropdown";
@@ -19,7 +18,20 @@ import { ReactComponent as CancelIcon } from "../assets/Icon_16x16/Cancel_16x16.
 import { ReactComponent as ShareIcon } from "../assets/Icon_16x16/Share_16x16.svg";
 import { ReactComponent as ArrowRiseIcon } from "../assets/Icon_16x16/Arrow-Rise_16x16.svg";
 import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Default_32x32.svg";
+import { ReactComponent as ThumbsupIcon } from "../assets/Icon_Others/Thumbsup.svg";
+import { ReactComponent as ReplyIcon } from "../assets/Icon_Others/Reply.svg";
 import "../styles/TournamentDetail.css";
+
+const discussionComments = [
+  {
+    id: "comment-1",
+    author: "Quant_Prophet",
+    timeAgo: "2 HOURS AGO",
+    body: "NVDA is looking extremely strong on the daily. My strategy here is simple: hold the core position and trade around the volatility. Good luck everyone!",
+    likes: 24,
+    likedByMe: false,
+  },
+];
 
 function formatCurrency(amount) {
   return Number(amount).toLocaleString("en-US", {
@@ -65,10 +77,18 @@ function TournamentDetailJoined({
   handleDeleteTournament,
   refreshParticipants,
 }) {
-  const navigate = useNavigate();
   const [selectedStock, setSelectedStock] = useState(null);
   const [tradeAmount, setTradeAmount] = useState("");
   const [commentText, setCommentText] = useState("");
+  const [debugComments, setDebugComments] = useState(discussionComments);
+  const [isBuyConfirmOpen, setIsBuyConfirmOpen] = useState(false);
+  const [submittingBuy, setSubmittingBuy] = useState(false);
+  const [buyError, setBuyError] = useState("");
+  const [isSellConfirmOpen, setIsSellConfirmOpen] = useState(false);
+  const [sellTargetHolding, setSellTargetHolding] = useState(null);
+  const [submittingSell, setSubmittingSell] = useState(false);
+  const [sellError, setSellError] = useState("");
+  const commentInputRef = useRef(null);
 
   const cashBalance = myParticipant?.cash_balance ?? 0;
   const holdings = myParticipant?.holdings || [];
@@ -94,13 +114,179 @@ function TournamentDetailJoined({
     setTradeAmount(((cashBalance * pct) / 100).toFixed(2));
   }
 
-  function handleExecuteBuy() {
-    if (selectedStock && tradeAmount > 0) {
-      navigate(`/tournaments/${id}/buy/${selectedStock.symbol}`, {
-        state: { amount: tradeAmount },
-      });
+  function handleToggleLike(commentId) {
+    setDebugComments((prev) =>
+      prev.map((comment) => {
+        if (comment.id !== commentId) return comment;
+        const likedByMe = !comment.likedByMe;
+        return {
+          ...comment,
+          likedByMe,
+          likes: Math.max(0, comment.likes + (likedByMe ? 1 : -1)),
+        };
+      }),
+    );
+  }
+
+  function handleReply(comment) {
+    const mention = `@${comment.author} `;
+    setCommentText((prev) =>
+      prev.trimStart().startsWith(mention.trim()) ? prev : `${mention}${prev}`,
+    );
+    if (commentInputRef.current) {
+      commentInputRef.current.focus();
+      commentInputRef.current.setSelectionRange(mention.length, mention.length);
     }
   }
+
+  async function pollUntilExecuted(queueId) {
+    return new Promise((resolve) => {
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(
+            `http://localhost:5000/api/tournaments/${id}/trades/queue`,
+            { headers: { Authorization: token } },
+          );
+          const pending = await res.json();
+          const stillPending = pending.some((t) => t._id === queueId);
+          if (!stillPending) {
+            clearInterval(interval);
+            resolve();
+          }
+        } catch (err) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 1000);
+    });
+  }
+
+  function handleExecuteBuy() {
+    if (!selectedStock || Number(tradeAmount) <= 0) return;
+    setBuyError("");
+    setIsBuyConfirmOpen(true);
+  }
+
+  async function handleConfirmBuySubmit() {
+    const amount = parseFloat(tradeAmount);
+    if (!selectedStock || !amount || amount <= 0) return;
+    if (amount > cashBalance) {
+      setBuyError("Amount exceeds your available cash balance.");
+      return;
+    }
+
+    setSubmittingBuy(true);
+    setBuyError("");
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/tournaments/${id}/trades`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: token },
+          body: JSON.stringify({
+            symbol: selectedStock.symbol.toUpperCase(),
+            side: "buy",
+            dollar_amount: amount,
+          }),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setBuyError(data.message || "Failed to queue trade.");
+        setSubmittingBuy(false);
+        return;
+      }
+
+      await pollUntilExecuted(data.queueId);
+      window.location.reload();
+    } catch (err) {
+      setBuyError("Server error. Please try again.");
+      setSubmittingBuy(false);
+    }
+  }
+
+  function openSellModal(holding) {
+    setSellError("");
+    setSellTargetHolding(holding);
+    setIsSellConfirmOpen(true);
+  }
+
+  function getSellStockInfo(holding) {
+    if (!holding) return null;
+    return stocks.find((s) => s.symbol === holding.symbol) || null;
+  }
+
+  function getSellDollarAmount(holding, stockInfo) {
+    if (!holding) return 0;
+    if (stockInfo?.price && holding.shares) {
+      return Number(stockInfo.price) * Number(holding.shares);
+    }
+    return Number(holding.amount_invested || 0);
+  }
+
+  async function handleConfirmSellSubmit() {
+    if (!sellTargetHolding) return;
+
+    const stockInfo = getSellStockInfo(sellTargetHolding);
+    const dollarAmount = getSellDollarAmount(sellTargetHolding, stockInfo);
+
+    if (!dollarAmount || dollarAmount <= 0) {
+      setSellError("Unable to calculate liquidation amount.");
+      return;
+    }
+
+    setSubmittingSell(true);
+    setSellError("");
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/tournaments/${id}/trades`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: token },
+          body: JSON.stringify({
+            symbol: sellTargetHolding.symbol.toUpperCase(),
+            side: "sell",
+            dollar_amount: dollarAmount,
+          }),
+        },
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSellError(data.message || "Failed to queue sell trade.");
+        setSubmittingSell(false);
+        return;
+      }
+
+      await pollUntilExecuted(data.queueId);
+      window.location.reload();
+    } catch (err) {
+      setSellError("Server error. Please try again.");
+      setSubmittingSell(false);
+    }
+  }
+
+  const investAmount = parseFloat(tradeAmount) || 0;
+  const estimatedShares =
+    selectedStock?.price && investAmount > 0
+      ? (investAmount / selectedStock.price).toFixed(3)
+      : "0.000";
+
+  const sellStockInfo = getSellStockInfo(sellTargetHolding);
+  const sellDollarAmount = getSellDollarAmount(
+    sellTargetHolding,
+    sellStockInfo,
+  );
+  const sellShares = Number(sellTargetHolding?.shares || 0);
+  const sellChangePct = Number(sellStockInfo?.changePct);
+  const sellChangeText = Number.isFinite(sellChangePct)
+    ? `${sellChangePct >= 0 ? "+" : ""}${sellChangePct.toFixed(1)}% Today`
+    : "-- Today";
 
   return (
     <div className="td-page">
@@ -169,12 +355,9 @@ function TournamentDetailJoined({
             <div className="td-bento">
               <div className="td-bento-card td-bento-card--ranking">
                 <span className="td-bento-label">Current Ranking</span>
-                <span className="td-bento-big-value">
-                  #{myRank || "--"}
-                </span>
+                <span className="td-bento-big-value">#{myRank || "--"}</span>
                 {myRank > 0 &&
-                  myRank <=
-                    Math.ceil(participants.length * 0.05) && (
+                  myRank <= Math.ceil(participants.length * 0.05) && (
                     <span className="td-bento-sub td-bento-sub--green">
                       <ArrowRiseIcon className="td-bento-sub-icon" />
                       Top 5%
@@ -195,9 +378,7 @@ function TournamentDetailJoined({
               </div>
               <div className="td-bento-card">
                 <span className="td-bento-label">Total Trades</span>
-                <span className="td-bento-big-value">
-                  {holdings.length}
-                </span>
+                <span className="td-bento-big-value">{holdings.length}</span>
                 <span className="td-bento-sub td-bento-sub--muted">
                   Win Rate: --
                 </span>
@@ -207,9 +388,7 @@ function TournamentDetailJoined({
             {/* Leaderboard */}
             <section className="td-leaderboard">
               <div className="td-leaderboard-header">
-                <h2 className="td-leaderboard-title">
-                  Tournament Leaderboard
-                </h2>
+                <h2 className="td-leaderboard-title">Tournament Leaderboard</h2>
                 <div className="td-leaderboard-actions">
                   <button
                     type="button"
@@ -239,8 +418,7 @@ function TournamentDetailJoined({
                 <div className="td-table-body">
                   {participants.map((p, i) => {
                     const isMe =
-                      user &&
-                      (p.user?._id === user.id || p.user === user.id);
+                      user && (p.user?._id === user.id || p.user === user.id);
                     const rank = i + 1;
                     return (
                       <div
@@ -282,28 +460,73 @@ function TournamentDetailJoined({
             {/* Community Discussion */}
             <section className="td-discussion">
               <div className="td-discussion-header">
-                <h2 className="td-leaderboard-title">
-                  Community Discussion
-                </h2>
+                <h2 className="td-leaderboard-title">Community Discussion</h2>
               </div>
               <div className="td-comment-input-area">
                 <ProfileIcon className="td-avatar" />
                 <div className="td-comment-input-wrap">
                   <textarea
+                    ref={commentInputRef}
                     className="td-comment-textarea"
                     placeholder="Share your strategies or thoughts..."
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                   />
                   <div className="td-comment-submit-row">
-                    <Button variant="primary" size="small">
+                    <Button
+                      variant="primary"
+                      size="small"
+                      className="td-comment-post-btn"
+                    >
                       Post Comment
                     </Button>
                   </div>
                 </div>
               </div>
-              <div className="td-comments-empty">
-                No comments yet. Start the conversation!
+
+              <div className="td-comments-list">
+                {debugComments.map((comment) => (
+                  <article key={comment.id} className="td-comment-card">
+                    <ProfileIcon className="td-avatar" />
+                    <div className="td-comment-content">
+                      <header className="td-comment-top">
+                        <p className="td-comment-author">{comment.author}</p>
+                        <time className="td-comment-time">
+                          {comment.timeAgo}
+                        </time>
+                      </header>
+                      <p className="td-comment-body">{comment.body}</p>
+                      <div className="td-comment-actions">
+                        <button
+                          type="button"
+                          className="td-comment-action-btn"
+                          onClick={() => handleToggleLike(comment.id)}
+                          aria-label={`Like comment from ${comment.author}`}
+                        >
+                          <ThumbsupIcon className="td-comment-action-icon td-comment-action-icon--thumb" />
+                          <span className="td-comment-like-count">
+                            {comment.likes}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="td-comment-action-btn"
+                          onClick={() => handleReply(comment)}
+                          aria-label={`Reply to ${comment.author}`}
+                        >
+                          <ReplyIcon className="td-comment-action-icon td-comment-action-icon--reply" />
+                          <span className="td-comment-reply-text">Reply</span>
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className="td-discussion-footer">
+                <button type="button" className="td-discussion-load-more">
+                  Load More Comments
+                </button>
               </div>
             </section>
           </div>
@@ -377,10 +600,20 @@ function TournamentDetailJoined({
                   variant="primary"
                   className="td-trade-submit"
                   onClick={handleExecuteBuy}
-                  disabled={!selectedStock || !tradeAmount}
+                  disabled={
+                    !selectedStock ||
+                    !tradeAmount ||
+                    Number(tradeAmount) <= 0 ||
+                    Number(tradeAmount) > cashBalance
+                  }
                 >
                   Execute Buy Order
                 </Button>
+                {Number(tradeAmount) > cashBalance && (
+                  <p className="td-trade-error">
+                    Amount exceeds available cash.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -399,9 +632,7 @@ function TournamentDetailJoined({
               <div className="td-holdings-list">
                 {holdings.length > 0 ? (
                   holdings.map((h) => {
-                    const stockInfo = stocks.find(
-                      (s) => s.symbol === h.symbol,
-                    );
+                    const stockInfo = stocks.find((s) => s.symbol === h.symbol);
                     const isPositive = true;
                     return (
                       <div
@@ -433,11 +664,8 @@ function TournamentDetailJoined({
                           <button
                             type="button"
                             className="td-holding-sell-btn"
-                            onClick={() =>
-                              navigate(
-                                `/tournaments/${id}/sell/${h.symbol}`,
-                              )
-                            }
+                            onClick={() => openSellModal(h)}
+                            aria-label={`Sell ${h.symbol}`}
                           >
                             <ShareIcon />
                           </button>
@@ -464,6 +692,163 @@ function TournamentDetailJoined({
           </div>
         </div>
       </main>
+
+      {isBuyConfirmOpen && (
+        <div className="td-modal-overlay" role="dialog" aria-modal="true">
+          <div className="td-buy-modal">
+            <div className="td-buy-modal-header">
+              <h2 className="td-buy-modal-title">Confirm Buy Order</h2>
+              <p className="td-buy-modal-subtitle">
+                Review your transaction before execution
+              </p>
+            </div>
+
+            <div className="td-buy-modal-content">
+              <div className="td-buy-stock-summary">
+                <div>
+                  <p className="td-buy-stock-symbol">{selectedStock?.symbol}</p>
+                  <p className="td-buy-stock-name">{selectedStock?.name}</p>
+                </div>
+                <div className="td-buy-current-price-wrap">
+                  <p className="td-buy-current-price-label">Current Price</p>
+                  <p className="td-buy-current-price-value">
+                    ${formatCurrency(selectedStock?.price || 0)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="td-buy-details">
+                <div className="td-buy-detail-row">
+                  <span>Amount to Invest</span>
+                  <span>${formatCurrency(investAmount)}</span>
+                </div>
+                <div className="td-buy-detail-row">
+                  <span>Estimated Shares</span>
+                  <span>{estimatedShares} shares</span>
+                </div>
+                <div className="td-buy-detail-row">
+                  <span>Transaction Fee</span>
+                  <span className="td-buy-fee">$0.00 (Paper Account)</span>
+                </div>
+              </div>
+
+              <div className="td-buy-total-row">
+                <span>Total Cost</span>
+                <span className="td-buy-total-value">
+                  ${formatCurrency(investAmount)}
+                </span>
+              </div>
+            </div>
+
+            <div className="td-buy-modal-actions">
+              <Button
+                variant="primary"
+                className="td-buy-confirm-btn"
+                onClick={handleConfirmBuySubmit}
+                disabled={submittingBuy}
+              >
+                {submittingBuy ? "Submitting..." : "Confirm & Submit"}
+              </Button>
+              <button
+                type="button"
+                className="td-buy-cancel-btn"
+                onClick={() => {
+                  if (!submittingBuy) {
+                    setIsBuyConfirmOpen(false);
+                    setBuyError("");
+                  }
+                }}
+                disabled={submittingBuy}
+              >
+                Cancel
+              </button>
+              {buyError && <p className="td-buy-error">{buyError}</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isSellConfirmOpen && (
+        <div className="td-modal-overlay" role="dialog" aria-modal="true">
+          <div className="td-sell-modal">
+            <div className="td-sell-modal-header">
+              <h2 className="td-sell-modal-title">Confirm Sell Order</h2>
+              <p className="td-sell-modal-subtitle">
+                Review your transaction before execution
+              </p>
+            </div>
+
+            <div className="td-sell-modal-content">
+              <div className="td-sell-stock-summary">
+                <div>
+                  <p className="td-sell-stock-symbol">
+                    {sellTargetHolding?.symbol}
+                  </p>
+                  <p className="td-sell-stock-name">
+                    {sellStockInfo?.name || ""}
+                  </p>
+                </div>
+                <div className="td-sell-current-price-wrap">
+                  <p className="td-sell-current-price-value">
+                    ${formatCurrency(sellStockInfo?.price || 0)}
+                  </p>
+                  <p className="td-sell-current-price-change">
+                    {sellChangeText}
+                  </p>
+                </div>
+              </div>
+
+              <div className="td-sell-details">
+                <div className="td-sell-detail-row">
+                  <span>Shares to Sell</span>
+                  <span>{sellShares.toFixed(2)}</span>
+                </div>
+                <div className="td-sell-detail-row">
+                  <span>Estimated Proceeds</span>
+                  <span>${formatCurrency(sellDollarAmount)}</span>
+                </div>
+                <div className="td-sell-detail-row">
+                  <span>Transaction Fee</span>
+                  <span className="td-sell-fee">Paper Account ($0.00)</span>
+                </div>
+              </div>
+
+              <div className="td-sell-total-inset">
+                <p className="td-sell-total-label">Total Liquidation Value</p>
+                <p className="td-sell-total-value">
+                  ${formatCurrency(sellDollarAmount)}
+                </p>
+              </div>
+            </div>
+
+            <div className="td-sell-modal-actions">
+              <Button
+                variant="cancel"
+                className="td-sell-confirm-btn"
+                headIcon={<ShareIcon />}
+                onClick={handleConfirmSellSubmit}
+                disabled={submittingSell}
+              >
+                {submittingSell ? "Submitting..." : "Confirm & Sell"}
+              </Button>
+              <button
+                type="button"
+                className="td-sell-cancel-btn"
+                onClick={() => {
+                  if (!submittingSell) {
+                    setIsSellConfirmOpen(false);
+                    setSellError("");
+                  }
+                }}
+                disabled={submittingSell}
+              >
+                Cancel
+              </button>
+              {sellError && <p className="td-sell-error">{sellError}</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

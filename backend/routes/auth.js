@@ -8,6 +8,10 @@ const verifyToken = require("../middleware/authMiddleware");
 // register
 router.post("/register", async (req, res) => {
   try {
+    // TODO(tier-1 user-model): Accept and persist email from req.body.
+    // - Destructure email alongside username/password.
+    // - Add a duplicate-email check (case-insensitive) before saving.
+    // - Pass email when constructing newUser so it is stored in MongoDB.
     const { username, password } = req.body;
 
     // 1. check if user already exists
@@ -259,3 +263,21 @@ router.patch("/profile/password", verifyToken, async (req, res) => {
 });
 
 module.exports = router;
+
+// TODO(tier-1 password-reset): Implement email-based password recovery.
+// 1. POST /forgot-password
+//    - Accept { email } from req.body.
+//    - Look up user by email; respond with a generic success message regardless
+//      (avoids leaking whether the email is registered).
+//    - Generate a crypto.randomBytes token, hash it, and store the hash + expiry
+//      (e.g., resetToken + resetTokenExpiry) on the User document.
+//    - Send the raw token to the user's email via Nodemailer.
+//      Use a transporter configured from env vars (EMAIL_HOST, EMAIL_PORT,
+//      EMAIL_USER, EMAIL_PASS).
+// 2. POST /reset-password
+//    - Accept { token, newPassword } from req.body.
+//    - Hash the incoming token and look up a User where the stored hash matches
+//      and resetTokenExpiry > Date.now().
+//    - Hash newPassword with bcrypt, save it, and clear the reset fields.
+//    - Return a success message so the frontend can redirect to /login.
+// 3. Add resetToken (String) and resetTokenExpiry (Date) fields to the User model.

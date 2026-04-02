@@ -139,11 +139,9 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     if (end - start < 60000) {
-      return res
-        .status(400)
-        .json({
-          message: "End time must be at least 1 minute after start time",
-        });
+      return res.status(400).json({
+        message: "End time must be at least 1 minute after start time",
+      });
     }
 
     const tournament = new Tournament({
@@ -220,6 +218,13 @@ router.delete("/:id/leave", verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// TODO(tier-2 tournament-edit): Add PATCH /:id — owner-only edit before tournament starts.
+// - Verify the requesting user is the owner.
+// - Only allow edits when tournament.status === "open" (not yet started).
+// - Accept any subset of: { name, description, start_date, end_date, starting_balance }.
+// - Validate that the updated start_date is still in the future and end_date > start_date.
+// - Save and return the updated tournament document.
 
 // PATCH close/reopen — owner only
 router.patch("/:id/close", verifyToken, async (req, res) => {

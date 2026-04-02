@@ -22,6 +22,17 @@ import { ReactComponent as ThumbsupIcon } from "../assets/Icon_Others/Thumbsup.s
 import { ReactComponent as ReplyIcon } from "../assets/Icon_Others/Reply.svg";
 import "../styles/TournamentDetail.css";
 
+// TODO(tier-1 comments): Replace hardcoded discussionComments with real API data.
+// Backend steps needed first:
+//   1. Create a Comment model: { tournamentId, userId, text, createdAt }
+//   2. Add POST /api/tournaments/:id/comments  (auth required)
+//   3. Add GET  /api/tournaments/:id/comments  (public)
+// Frontend steps:
+//   - On mount, fetch GET /api/tournaments/:id/comments and setDebugComments(data)
+//   - On "Post Comment" click, POST the commentText to the API, then refetch or
+//     append the returned comment to state.
+//   - Clear commentText after a successful post.
+//   - Show real author name, avatar, and createdAt timestamp from the API response.
 const discussionComments = [
   {
     id: "comment-1",
@@ -525,6 +536,7 @@ function TournamentDetailJoined({
                       variant="primary"
                       size="small"
                       className="td-comment-post-btn"
+                      // TODO(tier-1 comments): Wire onClick to POST /api/tournaments/:id/comments
                     >
                       Post Comment
                     </Button>

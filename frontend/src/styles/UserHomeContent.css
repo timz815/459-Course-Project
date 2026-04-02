@@ -135,10 +135,6 @@
   color: #cbe6ff;
 }
 
-.uh-section-title.primary {
-  color: var(--color-primary-300);
-}
-
 .uh-view-all {
   display: inline-flex;
   align-items: center;

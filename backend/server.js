@@ -6,6 +6,7 @@ const authRoutes = require("./routes/auth");
 const tournamentRoutes = require("./routes/tournaments");
 const stockRoutes = require("./routes/stocks");
 const tradeRoutes = require("./routes/trades");
+const userRoutes = require("./routes/users"); // ← new
 const { startPriceQueue } = require("./utils/priceQueue");
 
 const app = express();
@@ -25,10 +26,7 @@ async function connectDB() {
     await mongoose.connection.db.admin().command({ ping: 1 });
     console.log("✅ Pinged the db. You successfully connected to MongoDB!");
 
-    // Volume refresh via Polygon — runs on start then daily at 6am ET
     stockRoutes.startVolumeJob();
-
-    // Intraday price queue + trade execution — Finnhub, runs every 15 min ET window
     startPriceQueue();
   } catch (err) {
     console.error("❌ Connection failed:", err);
@@ -41,6 +39,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/tournaments", tradeRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/stocks", stockRoutes);
+app.use("/api/users", userRoutes); // ← new
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

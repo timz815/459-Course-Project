@@ -17,19 +17,48 @@ const express = require("express");
 const router = express.Router();
 const Tournament = require("../models/Tournament");
 const Participant = require("../models/Participant");
+const Trade = require("../models/Trade");
+const TradeQueue = require("../models/TradeQueue");
 const verifyToken = require("../middleware/authMiddleware");
+const verifyAdmin = require("../middleware/adminMiddleware");
 
-// GET all tournaments (public)
+// GET all tournaments — enriched for admin
 router.get("/", async (req, res) => {
   try {
-    const tournaments = await Tournament.find().sort({ createdAt: -1 });
+    const token = req.header("Authorization");
+    let isAdmin = false;
+
+    if (token) {
+      try {
+        const jwt = require("jsonwebtoken");
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallbackSecret");
+        isAdmin = decoded.role === "admin";
+      } catch {
+        // invalid token, treat as public
+      }
+    }
+
+    const tournaments = await Tournament.find()
+      .populate(isAdmin ? "owner" : "")
+      .sort({ createdAt: -1 });
+
+    if (isAdmin) {
+      const withCounts = await Promise.all(
+        tournaments.map(async (t) => {
+          const count = await Participant.countDocuments({ tournament: t._id });
+          return { ...t.toObject(), participantCount: count };
+        })
+      );
+      return res.json(withCounts);
+    }
+
     res.json(tournaments);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET my tournaments (created by me)
+// GET my tournaments
 router.get("/my-tournaments", verifyToken, async (req, res) => {
   try {
     const tournaments = await Tournament.find({ owner: req.userId }).sort({ createdAt: -1 });
@@ -39,36 +68,28 @@ router.get("/my-tournaments", verifyToken, async (req, res) => {
   }
 });
 
-// GET single tournament by ID
+// GET single tournament
 router.get("/:id", async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id).populate("owner", "username");
     if (!tournament) return res.status(404).json({ message: "Tournament not found" });
 
     const now = new Date();
-    
-    // Parse dates properly to ensure comparison works
     const startDate = new Date(tournament.start_date);
     const endDate = new Date(tournament.end_date);
-
     let modified = false;
 
-    // Auto-activate when start date passes (check if start date has passed and status is open)
     if (now >= startDate && tournament.status === "open") {
       tournament.status = "active";
       modified = true;
     }
 
-    // Auto-end when end date passes (check if end date has passed and status is not already ended)
     if (now >= endDate && tournament.status !== "ended") {
       tournament.status = "ended";
       modified = true;
     }
 
-    // Only save if we actually modified the status
-    if (modified) {
-      await tournament.save();
-    }
+    if (modified) await tournament.save();
 
     res.json(tournament);
   } catch (err) {
@@ -76,7 +97,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// GET participants for a tournament
+// GET participants
 router.get("/:id/participants", async (req, res) => {
   try {
     const participants = await Participant.find({ tournament: req.params.id })
@@ -88,31 +109,27 @@ router.get("/:id/participants", async (req, res) => {
   }
 });
 
-// POST create a new tournament
+// POST create tournament
 router.post("/", verifyToken, async (req, res) => {
   try {
     const { start_date, end_date, name, starting_balance, description } = req.body;
-    
-    // Validate required fields
+
     if (!name || !start_date || !end_date || starting_balance === undefined) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    
+
     const now = new Date();
     const start = new Date(start_date);
     const end = new Date(end_date);
-    
-    // Check if start is in the past
+
     if (start < now) {
       return res.status(400).json({ message: "Start time cannot be in the past" });
     }
-    
-    // Check if end is at least 1 minute after start
-    const diffMs = end - start;
-    if (diffMs < 60000) {
+
+    if (end - start < 60000) {
       return res.status(400).json({ message: "End time must be at least 1 minute after start time" });
     }
-    
+
     const tournament = new Tournament({
       owner: req.userId,
       name,
@@ -123,7 +140,6 @@ router.post("/", verifyToken, async (req, res) => {
     });
     await tournament.save();
 
-    // Automatically add creator as participant
     const participant = new Participant({
       tournament: tournament._id,
       user: req.userId,
@@ -137,27 +153,18 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-// POST join a tournament
+// POST join
 router.post("/:id/join", verifyToken, async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id);
-
-    if (!tournament) {
-      return res.status(404).json({ message: "Tournament not found" });
-    }
+    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
 
     if (tournament.status === "closed" || tournament.status === "ended") {
       return res.status(403).json({ message: "This tournament is no longer accepting players." });
     }
 
-    const existing = await Participant.findOne({
-      tournament: req.params.id,
-      user: req.userId,
-    });
-    
-    if (existing) {
-      return res.status(400).json({ message: "You have already joined this tournament." });
-    }
+    const existing = await Participant.findOne({ tournament: req.params.id, user: req.userId });
+    if (existing) return res.status(400).json({ message: "You have already joined this tournament." });
 
     const participant = new Participant({
       tournament: req.params.id,
@@ -172,38 +179,30 @@ router.post("/:id/join", verifyToken, async (req, res) => {
   }
 });
 
-// DELETE leave a tournament
+// DELETE leave
 router.delete("/:id/leave", verifyToken, async (req, res) => {
   try {
     const participant = await Participant.findOneAndDelete({
       tournament: req.params.id,
       user: req.userId,
     });
-
-    if (!participant) {
-      return res.status(404).json({ message: "You are not in this tournament." });
-    }
-
+    if (!participant) return res.status(404).json({ message: "You are not in this tournament." });
     res.json({ message: "You have left the tournament." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// PATCH close/reopen a tournament (owner only)
+// PATCH close/reopen — owner only
 router.patch("/:id/close", verifyToken, async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id);
-
-    if (!tournament) {
-      return res.status(404).json({ message: "Tournament not found" });
-    }
+    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
 
     if (tournament.owner.toString() !== req.userId) {
       return res.status(403).json({ message: "Only the owner can close this tournament." });
     }
 
-    // Toggle between open and closed
     tournament.status = tournament.status === "closed" ? "open" : "closed";
     await tournament.save();
 
@@ -213,24 +212,40 @@ router.patch("/:id/close", verifyToken, async (req, res) => {
   }
 });
 
-// DELETE a tournament (owner only)
+// DELETE — owner only
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id);
-
-    if (!tournament) {
-      return res.status(404).json({ message: "Tournament not found" });
-    }
+    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
 
     if (tournament.owner.toString() !== req.userId) {
       return res.status(403).json({ message: "Forbidden: You do not own this tournament." });
     }
 
-    // Cascade delete participants
     await Participant.deleteMany({ tournament: req.params.id });
     await Tournament.findByIdAndDelete(req.params.id);
 
     res.json({ message: "Tournament deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE — admin force-delete
+router.delete("/admin/:id", verifyAdmin, async (req, res) => {
+  try {
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
+
+    await Promise.all([
+      Participant.deleteMany({ tournament: req.params.id }),
+      Trade.deleteMany({ tournament: req.params.id }),
+      TradeQueue.deleteMany({ tournament: req.params.id }),
+    ]);
+
+    await Tournament.findByIdAndDelete(req.params.id);
+
+    res.json({ message: `Tournament "${tournament.name}" deleted.` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

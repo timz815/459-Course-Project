@@ -33,10 +33,14 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  // TODO: Add API route to update accountBalance when trades are executed
   accountBalance: {
     type: Number,
     default: 100000,
+  },
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
   },
 });
 

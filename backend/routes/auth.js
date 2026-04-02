@@ -82,6 +82,7 @@ function generateToken(user) {
       email: user.email || "",
       avatarUrl: user.avatarUrl || "",
       accountBalance: user.accountBalance,
+      role: user.role || "user",
     },
     process.env.JWT_SECRET || "fallbackSecret",
     { expiresIn: "1h" },

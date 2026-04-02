@@ -18,6 +18,7 @@
 const express = require("express");
 const router = express.Router();
 const Stock = require("../models/Stock");
+const verifyAdmin = require("../middleware/adminMiddleware");
 const { isEasternDST } = require("../utils/marketHours");
 
 const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
@@ -48,9 +49,9 @@ async function fetchPrevDay(symbol) {
 
     const result = data.results[0];
     return {
-      volume:    result.v  ?? null,
-      close:     result.c  ?? null,
-      timestamp: result.t  ?? null, // Unix ms timestamp for start of that day
+      volume: result.v ?? null,
+      close: result.c ?? null,
+      timestamp: result.t ?? null, // Unix ms timestamp for start of that day
     };
   } catch (err) {
     console.error(`[DailyJob] Error fetching ${symbol}:`, err.message);
@@ -89,9 +90,10 @@ async function refreshAllDailyData() {
         let updatedHistory = [...history3M];
         if (close !== null && timestamp !== null) {
           // Avoid duplicates — don't append if last entry has the same timestamp
-          const lastTs = updatedHistory.length > 0
-            ? updatedHistory[updatedHistory.length - 1][0]
-            : null;
+          const lastTs =
+            updatedHistory.length > 0
+              ? updatedHistory[updatedHistory.length - 1][0]
+              : null;
 
           if (lastTs !== timestamp) {
             updatedHistory.push([timestamp, close]);
@@ -108,14 +110,14 @@ async function refreshAllDailyData() {
           {
             $set: {
               volume,
-              history3M:        updatedHistory,
+              history3M: updatedHistory,
               historyUpdatedAt: new Date(),
             },
-          }
+          },
         );
 
         console.log(
-          `[DailyJob] ✓ ${symbol} — vol: ${volume}, close: $${close}, history: ${updatedHistory.length} candles`
+          `[DailyJob] ✓ ${symbol} — vol: ${volume}, close: $${close}, history: ${updatedHistory.length} candles`,
         );
       }
 
@@ -200,7 +202,9 @@ router.get("/:symbol", async (req, res) => {
     if (!stock) {
       return res
         .status(404)
-        .json({ message: `Stock ${req.params.symbol.toUpperCase()} not found` });
+        .json({
+          message: `Stock ${req.params.symbol.toUpperCase()} not found`,
+        });
     }
     res.json(stock);
   } catch (err) {
@@ -209,4 +213,107 @@ router.get("/:symbol", async (req, res) => {
 });
 
 router.startVolumeJob = startVolumeJob;
+
+// ─── Admin Stock Management ───────────────────────────────────────────────────
+
+// POST /api/stocks/admin — add a new stock
+router.post("/admin", verifyAdmin, async (req, res) => {
+  try {
+    const { symbol, name, sector, industry, exchange } = req.body;
+
+    if (!symbol || !name || !sector || !industry || !exchange) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "All fields required: symbol, name, sector, industry, exchange",
+        });
+    }
+
+    if (!["NASDAQ", "NYSE"].includes(exchange.toUpperCase())) {
+      return res
+        .status(400)
+        .json({ message: "Exchange must be NASDAQ or NYSE" });
+    }
+
+    const existing = await Stock.findOne({ symbol: symbol.toUpperCase() });
+    if (existing) {
+      return res
+        .status(409)
+        .json({ message: `Stock ${symbol.toUpperCase()} already exists` });
+    }
+
+    const stock = new Stock({
+      symbol: symbol.toUpperCase(),
+      name,
+      sector,
+      industry,
+      exchange: exchange.toUpperCase(),
+    });
+    await stock.save();
+
+    res.status(201).json({ message: `Stock ${stock.symbol} added.`, stock });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/stocks/admin/:symbol — edit stock metadata
+router.patch("/admin/:symbol", verifyAdmin, async (req, res) => {
+  try {
+    const { name, sector, industry, exchange } = req.body;
+    const updates = {};
+    if (name) updates.name = name;
+    if (sector) updates.sector = sector;
+    if (industry) updates.industry = industry;
+    if (exchange) {
+      if (!["NASDAQ", "NYSE"].includes(exchange.toUpperCase())) {
+        return res
+          .status(400)
+          .json({ message: "Exchange must be NASDAQ or NYSE" });
+      }
+      updates.exchange = exchange.toUpperCase();
+    }
+
+    const stock = await Stock.findOneAndUpdate(
+      { symbol: req.params.symbol.toUpperCase() },
+      { $set: updates },
+      { new: true },
+    );
+
+    if (!stock) {
+      return res
+        .status(404)
+        .json({
+          message: `Stock ${req.params.symbol.toUpperCase()} not found`,
+        });
+    }
+
+    res.json({ message: `Stock ${stock.symbol} updated.`, stock });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/stocks/admin/:symbol — remove stock
+router.delete("/admin/:symbol", verifyAdmin, async (req, res) => {
+  try {
+    const stock = await Stock.findOneAndDelete({
+      symbol: req.params.symbol.toUpperCase(),
+    });
+
+    if (!stock) {
+      return res
+        .status(404)
+        .json({
+          message: `Stock ${req.params.symbol.toUpperCase()} not found`,
+        });
+    }
+
+    res.json({ message: `Stock ${stock.symbol} deleted.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

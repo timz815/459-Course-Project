@@ -48,6 +48,38 @@ function formatDate(dateStr) {
   });
 }
 
+function mergeHoldingsBySymbol(holdings) {
+  const merged = new Map();
+
+  for (const holding of holdings || []) {
+    const symbol = holding?.symbol?.toUpperCase?.();
+    if (!symbol) continue;
+
+    const existing = merged.get(symbol);
+    if (existing) {
+      existing.shares = parseFloat(
+        ((existing.shares || 0) + (holding.shares || 0)).toFixed(1),
+      );
+      existing.amount_invested = parseFloat(
+        (
+          (existing.amount_invested || 0) + (holding.amount_invested || 0)
+        ).toFixed(2),
+      );
+    } else {
+      merged.set(symbol, {
+        ...holding,
+        symbol,
+        shares: parseFloat(((holding.shares || 0) * 1).toFixed(1)),
+        amount_invested: parseFloat(
+          ((holding.amount_invested || 0) * 1).toFixed(2),
+        ),
+      });
+    }
+  }
+
+  return Array.from(merged.values());
+}
+
 function getStatusLabel(status) {
   switch (status) {
     case "open":
@@ -91,7 +123,7 @@ function TournamentDetailJoined({
   const commentInputRef = useRef(null);
 
   const cashBalance = myParticipant?.cash_balance ?? 0;
-  const holdings = myParticipant?.holdings || [];
+  const holdings = mergeHoldingsBySymbol(myParticipant?.holdings || []);
   const startingBalance = tournament.starting_balance || 100000;
 
   const holdingsValue = holdings.reduce(

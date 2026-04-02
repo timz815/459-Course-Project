@@ -176,6 +176,7 @@
 }
 .sell-stock-input-field[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .sell-stock-helper {

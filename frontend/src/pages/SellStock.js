@@ -16,9 +16,10 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
+import TradeConfirmModal from "../components/TradeConfirmModal";
 import { isPendingUntilOpen } from "../utils/marketHours";
 import "../styles/SellStock.css";
 
@@ -26,6 +27,7 @@ function SellStock() {
   const { id: tournamentId, symbol } = useParams();
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [stock, setStock] = useState(null);
   const [holding, setHolding] = useState(null);
@@ -35,8 +37,11 @@ function SellStock() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [warningAcknowledged] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const pendingUntilOpen = isPendingUntilOpen();
+  const returnToStockDetail =
+    location.state?.returnTo || `/stocks/${symbol.toUpperCase()}`;
 
   useEffect(() => {
     async function fetchData() {
@@ -303,17 +308,17 @@ function SellStock() {
                   <button
                     type="button"
                     className="sell-stock-btn-cancel"
-                    onClick={() => navigate(`/tournaments/${tournamentId}`)}
+                    onClick={() => navigate(returnToStockDetail)}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     className="sell-stock-btn-sell"
-                    onClick={handleSell}
+                    onClick={() => setShowConfirm(true)}
                     disabled={!canSubmit || submitting}
                   >
-                    {submitting ? "Queuing\u2026" : "Sell Stock"}
+                    Sell Stock
                   </button>
                 </div>
               </>
@@ -321,6 +326,23 @@ function SellStock() {
           </div>
         </article>
       </main>
+
+      {showConfirm && (
+        <TradeConfirmModal
+          side="sell"
+          symbol={stock.symbol}
+          companyName={stock.name}
+          price={stock.price}
+          amount={amount}
+          shares={estimatedShares || "0.000"}
+          onConfirm={() => {
+            setShowConfirm(false);
+            handleSell();
+          }}
+          onCancel={() => setShowConfirm(false)}
+          submitting={submitting}
+        />
+      )}
     </div>
   );
 }

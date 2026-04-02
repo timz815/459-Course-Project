@@ -19,7 +19,7 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -178,6 +178,7 @@ const SLICE_MAP = { "1M": 21, "3M": null };
 function StockDetail() {
   const { symbol } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { token } = useContext(AuthContext);
   const [stock, setStock] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -526,6 +527,11 @@ function StockDetail() {
               holdsShares
                 ? `/tournaments/${tournamentId}/sell/${stock.symbol}`
                 : `/tournaments/${tournamentId}/buy/${stock.symbol}`,
+              {
+                state: {
+                  returnTo: `${location.pathname}${location.search}${location.hash}`,
+                },
+              },
             );
           }}
           onClose={() => setTradeModal(false)}

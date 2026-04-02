@@ -1,0 +1,214 @@
+/* ── Overlay ── */
+.tcm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* ── Modal card ── */
+.tcm-modal {
+  width: 100%;
+  max-width: 30rem;
+  background: var(--color-neutral-850);
+  border-radius: var(--radius-md);
+  padding: 2rem 2rem 1.75rem;
+  box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Header ── */
+.tcm-title {
+  font: 800 1.625rem/2rem var(--font-sans);
+  color: var(--color-neutral-100);
+  margin: 0;
+}
+
+.tcm-subtitle {
+  font: 500 0.625rem/1rem var(--font-mono);
+  color: var(--color-neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0.375rem 0 1.5rem;
+}
+
+/* ── Stock identity card ── */
+.tcm-stock-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-neutral-900);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tcm-stock-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.tcm-stock-symbol {
+  font: 700 1rem/1.5rem var(--font-sans);
+  color: var(--color-neutral-100);
+}
+
+.tcm-stock-name {
+  font: 400 0.75rem/1rem var(--font-sans);
+  color: var(--color-neutral-400);
+}
+
+.tcm-stock-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.tcm-stock-price-label {
+  font: 500 0.5625rem/0.875rem var(--font-mono);
+  color: var(--color-neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tcm-stock-price {
+  font: 500 1.25rem/1.75rem var(--font-mono);
+  color: var(--color-success-400);
+}
+
+/* ── Detail rows ── */
+.tcm-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border-default);
+  margin-bottom: 1.25rem;
+}
+
+.tcm-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tcm-detail-label {
+  font: 400 0.875rem/1.25rem var(--font-sans);
+  color: var(--color-neutral-400);
+}
+
+.tcm-detail-value {
+  font: 600 0.875rem/1.25rem var(--font-mono);
+  color: var(--color-neutral-100);
+}
+
+.tcm-detail-value--fee {
+  color: var(--color-success-400);
+}
+
+.tcm-detail-value--sell-fee {
+  color: #ff625e;
+}
+
+/* ── Total (buy variant: inline row) ── */
+.tcm-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.tcm-total-label {
+  font: 700 1.125rem/1.75rem var(--font-sans);
+  color: var(--color-neutral-100);
+}
+
+.tcm-total-value--buy {
+  font: 500 1.25rem/1.75rem var(--font-mono);
+  color: var(--color-success-400);
+}
+
+/* ── Total (sell variant: highlighted box) ── */
+.tcm-total-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(255, 98, 94, 0.08);
+  border: 1px solid rgba(255, 98, 94, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tcm-total-box-label {
+  font: 500 0.625rem/1rem var(--font-mono);
+  color: var(--color-neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tcm-total-box-value {
+  font: 600 1.75rem/2.25rem var(--font-mono);
+  color: #ff625e;
+}
+
+/* ── Confirm button ── */
+.tcm-confirm-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font: 800 1rem/1.5rem var(--font-sans);
+  letter-spacing: -0.03125rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.tcm-confirm-btn:hover {
+  opacity: 0.9;
+}
+
+.tcm-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tcm-confirm-btn--buy {
+  background: linear-gradient(to right, #90cdff, #0f9fea);
+  color: var(--color-primary-ink);
+}
+
+.tcm-confirm-btn--sell {
+  background: #ff625e;
+  color: #68000b;
+}
+
+/* ── Cancel link ── */
+.tcm-cancel-link {
+  display: block;
+  margin: 0.875rem auto 0;
+  background: none;
+  border: none;
+  font: 500 0.875rem/1.25rem var(--font-sans);
+  color: var(--color-neutral-400);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tcm-cancel-link:hover {
+  color: var(--color-neutral-100);
+}

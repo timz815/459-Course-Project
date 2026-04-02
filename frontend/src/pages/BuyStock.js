@@ -15,9 +15,10 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
+import TradeConfirmModal from "../components/TradeConfirmModal";
 import { isPendingUntilOpen } from "../utils/marketHours";
 import "../styles/BuyStock.css";
 
@@ -25,6 +26,7 @@ function BuyStock() {
   const { id: tournamentId, symbol } = useParams();
   const { token } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [stock, setStock] = useState(null);
   const [participant, setParticipant] = useState(null);
@@ -34,8 +36,11 @@ function BuyStock() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [warningAcknowledged] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const pendingUntilOpen = isPendingUntilOpen();
+  const returnToStockDetail =
+    location.state?.returnTo || `/stocks/${symbol.toUpperCase()}`;
 
   useEffect(() => {
     async function fetchData() {
@@ -283,23 +288,40 @@ function BuyStock() {
                 <button
                   type="button"
                   className="buy-stock-btn-cancel"
-                  onClick={() => navigate(`/tournaments/${tournamentId}`)}
+                  onClick={() => navigate(returnToStockDetail)}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   className="buy-stock-btn-buy"
-                  onClick={handleBuy}
+                  onClick={() => setShowConfirm(true)}
                   disabled={!canSubmit || submitting}
                 >
-                  {submitting ? "Queuing\u2026" : `Buy ${stock.symbol}`}
+                  {`Buy ${stock.symbol}`}
                 </button>
               </div>
             </div>
           )}
         </article>
       </main>
+
+      {showConfirm && (
+        <TradeConfirmModal
+          side="buy"
+          symbol={stock.symbol}
+          companyName={stock.name}
+          price={stock.price}
+          amount={amount}
+          shares={estimatedShares || "0.000"}
+          onConfirm={() => {
+            setShowConfirm(false);
+            handleBuy();
+          }}
+          onCancel={() => setShowConfirm(false)}
+          submitting={submitting}
+        />
+      )}
     </div>
   );
 }

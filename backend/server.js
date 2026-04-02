@@ -6,7 +6,7 @@ const authRoutes = require("./routes/auth");
 const tournamentRoutes = require("./routes/tournaments");
 const stockRoutes = require("./routes/stocks");
 const tradeRoutes = require("./routes/trades");
-const userRoutes = require("./routes/users"); // ← new
+const userRoutes = require("./routes/users");
 const watchlistRoutes = require("./routes/watchlist");
 const { startPriceQueue } = require("./utils/priceQueue");
 

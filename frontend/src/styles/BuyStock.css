@@ -1,3 +1,4 @@
+/* ── Page shell ── */
 .buy-stock-page {
   min-height: 100vh;
   background: var(--color-neutral-950);
@@ -5,8 +6,9 @@
 
 .buy-stock-main {
   display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 2.5rem 1.25rem;
+  padding: 2.5rem 1rem;
 }
 
 .buy-stock-status {
@@ -15,150 +17,254 @@
   padding: 5rem;
 }
 
+/* ── Card ── */
 .buy-stock-card {
   width: 100%;
-  max-width: 30rem;
+  max-width: 32rem;
   background: var(--color-neutral-850);
-  border-radius: 1rem;
-  padding: 2rem;
-  border: 1px solid var(--color-border-default);
-  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.4);
+  border: 1px solid #353535;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 2rem;
+  padding: 2.0625rem 2.0625rem 3.0625rem;
 }
 
+/* ── Stock identity header ── */
 .buy-stock-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
 }
 
-.buy-stock-symbol {
-  margin: 0;
-  color: var(--color-neutral-100);
-}
-
-.buy-stock-name {
-  margin: 0.25rem 0 0;
+.buy-stock-upper-label {
+  font: 500 0.625rem/1rem var(--font-mono);
   color: var(--color-neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.buy-stock-price {
+.buy-stock-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.buy-stock-ticker {
+  font: 800 1.875rem/2.25rem var(--font-sans);
+  color: var(--color-primary-300);
+  letter-spacing: -0.09375rem;
+  margin: 0;
+}
+
+.buy-stock-company {
+  font: 700 0.875rem/1.25rem var(--font-sans);
+  color: var(--color-neutral-400);
+  letter-spacing: 0.04375rem;
+}
+
+.buy-stock-price-section {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.125rem;
-}
-
-.buy-stock-price-label {
-  color: var(--color-neutral-500);
+  gap: 0.25rem;
 }
 
 .buy-stock-price-value {
-  color: var(--color-neutral-100);
-  font: 700 1.25rem/1.75rem var(--font-sans);
+  font: 500 1.25rem/1.75rem var(--font-mono);
+  color: var(--color-success-400);
 }
 
 .buy-stock-price-note {
-  color: var(--color-neutral-500);
-  font: 400 0.6875rem/1rem var(--font-sans);
+  font: 400 0.625rem/1rem var(--font-mono);
+  color: var(--color-neutral-400);
 }
 
+/* ── Balance info bar ── */
 .buy-stock-balance {
+  background: #0e0e0e;
+  border-radius: var(--radius-sm);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  background: var(--color-neutral-900);
-  padding: 0.625rem 0.875rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-border-default);
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
 }
 
 .buy-stock-balance-label {
+  font: 700 0.875rem/1.25rem var(--font-sans);
   color: var(--color-neutral-400);
+  letter-spacing: 0.04375rem;
 }
 
 .buy-stock-balance-value {
-  color: var(--color-success-500);
-  font: 700 1rem/1.5rem var(--font-sans);
+  font: 500 1.25rem/1.75rem var(--font-mono);
+  color: var(--color-primary-300);
 }
 
-.buy-stock-label {
-  margin-top: 0.25rem;
-  color: var(--color-neutral-400);
+/* ── Buy form section ── */
+.buy-stock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.buy-stock-amount-wrap {
-  position: relative;
+/* ── Input section ── */
+.buy-stock-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.buy-stock-dollar-sign {
-  position: absolute;
-  left: 0.875rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-neutral-500);
-  font-weight: 600;
-  pointer-events: none;
-}
-
-.buy-stock-amount {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.75rem 1rem 0.75rem 1.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-neutral-900);
+.buy-stock-input-label {
+  font: 700 0.625rem/0.875rem var(--font-ui);
   color: var(--color-neutral-100);
-  font: 500 1.125rem/1.5rem var(--font-sans);
-  outline: none;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
 }
 
-.buy-stock-amount::placeholder {
+.buy-stock-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--color-neutral-900);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+}
+
+.buy-stock-input-dollar {
+  color: var(--color-neutral-400);
+  font: 600 1rem/1rem var(--font-mono);
+  flex-shrink: 0;
+}
+
+.buy-stock-input-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font: 600 0.875rem/1.25rem var(--font-mono);
+  color: var(--color-neutral-100);
+  min-width: 0;
+}
+
+.buy-stock-input-field::placeholder {
+  color: rgba(136, 146, 156, 0.2);
+}
+
+/* hide number spinners */
+.buy-stock-input-field::-webkit-outer-spin-button,
+.buy-stock-input-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.buy-stock-input-field[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.buy-stock-helper {
+  padding: 0 0.25rem;
+}
+
+.buy-stock-helper-text {
+  font: 400 0.625rem/0.9375rem var(--font-ui);
   color: var(--color-placeholder);
 }
 
+/* ── Percentage quick-pick buttons ── */
+.buy-stock-pct-row {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.buy-stock-pct-btn {
+  flex: 1;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(136, 146, 156, 0.3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font: 800 1rem/1.5rem var(--font-sans);
+  color: var(--color-success-500);
+  letter-spacing: -0.03125rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.buy-stock-pct-btn:hover {
+  border-color: rgba(136, 146, 156, 0.5);
+  background: rgba(136, 146, 156, 0.05);
+}
+
+.buy-stock-pct-btn--active {
+  border-color: var(--color-success-500);
+  background: rgba(0, 208, 132, 0.08);
+}
+
+/* ── Error ── */
 .buy-stock-error {
   color: var(--color-danger-500);
+  font: 500 0.875rem/1.25rem var(--font-sans);
   margin: 0;
 }
 
-.buy-stock-estimate {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  background: rgba(15, 159, 234, 0.08);
-  border: 1px solid rgba(15, 159, 234, 0.2);
-  padding: 0.625rem 0.875rem;
-  border-radius: 0.5rem;
-}
-
-.buy-stock-estimate-label {
-  color: var(--color-neutral-400);
-}
-
-.buy-stock-estimate-value {
-  color: var(--color-primary-500);
-  font: 700 1.125rem/1.5rem var(--font-sans);
-}
-
-.buy-stock-estimate-note {
-  color: var(--color-neutral-500);
-  font: 400 0.6875rem/1rem var(--font-sans);
-}
-
+/* ── Action buttons ── */
 .buy-stock-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.buy-stock-btn-cancel {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5625rem 1.8125rem;
+  border: 1px solid rgba(136, 146, 156, 0.3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font: 800 1rem/1.5rem var(--font-sans);
+  color: var(--color-neutral-400);
+  letter-spacing: -0.03125rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
 }
 
-.buy-stock-actions .ui-btn {
-  flex: 1;
+.buy-stock-btn-cancel:hover {
+  border-color: rgba(136, 146, 156, 0.5);
 }
 
+.buy-stock-btn-buy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(to right, #90cdff, #0f9fea);
+  font: 800 1rem/1.5rem var(--font-sans);
+  color: var(--color-primary-ink);
+  letter-spacing: -0.03125rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.buy-stock-btn-buy:hover {
+  opacity: 0.9;
+}
+
+.buy-stock-btn-buy:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Pending state ── */
 .buy-stock-pending {
   display: flex;
   flex-direction: column;
@@ -171,7 +277,7 @@
   width: 2.5rem;
   height: 2.5rem;
   border: 3px solid var(--color-border-default);
-  border-top: 3px solid var(--color-success-500);
+  border-top: 3px solid var(--color-primary-500);
   border-radius: 50%;
   animation: buy-spin 1s linear infinite;
 }
@@ -179,11 +285,13 @@
 .buy-stock-pending-text {
   margin: 0;
   color: var(--color-neutral-100);
+  font: 500 0.875rem/1.25rem var(--font-sans);
 }
 
 .buy-stock-pending-subtext {
   margin: 0;
   color: var(--color-neutral-400);
+  font: 400 0.75rem/1rem var(--font-sans);
   text-align: center;
 }
 

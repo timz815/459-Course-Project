@@ -1,199 +1,553 @@
-/* ─── Append these rules to the bottom of StockDetail.css ─── */
+/* ─── StockDetail Page ─────────────────────────────────────── */
 
-/* ── Market closed banner ────────────────────────────────── */
-
-.stock-detail-market-closed-banner {
-  background-color: #242424;
-  border: 1px solid #333;
-  border-radius: 0.5rem;
-  padding: 0.625rem 1rem;
-  font-size: 0.82rem;
-  color: #888;
-  margin-bottom: 1.5rem;
-  font-style: italic;
+.sd-page {
+  min-height: 100vh;
+  background: var(--color-neutral-950);
+  color: var(--color-neutral-100);
 }
 
-/* ── Tab bar ─────────────────────────────────────────────── */
-
-.stock-detail-tab-bar {
+.sd-main {
+  max-width: 78.125rem;
+  margin: 0 auto;
+  padding: 6rem 2rem 8rem;
   display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid #333;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.stock-detail-tab {
-  position: relative;
+.sd-status {
+  color: var(--color-neutral-400);
+  font: 500 0.875rem/1.25rem var(--font-sans);
+  text-align: center;
+  padding: 4rem 0;
+}
+
+/* ── Breadcrumb / back ─────────────────────────────────────── */
+
+.sd-breadcrumb {
+  display: flex;
+  align-items: center;
+}
+
+.sd-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 3rem;
+  padding: 0 1rem 0 0.8125rem;
+  border: 1px solid rgba(136, 146, 156, 0.3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: #00c076;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.03125rem;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.sd-back-btn:hover {
+  background: rgba(0, 192, 118, 0.06);
+}
+
+.sd-back-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #00c076;
+}
+
+/* ── Header section: symbol & price ────────────────────────── */
+
+.sd-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.sd-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sd-symbol-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sd-symbol {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 2.25rem;
+  letter-spacing: -0.09375rem;
+  color: #e5e2e1;
+}
+
+.sd-exchange-chip {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: #353535;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.0625rem;
+  text-transform: uppercase;
+  color: #e8e8e8;
+}
+
+.sd-company-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.sd-company-name {
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.75rem;
+  color: var(--color-primary-300);
+}
+
+.sd-tag {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.0625rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sd-tag--blue {
+  background: rgba(15, 159, 234, 0.1);
+  color: #90cdff;
+}
+
+/* ── Price (right side of header) ──────────────────────────── */
+
+.sd-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.sd-price-large {
+  font-family: var(--font-mono);
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 2.75rem;
+  color: #e5e2e1;
+}
+
+.sd-change-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sd-arrow-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.sd-arrow-icon path {
+  fill: currentColor;
+}
+
+.sd-arrow-icon--positive {
+  color: var(--color-success-400);
+}
+
+.sd-arrow-icon--negative {
+  color: var(--color-danger-500);
+}
+
+.sd-change-text {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.75rem;
+}
+
+.sd-change--positive {
+  color: #44e092;
+}
+
+.sd-change--negative {
+  color: #ff4d4d;
+}
+
+.sd-change--neutral {
+  color: #88929c;
+}
+
+/* ── Market closed ─────────────────────────────────────────── */
+
+.sd-closed-note {
+  margin: 0;
+  color: var(--color-neutral-400);
+  font: 500 0.875rem/1.25rem var(--font-sans);
+}
+
+/* ── Chart Area (4-col grid) ───────────────────────────────── */
+
+.sd-chart-area {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+  padding-top: 1rem;
+}
+
+/* Stock Container — spans 3 cols */
+.sd-chart-card {
+  grid-column: 1 / span 3;
+  background: var(--color-neutral-900);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 28.125rem;
+  padding: 2rem;
+}
+
+.sd-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.sd-tab-bar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sd-tab {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  background: none;
+  padding: 0.25rem 1rem;
+  border-radius: var(--radius-md);
   border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  color: #888;
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
+  background: transparent;
+  color: #88929c;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.0625rem;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: color 0.15s;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
 }
 
-.stock-detail-tab:hover {
+.sd-tab:hover {
   color: var(--color-neutral-100);
 }
 
-.stock-detail-tab--active {
-  color: var(--color-neutral-100);
-  border-bottom-color: var(--color-primary-500);
+.sd-tab--active {
+  background: #353535;
+  color: var(--color-primary-300);
 }
 
-/* ── Live pulsing dot (shown on 1M / 3M when market open) ── */
-
-.stock-detail-live-dot {
+.sd-live-dot {
   display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #00C076;
-  animation: stock-detail-pulse 2s ease-in-out infinite;
-  flex-shrink: 0;
+  background: #00c076;
+  animation: sdPulse 2s ease-in-out infinite;
 }
 
-@keyframes stock-detail-pulse {
-  0%, 100% { opacity: 1; transform: scale(1);   }
-  50%       { opacity: 0.4; transform: scale(0.75); }
+@keyframes sdPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
 }
 
-/* ── Stat label row (label + note side by side) ──────────── */
+.sd-volume-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 400;
+  line-height: 0.9375rem;
+  letter-spacing: 0.0625rem;
+  text-transform: uppercase;
+  color: #88929c;
+}
 
-.stock-detail-stat-label-row {
+.sd-chart-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.sd-no-data {
+  flex: 1;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+  color: #88929c;
+  font: 500 0.875rem/1.25rem var(--font-sans);
 }
 
-.stock-detail-stat-note {
-  font-size: 0.6rem;
-  color: #444;
-  font-style: italic;
-}
+/* ── Tooltip ───────────────────────────────────────────────── */
 
-/* ── 5-column stats override ─────────────────────────────── */
-
-.stock-detail-stats--five {
-  grid-template-columns: repeat(5, 1fr);
-}
-
-@media (max-width: 48rem) {
-  .stock-detail-stats--five {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 32rem) {
-  .stock-detail-stats--five {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* ── Market closed banner ────────────────────────────────── */
-
-.stock-detail-market-closed-banner {
-  background-color: #242424;
+.sd-tooltip {
+  background: #1c1b1b;
   border: 1px solid #333;
-  border-radius: 0.5rem;
-  padding: 0.625rem 1rem;
-  font-size: 0.82rem;
-  color: #888;
-  margin-bottom: 1.5rem;
-  font-style: italic;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
 }
 
-/* ── Tab bar ─────────────────────────────────────────────── */
-
-.stock-detail-tab-bar {
-  display: flex;
-  gap: 0.25rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid #333;
+.sd-tooltip-time {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: #88929c;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
 }
 
-.stock-detail-tab {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  color: #888;
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
+.sd-tooltip-price {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: color 0.15s;
 }
 
-.stock-detail-tab:hover {
-  color: var(--color-neutral-100);
-}
+/* ── Sidebar ───────────────────────────────────────────────── */
 
-.stock-detail-tab--active {
-  color: var(--color-neutral-100);
-  border-bottom-color: var(--color-primary-500);
-}
-
-/* ── Live pulsing dot (shown on 1M / 3M when market open) ── */
-
-.stock-detail-live-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #00C076;
-  animation: stock-detail-pulse 2s ease-in-out infinite;
-  flex-shrink: 0;
-}
-
-@keyframes stock-detail-pulse {
-  0%, 100% { opacity: 1; transform: scale(1);   }
-  50%       { opacity: 0.4; transform: scale(0.75); }
-}
-
-/* ── Stat label row (label + note side by side) ──────────── */
-
-.stock-detail-stat-label-row {
+.sd-sidebar {
+  grid-column: 4;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Action Card */
+.sd-action-card {
+  background: #2a2a2a;
+  border: 1px solid rgba(63, 72, 81, 0.1);
+  border-radius: var(--radius-md);
+  padding: 1.5625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sd-card-heading {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  letter-spacing: 0.04375rem;
+  color: #bec7d2;
+}
+
+.sd-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sd-btn-buy {
+  display: flex;
   align-items: center;
+  justify-content: center;
+  height: 3.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, #90cdff, #0f9fea);
+  color: #00324e;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.03125rem;
+  cursor: pointer;
+  transition: opacity 150ms ease;
 }
 
-.stock-detail-stat-note {
-  font-size: 0.6rem;
-  color: #444;
-  font-style: italic;
+.sd-btn-buy:hover {
+  opacity: 0.9;
 }
 
-/* ── 5-column stats override ─────────────────────────────── */
+.sd-btn-sell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 3.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: #ff625e;
+  color: #68000b;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: -0.03125rem;
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
 
-.stock-detail-stats--five {
+.sd-btn-sell:hover {
+  opacity: 0.9;
+}
+
+.sd-btn-watchlist {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 3.5rem;
+  border: 1px solid rgba(136, 146, 156, 0.3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: #00c076;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.03125rem;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.sd-btn-watchlist:hover {
+  background: rgba(0, 192, 118, 0.06);
+}
+
+/* Brief Card */
+.sd-brief-card {
+  background: var(--color-neutral-900);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sd-brief-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sd-brief-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sd-brief-item--border {
+  border-top: 1px solid rgba(63, 72, 81, 0.1);
+  padding-top: 1rem;
+}
+
+.sd-brief-time {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.0625rem;
+  text-transform: uppercase;
+  color: #88929c;
+}
+
+.sd-brief-text {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  color: #e5e2e1;
+}
+
+.sd-brief-text--muted {
+  color: rgba(229, 226, 225, 0.7);
+}
+
+/* ── Stat Cards Row ────────────────────────────────────────── */
+
+.sd-stats {
+  display: grid;
   grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  padding-top: 1rem;
 }
 
-@media (max-width: 48rem) {
-  .stock-detail-stats--five {
+.sd-stat-card {
+  background: #2a2a2a;
+  border-radius: var(--radius-sm);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sd-stat-label {
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 0.875rem;
+  letter-spacing: 0.068rem;
+  text-transform: uppercase;
+  color: #88929c;
+}
+
+.sd-stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.75rem;
+  color: #e5e2e1;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 62rem) {
+  .sd-chart-area {
+    grid-template-columns: 1fr;
+  }
+
+  .sd-chart-card {
+    grid-column: 1;
+  }
+
+  .sd-sidebar {
+    grid-column: 1;
+  }
+
+  .sd-stats {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .sd-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sd-header-right {
+    align-items: flex-start;
   }
 }
 
-@media (max-width: 32rem) {
-  .stock-detail-stats--five {
+@media (max-width: 40rem) {
+  .sd-stats {
     grid-template-columns: repeat(2, 1fr);
   }
 }

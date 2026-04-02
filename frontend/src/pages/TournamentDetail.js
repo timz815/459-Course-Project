@@ -301,7 +301,11 @@ function TournamentDetail() {
           {/* Join Container — logged-in, not joined */}
           {canJoin && (
             <div className="td-join-container">
-              <Button variant="primary" headIcon={<TentIcon />} onClick={handleJoin}>
+              <Button
+                variant="primary"
+                headIcon={<TentIcon />}
+                onClick={handleJoin}
+              >
                 Join Tournament
               </Button>
               <button type="button" className="td-view-rules-btn">
@@ -330,11 +334,7 @@ function TournamentDetail() {
           <div className="td-leaderboard-header">
             <h2 className="td-leaderboard-title">Tournament Leaderboard</h2>
             <div className="td-leaderboard-actions">
-              <button
-                type="button"
-                className="td-icon-btn"
-                aria-label="Sort"
-              >
+              <button type="button" className="td-icon-btn" aria-label="Sort">
                 <SortIcon />
               </button>
               <button
@@ -358,8 +358,7 @@ function TournamentDetail() {
             <div className="td-table-body">
               {participants.map((p, i) => {
                 const isMe =
-                  user &&
-                  (p.user?._id === user.id || p.user === user.id);
+                  user && (p.user?._id === user.id || p.user === user.id);
                 const rank = i + 1;
                 return (
                   <div
@@ -374,7 +373,15 @@ function TournamentDetail() {
                       </span>
                     </span>
                     <span className="td-td td-td--user">
-                      <ProfileIcon className="td-avatar" />
+                      {p.user?.avatarUrl ? (
+                        <img
+                          src={p.user.avatarUrl}
+                          alt={`${p.user?.username || "User"} avatar`}
+                          className="td-avatar"
+                        />
+                      ) : (
+                        <ProfileIcon className="td-avatar" />
+                      )}
                       <span
                         className={`td-username${rank === 1 ? " td-username--first" : ""}${isMe ? " td-username--me" : ""}`}
                       >

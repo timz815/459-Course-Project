@@ -433,7 +433,15 @@ function TournamentDetailJoined({
                           </span>
                         </span>
                         <span className="td-td td-td--user">
-                          <ProfileIcon className="td-avatar" />
+                          {p.user?.avatarUrl ? (
+                            <img
+                              src={p.user.avatarUrl}
+                              alt={`${p.user?.username || "User"} avatar`}
+                              className="td-avatar"
+                            />
+                          ) : (
+                            <ProfileIcon className="td-avatar" />
+                          )}
                           <span
                             className={`td-username${rank === 1 ? " td-username--first" : ""}${isMe ? " td-username--me" : ""}`}
                           >
@@ -463,7 +471,15 @@ function TournamentDetailJoined({
                 <h2 className="td-leaderboard-title">Community Discussion</h2>
               </div>
               <div className="td-comment-input-area">
-                <ProfileIcon className="td-avatar" />
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt="Your avatar"
+                    className="td-avatar"
+                  />
+                ) : (
+                  <ProfileIcon className="td-avatar" />
+                )}
                 <div className="td-comment-input-wrap">
                   <textarea
                     ref={commentInputRef}
@@ -487,7 +503,15 @@ function TournamentDetailJoined({
               <div className="td-comments-list">
                 {debugComments.map((comment) => (
                   <article key={comment.id} className="td-comment-card">
-                    <ProfileIcon className="td-avatar" />
+                    {comment.avatarUrl ? (
+                      <img
+                        src={comment.avatarUrl}
+                        alt={`${comment.author} avatar`}
+                        className="td-avatar"
+                      />
+                    ) : (
+                      <ProfileIcon className="td-avatar" />
+                    )}
                     <div className="td-comment-content">
                       <header className="td-comment-top">
                         <p className="td-comment-author">{comment.author}</p>

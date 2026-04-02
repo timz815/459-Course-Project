@@ -46,7 +46,7 @@ function StockMarket() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sectorFilter, setSectorFilter] = useState("all");
-  const [exchangeFilter, setExchangeFilter] = useState("nasdaq");
+  const [exchangeFilter, setExchangeFilter] = useState("all");
   const [marketOpen, setMarketOpen] = useState(isMarketOpen());
   const navigate = useNavigate();
 

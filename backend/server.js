@@ -7,6 +7,7 @@ const tournamentRoutes = require("./routes/tournaments");
 const stockRoutes = require("./routes/stocks");
 const tradeRoutes = require("./routes/trades");
 const userRoutes = require("./routes/users"); // ← new
+const watchlistRoutes = require("./routes/watchlist");
 const { startPriceQueue } = require("./utils/priceQueue");
 
 const app = express();
@@ -40,6 +41,7 @@ app.use("/api/tournaments", tradeRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/stocks", stockRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/watchlist", watchlistRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

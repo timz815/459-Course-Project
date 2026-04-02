@@ -29,6 +29,17 @@
     hue-rotate(172deg) brightness(101%) contrast(102%);
 }
 
+.profile-dropdown-trigger-icon--avatar {
+  border-radius: 9999px;
+  object-fit: cover;
+  filter: none;
+}
+
+.profile-dropdown-trigger.open .profile-dropdown-trigger-icon--avatar {
+  filter: none;
+  opacity: 0.7;
+}
+
 .profile-dropdown-name {
   font-family: var(--font-sans);
   font-size: 0.875rem;

@@ -11,34 +11,6 @@ import magnifyIcon16 from "../assets/Icon_16x16/Magnify_16x16.svg";
 import deleteIcon16 from "../assets/Icon_16x16/Delete_16x16.svg";
 import "../styles/UserHomeContent.css";
 
-/* ─── Debug Watchlist (static until real watchlist is built) ────────────────── */
-const DEBUG_WATCHLIST = [
-  {
-    symbol: "IBM",
-    name: "Intl. Business Machines",
-    sector: "Technology",
-    exchange: "NYSE",
-  },
-  {
-    symbol: "NVDA",
-    name: "NVIDIA Corporation",
-    sector: "Semicon",
-    exchange: "NASDAQ",
-  },
-  {
-    symbol: "TSLA",
-    name: "Tesla, Inc.",
-    sector: "Automotive",
-    exchange: "NASDAQ",
-  },
-  {
-    symbol: "AMD",
-    name: "Advanced Micro Devices",
-    sector: "Semicon",
-    exchange: "NASDAQ",
-  },
-];
-
 /* Color palette for competition card icons (cycles) */
 const CARD_THEMES = [
   { bg: "blue", icon: TrophyIcon24, barColor: "blue" },
@@ -51,7 +23,24 @@ function UserHomeContent() {
 
   const [competitions, setCompetitions] = useState([]);
   const [watchlistPrices, setWatchlistPrices] = useState({});
-  const [watchlist, setWatchlist] = useState(DEBUG_WATCHLIST);
+  const [watchlist, setWatchlist] = useState([]);
+
+  useEffect(() => {
+    if (!token) return;
+    async function fetchWatchlist() {
+      try {
+        const res = await fetch("http://localhost:5000/api/watchlist", {
+          headers: { Authorization: token },
+        });
+        if (!res.ok) return;
+        const items = await res.json();
+        if (Array.isArray(items)) setWatchlist(items);
+      } catch {
+        // ignore
+      }
+    }
+    fetchWatchlist();
+  }, [token]);
 
   /* ─── Fetch user's active competitions ─────────────────────────────────── */
   useEffect(() => {
@@ -212,8 +201,16 @@ function UserHomeContent() {
     return `${sign}${n.toFixed(2)}%`;
   }
 
-  function removeFromWatchlist(symbol) {
+  async function removeFromWatchlist(symbol) {
     setWatchlist((prev) => prev.filter((w) => w.symbol !== symbol));
+    try {
+      await fetch(`http://localhost:5000/api/watchlist/${symbol}`, {
+        method: "DELETE",
+        headers: { Authorization: token },
+      });
+    } catch {
+      // ignore
+    }
   }
 
   return (

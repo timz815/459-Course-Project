@@ -155,6 +155,7 @@ function Header({ minimal = false }) {
 
                   <ProfileDropdown
                     userName={user?.username || "Account"}
+                    avatarUrl={user?.avatarUrl}
                     isAdmin={isAdmin}
                     accountBalance={user?.accountBalance ?? 100000}
                     onAccountSettings={() => navigate("/account-settings")}

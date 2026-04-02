@@ -31,7 +31,10 @@ router.get("/", async (req, res) => {
     if (token) {
       try {
         const jwt = require("jsonwebtoken");
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallbackSecret");
+        const decoded = jwt.verify(
+          token,
+          process.env.JWT_SECRET || "fallbackSecret",
+        );
         isAdmin = decoded.role === "admin";
       } catch {
         // invalid token, treat as public
@@ -47,7 +50,7 @@ router.get("/", async (req, res) => {
         tournaments.map(async (t) => {
           const count = await Participant.countDocuments({ tournament: t._id });
           return { ...t.toObject(), participantCount: count };
-        })
+        }),
       );
       return res.json(withCounts);
     }
@@ -61,7 +64,9 @@ router.get("/", async (req, res) => {
 // GET my tournaments
 router.get("/my-tournaments", verifyToken, async (req, res) => {
   try {
-    const tournaments = await Tournament.find({ owner: req.userId }).sort({ createdAt: -1 });
+    const tournaments = await Tournament.find({ owner: req.userId }).sort({
+      createdAt: -1,
+    });
     res.json(tournaments);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -71,8 +76,12 @@ router.get("/my-tournaments", verifyToken, async (req, res) => {
 // GET single tournament
 router.get("/:id", async (req, res) => {
   try {
-    const tournament = await Tournament.findById(req.params.id).populate("owner", "username");
-    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
+    const tournament = await Tournament.findById(req.params.id).populate(
+      "owner",
+      "username",
+    );
+    if (!tournament)
+      return res.status(404).json({ message: "Tournament not found" });
 
     const now = new Date();
     const startDate = new Date(tournament.start_date);
@@ -101,7 +110,7 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/participants", async (req, res) => {
   try {
     const participants = await Participant.find({ tournament: req.params.id })
-      .populate("user", "username")
+      .populate("user", "username displayName avatarUrl")
       .sort({ cash_balance: -1 });
     res.json(participants);
   } catch (err) {
@@ -112,7 +121,8 @@ router.get("/:id/participants", async (req, res) => {
 // POST create tournament
 router.post("/", verifyToken, async (req, res) => {
   try {
-    const { start_date, end_date, name, starting_balance, description } = req.body;
+    const { start_date, end_date, name, starting_balance, description } =
+      req.body;
 
     if (!name || !start_date || !end_date || starting_balance === undefined) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -123,11 +133,17 @@ router.post("/", verifyToken, async (req, res) => {
     const end = new Date(end_date);
 
     if (start < now) {
-      return res.status(400).json({ message: "Start time cannot be in the past" });
+      return res
+        .status(400)
+        .json({ message: "Start time cannot be in the past" });
     }
 
     if (end - start < 60000) {
-      return res.status(400).json({ message: "End time must be at least 1 minute after start time" });
+      return res
+        .status(400)
+        .json({
+          message: "End time must be at least 1 minute after start time",
+        });
     }
 
     const tournament = new Tournament({
@@ -157,14 +173,23 @@ router.post("/", verifyToken, async (req, res) => {
 router.post("/:id/join", verifyToken, async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id);
-    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
+    if (!tournament)
+      return res.status(404).json({ message: "Tournament not found" });
 
     if (tournament.status === "closed" || tournament.status === "ended") {
-      return res.status(403).json({ message: "This tournament is no longer accepting players." });
+      return res
+        .status(403)
+        .json({ message: "This tournament is no longer accepting players." });
     }
 
-    const existing = await Participant.findOne({ tournament: req.params.id, user: req.userId });
-    if (existing) return res.status(400).json({ message: "You have already joined this tournament." });
+    const existing = await Participant.findOne({
+      tournament: req.params.id,
+      user: req.userId,
+    });
+    if (existing)
+      return res
+        .status(400)
+        .json({ message: "You have already joined this tournament." });
 
     const participant = new Participant({
       tournament: req.params.id,
@@ -186,7 +211,10 @@ router.delete("/:id/leave", verifyToken, async (req, res) => {
       tournament: req.params.id,
       user: req.userId,
     });
-    if (!participant) return res.status(404).json({ message: "You are not in this tournament." });
+    if (!participant)
+      return res
+        .status(404)
+        .json({ message: "You are not in this tournament." });
     res.json({ message: "You have left the tournament." });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -197,10 +225,13 @@ router.delete("/:id/leave", verifyToken, async (req, res) => {
 router.patch("/:id/close", verifyToken, async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id);
-    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
+    if (!tournament)
+      return res.status(404).json({ message: "Tournament not found" });
 
     if (tournament.owner.toString() !== req.userId) {
-      return res.status(403).json({ message: "Only the owner can close this tournament." });
+      return res
+        .status(403)
+        .json({ message: "Only the owner can close this tournament." });
     }
 
     tournament.status = tournament.status === "closed" ? "open" : "closed";
@@ -216,10 +247,13 @@ router.patch("/:id/close", verifyToken, async (req, res) => {
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id);
-    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
+    if (!tournament)
+      return res.status(404).json({ message: "Tournament not found" });
 
     if (tournament.owner.toString() !== req.userId) {
-      return res.status(403).json({ message: "Forbidden: You do not own this tournament." });
+      return res
+        .status(403)
+        .json({ message: "Forbidden: You do not own this tournament." });
     }
 
     await Participant.deleteMany({ tournament: req.params.id });
@@ -235,7 +269,8 @@ router.delete("/:id", verifyToken, async (req, res) => {
 router.delete("/admin/:id", verifyAdmin, async (req, res) => {
   try {
     const tournament = await Tournament.findById(req.params.id);
-    if (!tournament) return res.status(404).json({ message: "Tournament not found" });
+    if (!tournament)
+      return res.status(404).json({ message: "Tournament not found" });
 
     await Promise.all([
       Participant.deleteMany({ tournament: req.params.id }),

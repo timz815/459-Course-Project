@@ -10,6 +10,7 @@ import "../../styles/ProfileDropdown.css";
 
 function ProfileDropdown({
   userName,
+  avatarUrl,
   isAdmin = false,
   accountBalance = 100000,
   onAccountSettings,
@@ -43,9 +44,9 @@ function ProfileDropdown({
         aria-expanded={open}
       >
         <img
-          src={ProfileDefault16Icon}
+          src={avatarUrl || ProfileDefault16Icon}
           alt=""
-          className="profile-dropdown-trigger-icon"
+          className={`profile-dropdown-trigger-icon${avatarUrl ? " profile-dropdown-trigger-icon--avatar" : ""}`}
         />
         <span className="profile-dropdown-name">{userName}</span>
         <img

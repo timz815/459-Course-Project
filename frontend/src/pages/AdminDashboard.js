@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import { ReactComponent as EditIcon } from "../assets/Icon_16x16/Pen_16x16.svg";
 import { ReactComponent as DeleteIcon } from "../assets/Icon_16x16/Delete_16x16.svg";
+import { ReactComponent as MagnifyIcon } from "../assets/Icon_16x16/Magnify_16x16.svg";
 import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Default_32x32.svg";
 import "../styles/AdminDashboard.css";
 
@@ -258,7 +259,7 @@ function AdminDashboard() {
 
             <div className="adm-search-row">
               <div className="adm-search-wrap">
-                <span className="adm-search-icon">&#x1F50D;</span>
+                <MagnifyIcon className="adm-search-icon" />
                 <input
                   className="adm-search"
                   type="text"
@@ -352,7 +353,7 @@ function AdminDashboard() {
 
             <div className="adm-search-row">
               <div className="adm-search-wrap">
-                <span className="adm-search-icon">&#x1F50D;</span>
+                <MagnifyIcon className="adm-search-icon" />
                 <input
                   className="adm-search"
                   type="text"

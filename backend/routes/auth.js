@@ -37,21 +37,27 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ username });
     if (!user) return res.status(400).json({ message: "User not found" });
 
+    console.log(`[LOGIN] Found user: ${username}, role in DB: "${user.role}"`);
+
     // 2. compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
     // 3. generate token  ("wristband")
+    const tokenPayload = {
+      id: user._id,
+      username: user.username,
+      displayName: user.displayName || "",
+      email: user.email || "",
+      avatarUrl: user.avatarUrl || "",
+      accountBalance: user.accountBalance,
+      role: user.role || "user",
+    };
+    console.log(`[LOGIN] JWT payload for ${username}:`, tokenPayload);
+
     const token = jwt.sign(
-      {
-        id: user._id,
-        username: user.username,
-        displayName: user.displayName || "",
-        email: user.email || "",
-        avatarUrl: user.avatarUrl || "",
-        accountBalance: user.accountBalance,
-      },
+      tokenPayload,
       process.env.JWT_SECRET || "fallbackSecret",
       { expiresIn: "1h" },
     );
@@ -108,11 +114,9 @@ router.patch("/profile/display-name", verifyToken, async (req, res) => {
 
     // length check
     if (!displayName || displayName.length < 3 || displayName.length > 20) {
-      return res
-        .status(400)
-        .json({
-          message: "Display names must be between 3 and 20 characters.",
-        });
+      return res.status(400).json({
+        message: "Display names must be between 3 and 20 characters.",
+      });
     }
 
     // allowed characters
@@ -143,11 +147,9 @@ router.patch("/profile/display-name", verifyToken, async (req, res) => {
     const token = generateToken(user);
     res.json({ message: "Your display name has been updated.", token, user });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: "Unable to update your display name. Please try again.",
-      });
+    res.status(500).json({
+      message: "Unable to update your display name. Please try again.",
+    });
   }
 });
 
@@ -178,15 +180,16 @@ router.patch("/profile/avatar", verifyToken, async (req, res) => {
       user,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: "Unable to update your profile picture. Please try again.",
-      });
+    res.status(500).json({
+      message: "Unable to update your profile picture. Please try again.",
+    });
   }
 });
 
 // PATCH email
+// Note: In a real application, you'd want to implement email verification for the new address
+// before updating it in the user's profile. For simplicity,
+// this example just updates the email and returns a success message.
 router.patch("/profile/email", verifyToken, async (req, res) => {
   try {
     const { email } = req.body;
@@ -222,6 +225,10 @@ router.patch("/profile/email", verifyToken, async (req, res) => {
 });
 
 // PATCH password
+// Note: In a real application, you'd want to implement additional security measures here,
+// such as requiring the user to re-authenticate before changing their password,
+// and sending an email notification about the change. For simplicity,
+// this example just updates the password after verifying the current one.
 router.patch("/profile/password", verifyToken, async (req, res) => {
   try {
     const { currentPassword, newPassword, confirmPassword } = req.body;

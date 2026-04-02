@@ -122,7 +122,7 @@
   line-height: 1.03125rem;
   letter-spacing: 0.1375rem;
   text-transform: uppercase;
-  color: var(--color-body);
+  color: var(--color-primary-300);
 }
 
 .uh-section-title {
@@ -191,15 +191,21 @@
 
 .uh-comp-icon.blue {
   background: rgba(144, 205, 255, 0.1);
+  color: var(--color-primary-300);
 }
 
 .uh-comp-icon.green {
   background: rgba(68, 224, 146, 0.1);
+  color: var(--color-success-400);
 }
 
-.uh-comp-icon img {
+.uh-comp-icon-svg {
   width: 1.5rem;
   height: 1.5rem;
+}
+
+.uh-comp-icon-svg path {
+  fill: currentColor;
 }
 
 .uh-comp-rank {
@@ -327,7 +333,7 @@
   width: 100%;
   padding: 0.5rem 0;
   border: none;
-  border-radius: 0.125rem;
+  border-radius: 0.5rem;
   background: var(--color-neutral-850);
   color: var(--color-neutral-100);
   font-family: var(--font-ui);

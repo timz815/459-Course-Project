@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { ReactComponent as MagnifyIcon } from "../assets/Icon_16x16/Magnify_16x16.svg";
 import { ReactComponent as DropdownIcon } from "../assets/Icon_16x16/Dropdown_16x16.svg";
 import { ReactComponent as SettingIcon } from "../assets/Icon_16x16/Setting-Horizontal_16x16.svg";
-import "../styles/VisitorTournamentsContent.css";
+import { ReactComponent as AddIcon } from "../assets/Icon_16x16/Add_16x16.svg";
+import Button from "./UI/Button";
+import "../styles/TournamentsContent.css";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Status", color: null },
@@ -13,7 +15,7 @@ const STATUS_OPTIONS = [
   { value: "ended", label: "Ended", color: "var(--color-body)" },
 ];
 
-function VisitorTournamentsContent() {
+function TournamentsContent({ isLoggedIn = false }) {
   const [tournaments, setTournaments] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -243,8 +245,26 @@ function VisitorTournamentsContent() {
           <div className="vtc-empty">No tournaments found.</div>
         )}
       </div>
+
+      {/* ── Load More Section (logged-in only) ── */}
+      {isLoggedIn && (
+        <div className="vtc-loadmore">
+          <p className="vtc-loadmore-text">
+            Near real-time quote updates using Finnhub at up to 1
+            request/second, plus cached market data stored in MongoDB for fast
+            UI rendering.
+          </p>
+          <Button
+            variant="primary"
+            headIcon={<AddIcon />}
+            onClick={() => navigate("/add-tournament")}
+          >
+            Create Tournament
+          </Button>
+        </div>
+      )}
     </main>
   );
 }
 
-export default VisitorTournamentsContent;
+export default TournamentsContent;

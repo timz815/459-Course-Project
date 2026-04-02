@@ -67,17 +67,31 @@ function TimePicker({ name, value, onChange }) {
   }, []);
 
   // Formatted display string
-  const displayTime = `${hours12
-    .toString()
-    .padStart(2, "0")}:${minutes
+  const displayTime = `${hours12.toString().padStart(2, "0")}:${minutes
     .toString()
     .padStart(2, "0")} ${ampm}`;
 
   // Individual scrollable column component
   function Column({ options, selected, onSelect, format = (x) => x }) {
+    const scrollRef = useRef(null);
+
+    useEffect(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+
+      const selectedIdx = options.findIndex((opt) => opt === selected);
+      if (selectedIdx >= 0) {
+        const approxItemHeight = el.scrollHeight / options.length;
+        const targetScroll =
+          selectedIdx * approxItemHeight -
+          (el.clientHeight - approxItemHeight) / 2;
+        el.scrollTop = Math.max(0, targetScroll);
+      }
+    }, [selected, options]);
+
     return (
       <div className="timepicker-col">
-        <div className="timepicker-col-scroll">
+        <div ref={scrollRef} className="timepicker-col-scroll">
           {options.map((opt) => (
             <button
               type="button"
@@ -132,7 +146,11 @@ function TimePicker({ name, value, onChange }) {
       </button>
 
       {isOpen && (
-        <div role="dialog" aria-label="Time picker" className="timepicker-panel">
+        <div
+          role="dialog"
+          aria-label="Time picker"
+          className="timepicker-panel"
+        >
           <div className="timepicker-panel-header">
             <span className="timepicker-panel-label">Hour</span>
             <span className="timepicker-panel-spacer" />

@@ -77,6 +77,8 @@
 
 .timepicker-columns {
   display: flex;
+  gap: 0.3125rem;
+  padding: 0 0.3125rem;
 }
 
 .timepicker-divider {
@@ -92,8 +94,18 @@
 }
 
 .timepicker-col-scroll {
+  flex: 1;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.timepicker-col-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .timepicker-col-item {
@@ -105,8 +117,10 @@
   transition: all 0.12s;
   background: none;
   border: none;
-  width: 100%;
+  width: calc(100% - 0.5rem);
+  margin: 0.125rem auto;
   font-family: inherit;
+  border-radius: 0.5rem;
 }
 
 .timepicker-col-item--selected {

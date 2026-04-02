@@ -1,0 +1,34 @@
+.ui-vscroll {
+  width: 0.75rem;
+  height: 100%;
+  border-radius: 1.875rem;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.ui-vscroll-track {
+  position: absolute;
+  top: 0.1875rem;
+  right: 0;
+  bottom: 0.1875rem;
+  left: 0;
+}
+
+.ui-vscroll-thumb {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0.375rem;
+  border-radius: 62.5rem;
+  background: rgba(255, 255, 255, 0.45);
+  min-height: 1.125rem;
+  cursor: grab;
+}
+
+.ui-vscroll:active .ui-vscroll-thumb {
+  cursor: grabbing;
+}

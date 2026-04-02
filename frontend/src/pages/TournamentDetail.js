@@ -1,7 +1,8 @@
 /**
  * TournamentDetail Component
  *
- * Displays full tournament information with participant management and owner controls.
+ * Displays tournament page. Visitor view for non-participants,
+ * swaps to TournamentDetailJoined when user has joined.
  */
 
 import { useContext, useEffect, useState } from "react";
@@ -9,9 +10,43 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
-import Input from "../components/UI/Input";
-import StockSearchDropdown from "../components/StockSearchDropdown";
+import TournamentDetailJoined from "./TournamentDetailJoined";
+import { ReactComponent as TentIcon } from "../assets/Icon_16x16/Tent_16x16.svg";
+import { ReactComponent as CheckIcon } from "../assets/Icon_16x16/Check-Completed_16x16.svg";
+import { ReactComponent as SortIcon } from "../assets/Icon_16x16/Sort_16x16.svg";
+import { ReactComponent as RefreshIcon } from "../assets/Icon_16x16/Refresh_16x16.svg";
+import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Default_32x32.svg";
 import "../styles/TournamentDetail.css";
+
+function formatCurrency(amount) {
+  return Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function getStatusLabel(status) {
+  switch (status) {
+    case "open":
+      return "OPEN";
+    case "active":
+      return "ACTIVE NOW";
+    case "closed":
+      return "CLOSED";
+    case "ended":
+      return "ENDED";
+    default:
+      return status?.toUpperCase() || "";
+  }
+}
 
 function TournamentDetail() {
   const { id } = useParams();
@@ -26,8 +61,6 @@ function TournamentDetail() {
   const [isParticipant, setIsParticipant] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [holdingSearch, setHoldingSearch] = useState("");
-  const [selectedStock, setSelectedStock] = useState(null);
   const [toast, setToast] = useState(location.state?.toast || "");
 
   useEffect(() => {
@@ -79,10 +112,7 @@ function TournamentDetail() {
     try {
       const res = await fetch(
         `http://localhost:5000/api/tournaments/${id}/join`,
-        {
-          method: "POST",
-          headers: { Authorization: token },
-        },
+        { method: "POST", headers: { Authorization: token } },
       );
       const data = await res.json();
       if (res.ok) {
@@ -108,10 +138,7 @@ function TournamentDetail() {
     try {
       const res = await fetch(
         `http://localhost:5000/api/tournaments/${id}/leave`,
-        {
-          method: "DELETE",
-          headers: { Authorization: token },
-        },
+        { method: "DELETE", headers: { Authorization: token } },
       );
       const data = await res.json();
       if (res.ok) {
@@ -134,17 +161,11 @@ function TournamentDetail() {
     try {
       const res = await fetch(
         `http://localhost:5000/api/tournaments/${id}/close`,
-        {
-          method: "PATCH",
-          headers: { Authorization: token },
-        },
+        { method: "PATCH", headers: { Authorization: token } },
       );
       const data = await res.json();
-      if (res.ok) {
-        setTournament(data);
-      } else {
-        alert(data.message || "Failed to update status");
-      }
+      if (res.ok) setTournament(data);
+      else alert(data.message || "Failed to update status");
     } catch (err) {
       console.error("Close error:", err);
     }
@@ -158,9 +179,8 @@ function TournamentDetail() {
         method: "DELETE",
         headers: { Authorization: token },
       });
-      if (res.ok) {
-        navigate("/tournaments");
-      } else {
+      if (res.ok) navigate("/tournaments");
+      else {
         const data = await res.json();
         alert(data.message || "Failed to delete");
       }
@@ -169,32 +189,21 @@ function TournamentDetail() {
     }
   }
 
-  function getStatusClass(status) {
-    switch (status) {
-      case "open":
-        return "open";
-      case "active":
-        return "active";
-      case "closed":
-        return "closed";
-      case "ended":
-        return "ended";
-      default:
-        return "default";
-    }
+  function refreshParticipants() {
+    fetch(`http://localhost:5000/api/tournaments/${id}/participants`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setParticipants(data);
+      })
+      .catch(console.error);
   }
-
-  const holdings = myParticipant?.holdings || [];
-  const filteredHoldings = holdings.filter((h) =>
-    h.symbol.toLowerCase().includes(holdingSearch.toLowerCase()),
-  );
 
   if (loading) {
     return (
-      <div className="tournament-detail-page">
+      <div className="td-page">
         <Header />
-        <main className="tournament-detail-main">
-          <p className="tournament-detail-status ds-type-body-2">Loading...</p>
+        <main className="td-main">
+          <p className="td-loading">Loading...</p>
         </main>
       </div>
     );
@@ -202,293 +211,193 @@ function TournamentDetail() {
 
   if (!tournament) {
     return (
-      <div className="tournament-detail-page">
+      <div className="td-page">
         <Header />
-        <main className="tournament-detail-main">
-          <p className="tournament-detail-status ds-type-body-2">
-            Tournament not found.
-          </p>
+        <main className="td-main">
+          <p className="td-loading">Tournament not found.</p>
         </main>
       </div>
     );
   }
 
-  const statusClass = getStatusClass(tournament.status);
+  /* Swap to joined view when user is a participant */
+  if (isParticipant) {
+    return (
+      <TournamentDetailJoined
+        tournament={tournament}
+        participants={participants}
+        stocks={stocks}
+        myParticipant={myParticipant}
+        user={user}
+        token={token}
+        id={id}
+        isOwner={isOwner}
+        handleLeave={handleLeave}
+        handleClose={handleClose}
+        handleDeleteTournament={handleDeleteTournament}
+        refreshParticipants={refreshParticipants}
+      />
+    );
+  }
+
   const canJoin =
-    tournament.status === "open" || tournament.status === "active";
-  const now = new Date();
-  const endDate = new Date(tournament.end_date);
-  const hasEnded = now > endDate;
-  const canTrade = isParticipant && !hasEnded;
+    token &&
+    !isOwner &&
+    (tournament.status === "open" || tournament.status === "active");
 
   return (
-    <div className="tournament-detail-page">
+    <div className="td-page">
       <Header />
+      {toast && <div className="td-toast">{toast}</div>}
 
-      {toast && <div className="tournament-detail-toast">{toast}</div>}
-
-      <main className="tournament-detail-main">
-        <nav className="tournament-detail-back-nav">
-          <Button
-            variant="secondary"
-            size="small"
-            onClick={() => navigate("/tournaments")}
-          >
-            �� Back to Tournaments
-          </Button>
-        </nav>
-
-        <header className="tournament-detail-header">
-          <div className="tournament-detail-title-row">
-            <h1 className="tournament-detail-title ds-type-title-l">
-              {tournament.name}
-            </h1>
-            <span
-              className={`tournament-detail-status-badge tournament-detail-status-${statusClass}`}
-            >
-              {tournament.status}
-            </span>
-          </div>
-          <dl className="tournament-detail-metadata">
-            <dt className="ds-visually-hidden">Date Range</dt>
-            <dd className="tournament-detail-meta-item">
-              {tournament.start_date?.slice(0, 10)} ��{" "}
-              {tournament.end_date?.slice(0, 10)}
-            </dd>
-            <span
-              aria-hidden="true"
-              className="tournament-detail-meta-separator"
-            >
-              ��
-            </span>
-            <dt className="ds-visually-hidden">Starting Balance</dt>
-            <dd className="tournament-detail-meta-item">
-              ${tournament.starting_balance} starting balance
-            </dd>
-            <span
-              aria-hidden="true"
-              className="tournament-detail-meta-separator"
-            >
-              ��
-            </span>
-            <dt className="ds-visually-hidden">Participants</dt>
-            <dd className="tournament-detail-meta-item">
-              {participants.length} participants
-            </dd>
-            {tournament.owner?.username && (
-              <>
-                <span
-                  aria-hidden="true"
-                  className="tournament-detail-meta-separator"
-                >
-                  ��
-                </span>
-                <dt className="ds-visually-hidden">Host</dt>
-                <dd className="tournament-detail-meta-item">
-                  Hosted by {tournament.owner.username}
-                </dd>
-              </>
-            )}
-          </dl>
-          {tournament.description && (
-            <p className="tournament-detail-description ds-type-body-2">
-              {tournament.description}
-            </p>
-          )}
-        </header>
-
-        <section className="tournament-detail-panel">
-          {!token ? (
-            <div className="tournament-detail-action-row">
-              <p className="tournament-detail-action-text ds-type-body-2">
-                Login to join this tournament.
-              </p>
-              <Button variant="primary" onClick={() => navigate("/login")}>
-                Login to Join
-              </Button>
+      <main className="td-main">
+        {/* ── Header Section ── */}
+        <section className="td-header-section">
+          <div className="td-header-left">
+            <div className="td-chips-row">
+              <span
+                className={`td-status-chip td-status-chip--${tournament.status}`}
+              >
+                {getStatusLabel(tournament.status)}
+              </span>
+              <span className="td-tournament-id">
+                Tournament ID: PT-{id?.slice(-4) || id}
+              </span>
             </div>
-          ) : isOwner ? (
-            <div className="tournament-detail-action-row">
-              <p className="tournament-detail-owner-text ds-type-subtitle-l">
-                You created this tournament.
-              </p>
-              <div className="tournament-detail-owner-actions">
-                <Button variant="secondary" onClick={handleClose}>
-                  {tournament.status === "closed"
-                    ? "Open Joining"
-                    : "Close Joining"}
-                </Button>
-                <Button variant="cancel" onClick={handleDeleteTournament}>
-                  Delete Tournament
-                </Button>
+
+            <h1 className="td-title">{tournament.name}</h1>
+
+            <div className="td-meta-row">
+              <div className="td-meta-col">
+                <span className="td-meta-label">Entry Balance</span>
+                <span className="td-meta-value">
+                  ${formatCurrency(tournament.starting_balance)}
+                </span>
               </div>
-            </div>
-          ) : isParticipant ? (
-            <div className="tournament-detail-action-row">
-              <p className="tournament-detail-success-text ds-type-subtitle-l">
-                ? You are participating in this tournament.
-              </p>
-              {canJoin && (
-                <Button variant="cancel" onClick={handleLeave}>
-                  Leave Tournament
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="tournament-detail-action-row">
-              <p className="tournament-detail-action-text ds-type-body-2">
-                You are not part of this tournament.
-              </p>
-              {canJoin ? (
-                <Button variant="primary" onClick={handleJoin}>
-                  Join Tournament
-                </Button>
-              ) : (
-                <span className="tournament-detail-closed-text ds-type-body-2">
-                  Tournament is {tournament.status}
+              <div className="td-meta-col">
+                <span className="td-meta-label">Participants</span>
+                <span className="td-meta-value">
+                  {participants.length.toLocaleString()}
                 </span>
+              </div>
+              <div className="td-meta-col">
+                <span className="td-meta-label">Closing Date</span>
+                <span className="td-meta-value">
+                  {formatDate(tournament.end_date)}
+                </span>
+              </div>
+              {tournament.owner?.username && (
+                <div className="td-meta-col">
+                  <span className="td-meta-label">Host</span>
+                  <span className="td-meta-value td-meta-value--host">
+                    {tournament.owner.username}
+                    <CheckIcon className="td-verified-icon" />
+                  </span>
+                </div>
               )}
+            </div>
+          </div>
+
+          {/* Join Container — logged-in, not joined */}
+          {canJoin && (
+            <div className="td-join-container">
+              <Button variant="primary" headIcon={<TentIcon />} onClick={handleJoin}>
+                Join Tournament
+              </Button>
+              <button type="button" className="td-view-rules-btn">
+                View Rules
+              </button>
+            </div>
+          )}
+
+          {/* Owner Controls */}
+          {isOwner && (
+            <div className="td-join-container">
+              <Button variant="secondary" onClick={handleClose}>
+                {tournament.status === "closed"
+                  ? "Open Joining"
+                  : "Close Joining"}
+              </Button>
+              <Button variant="cancel" onClick={handleDeleteTournament}>
+                Delete Tournament
+              </Button>
             </div>
           )}
         </section>
 
-        {canTrade && (
-          <section className="tournament-detail-panel">
-            <h2 className="tournament-detail-panel-title ds-type-title-m">
-              Buy Stocks
-            </h2>
-            <div className="tournament-detail-buy-row">
-              <div className="tournament-detail-dropdown-wrap">
-                <StockSearchDropdown
-                  stocks={stocks}
-                  selected={selectedStock}
-                  onSelect={setSelectedStock}
-                />
-              </div>
-              <Button
-                variant="tertiary"
-                disabled={!selectedStock}
-                onClick={() =>
-                  selectedStock &&
-                  navigate(`/tournaments/${id}/buy/${selectedStock.symbol}`)
-                }
+        {/* ── Leaderboard (full width) ── */}
+        <section className="td-leaderboard">
+          <div className="td-leaderboard-header">
+            <h2 className="td-leaderboard-title">Tournament Leaderboard</h2>
+            <div className="td-leaderboard-actions">
+              <button
+                type="button"
+                className="td-icon-btn"
+                aria-label="Sort"
               >
-                Buy
-              </Button>
+                <SortIcon />
+              </button>
+              <button
+                type="button"
+                className="td-icon-btn"
+                onClick={refreshParticipants}
+                aria-label="Refresh"
+              >
+                <RefreshIcon />
+              </button>
             </div>
-          </section>
-        )}
+          </div>
 
-        {canTrade && (
-          <section className="tournament-detail-panel">
-            <div className="tournament-detail-portfolio-header">
-              <h2 className="tournament-detail-panel-title ds-type-title-m">
-                Your Stocks
-              </h2>
-              <Input
-                type="text"
-                placeholder="Filter..."
-                value={holdingSearch}
-                onChange={(e) => setHoldingSearch(e.target.value)}
-                inputClassName="tournament-detail-search-input"
-              />
+          <div className="td-table">
+            <div className="td-table-head">
+              <span className="td-th td-th--rank">Rank</span>
+              <span className="td-th td-th--user">User</span>
+              <span className="td-th td-th--value">Portfolio Value</span>
+              <span className="td-th td-th--change">Day Change</span>
             </div>
-
-            <div className="tournament-detail-cash-row">
-              <span className="tournament-detail-cash-label ds-type-body-2">
-                Cash Balance
-              </span>
-              <span className="tournament-detail-cash-amount">
-                $
-                {(myParticipant?.cash_balance ?? 0).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                })}
-              </span>
-            </div>
-
-            {filteredHoldings.length > 0 ? (
-              <div className="tournament-detail-holdings">
-                {filteredHoldings.map((h) => {
-                  const stockInfo = stocks.find((s) => s.symbol === h.symbol);
-                  return (
-                    <article
-                      key={h.symbol}
-                      className="tournament-detail-holding-card"
-                    >
-                      <div className="tournament-detail-holding-primary">
-                        <span className="tournament-detail-holding-symbol">
-                          {h.symbol}
-                        </span>
-                        {stockInfo && (
-                          <span className="tournament-detail-holding-name">
-                            {stockInfo.name}
-                          </span>
-                        )}
-                      </div>
-                      <div className="tournament-detail-holding-detail">
-                        <span className="tournament-detail-holding-shares">
-                          {h.shares} shares
-                        </span>
-                        <span className="tournament-detail-holding-invested">
-                          $
-                          {h.amount_invested.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                          })}{" "}
-                          invested
-                        </span>
-                      </div>
-                      <Button
-                        variant="cancel"
-                        size="small"
-                        onClick={() =>
-                          navigate(`/tournaments/${id}/sell/${h.symbol}`)
-                        }
+            <div className="td-table-body">
+              {participants.map((p, i) => {
+                const isMe =
+                  user &&
+                  (p.user?._id === user.id || p.user === user.id);
+                const rank = i + 1;
+                return (
+                  <div
+                    key={p._id}
+                    className={`td-table-row${isMe ? " td-table-row--me" : ""}`}
+                  >
+                    <span className="td-td td-td--rank">
+                      <span
+                        className={`td-rank-badge${rank === 1 ? " td-rank-badge--first" : ""}${isMe ? " td-rank-badge--me" : ""}`}
                       >
-                        Sell
-                      </Button>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="tournament-detail-empty">
-                {holdings.length === 0
-                  ? "You don't own any stocks yet. Buy some above!"
-                  : "No stocks match your search."}
-              </div>
-            )}
-          </section>
-        )}
-
-        <section className="tournament-detail-panel">
-          <h2 className="tournament-detail-leaderboard-title ds-type-title-m">
-            Participants
-            <span className="tournament-detail-count">
-              {" "}
-              ({participants.length})
-            </span>
-          </h2>
-          {participants.length > 0 ? (
-            <ol className="tournament-detail-leaderboard">
-              {participants.map((p, index) => (
-                <li key={p._id} className="tournament-detail-leaderboard-item">
-                  <div className="tournament-detail-participant-info">
-                    <span className="tournament-detail-rank">#{index + 1}</span>
-                    <span className="tournament-detail-participant-name">
-                      {p.user?.username || "Unknown"}
+                        {String(rank).padStart(2, "0")}
+                      </span>
+                    </span>
+                    <span className="td-td td-td--user">
+                      <ProfileIcon className="td-avatar" />
+                      <span
+                        className={`td-username${rank === 1 ? " td-username--first" : ""}${isMe ? " td-username--me" : ""}`}
+                      >
+                        {p.user?.username || "Unknown"}
+                        {isMe && " (You)"}
+                      </span>
+                    </span>
+                    <span className="td-td td-td--value">
+                      ${formatCurrency(p.cash_balance || 0)}
+                    </span>
+                    <span className="td-td td-td--change td-change--neutral">
+                      --
                     </span>
                   </div>
-                  <output className="tournament-detail-balance">
-                    ${p.cash_balance?.toLocaleString()}
-                  </output>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <div className="tournament-detail-empty-leaderboard ds-type-body-2">
-              <p>No participants yet. Be the first to join!</p>
+                );
+              })}
+              {participants.length === 0 && (
+                <div className="td-table-empty">
+                  No participants yet. Be the first to join!
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </section>
       </main>
     </div>

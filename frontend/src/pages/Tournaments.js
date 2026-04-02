@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
-import VisitorTournamentsContent from "../components/VisitorTournamentsContent";
+import TournamentsContent from "../components/TournamentsContent";
 
 function Tournaments() {
   const { token } = useContext(AuthContext);
@@ -9,7 +9,7 @@ function Tournaments() {
   return (
     <div>
       <Header />
-      {token ? <VisitorTournamentsContent /> : <VisitorTournamentsContent />}
+      <TournamentsContent isLoggedIn={!!token} />
     </div>
   );
 }

@@ -12,14 +12,15 @@
  * - Submits to backend API with auth token, navigates to dashboard on success
  */
 
-import { useContext, useState, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
-import Input from "../components/UI/Input";
 import DatePicker from "../components/DatePicker";
 import TimePicker from "../components/TimePicker";
+import { ReactComponent as TimedIcon } from "../assets/Icon_16x16/Timed_16x16.svg";
+import { ReactComponent as CautionIcon } from "../assets/Icon_16x16/Caution_16x16.svg";
 import "../styles/AddTournament.css";
 
 // Returns current time rounded up to nearest 15 minutes in ISO format
@@ -55,12 +56,12 @@ function AddTournament() {
   // Memoized validation errors for start/end dates
   const validationErrors = useMemo(() => {
     const errors = {};
-    const now = new Date();
+    const current = new Date();
     const start = new Date(formData.start_date);
     const end = new Date(formData.end_date);
 
     // Start must not be in the past (1 minute buffer)
-    if (start < new Date(now.getTime() - 60000)) {
+    if (start < new Date(current.getTime() - 60000)) {
       errors.start_date = "Start time cannot be in the past";
     }
 
@@ -75,20 +76,18 @@ function AddTournament() {
 
   const hasErrors = Object.keys(validationErrors).length > 0;
 
-  // Generic handler for text/number input changes
   function handleChange(e) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   }
 
-  // Calculates human-readable duration between start and end dates
-  function getDuration() {
+  function getDurationDaysHours() {
     const diff = new Date(formData.end_date) - new Date(formData.start_date);
-    const mins = Math.floor(diff / 60000);
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    if (h === 0) return `${m}m`;
-    if (m === 0) return `${h}h`;
-    return `${h}h ${m}m`;
+    if (diff <= 0) return "-- Days -- Hours";
+
+    const totalHours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    return `${days} Days ${hours} Hours`;
   }
 
   // Submits tournament data to API after validation check
@@ -127,137 +126,168 @@ function AddTournament() {
   return (
     <div className="add-tournament-page">
       <Header />
+
       <main className="add-tournament-main">
-        <article className="add-tournament-card">
-          <h1 className="add-tournament-title ds-type-title-l">
-            Create Tournament
-          </h1>
+        <section className="add-tournament-shell">
+          <header className="add-tournament-head">
+            <p className="add-tournament-eyebrow">Competition Management</p>
+            <h1 className="add-tournament-title">Create New Tournament</h1>
+          </header>
 
-          <form onSubmit={handleSubmit} className="add-tournament-form">
-            {/* Tournament Name Field */}
-            <Input
-              label="Tournament Name"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="e.g. S&P 500 Challenge"
-              required
-              inputClassName="add-tournament-input"
-              autoFocus
-            />
+          <article className="add-tournament-card">
+            <div className="add-tournament-accent" aria-hidden="true" />
 
-            {/* Start Date & Time Group */}
-            <fieldset className="add-tournament-fieldset">
-              <legend className="add-tournament-legend ds-type-label">
-                Start Date & Time
-              </legend>
-              <div className="add-tournament-date-time">
-                <DatePicker
-                  name="start_date"
-                  value={formData.start_date}
+            <form onSubmit={handleSubmit} className="add-tournament-form">
+              <div className="add-tournament-row add-tournament-row--full">
+                <label htmlFor="name" className="add-tournament-label">
+                  Tournament Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
-                />
-                <TimePicker
-                  name="start_date"
-                  value={formData.start_date}
-                  onChange={handleChange}
+                  placeholder="e.g. Q4 Institutional Challenge"
+                  required
+                  autoFocus
+                  className="add-tournament-input"
                 />
               </div>
-            </fieldset>
-            {validationErrors.start_date && (
-              <p role="alert" className="add-tournament-error">
-                {validationErrors.start_date}
-              </p>
-            )}
 
-            {/* End Date & Time Group */}
-            <fieldset className="add-tournament-fieldset">
-              <legend className="add-tournament-legend ds-type-label">
-                End Date & Time
-              </legend>
-              <div className="add-tournament-date-time">
-                <DatePicker
-                  name="end_date"
-                  value={formData.end_date}
+              <div className="add-tournament-grid add-tournament-grid--schedule">
+                <fieldset className="add-tournament-fieldset">
+                  <legend className="add-tournament-label">
+                    Start Schedule
+                  </legend>
+                  <div className="add-tournament-date-time">
+                    <DatePicker
+                      name="start_date"
+                      value={formData.start_date}
+                      onChange={handleChange}
+                      placeholder="mm/dd/yyyy"
+                    />
+                    <TimePicker
+                      name="start_date"
+                      value={formData.start_date}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  {validationErrors.start_date && (
+                    <p role="alert" className="add-tournament-error">
+                      {validationErrors.start_date}
+                    </p>
+                  )}
+                </fieldset>
+
+                <fieldset className="add-tournament-fieldset">
+                  <legend className="add-tournament-label">End Schedule</legend>
+                  <div className="add-tournament-date-time">
+                    <DatePicker
+                      name="end_date"
+                      value={formData.end_date}
+                      onChange={handleChange}
+                      placeholder="mm/dd/yyyy"
+                    />
+                    <TimePicker
+                      name="end_date"
+                      value={formData.end_date}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  {validationErrors.end_date && (
+                    <p role="alert" className="add-tournament-error">
+                      {validationErrors.end_date}
+                    </p>
+                  )}
+                </fieldset>
+              </div>
+
+              <div className="add-tournament-grid add-tournament-grid--finance">
+                <div className="add-tournament-row">
+                  <label
+                    htmlFor="starting_balance"
+                    className="add-tournament-label"
+                  >
+                    Starting Balance
+                  </label>
+                  <div className="add-tournament-money-wrap">
+                    <span className="add-tournament-dollar">$</span>
+                    <input
+                      id="starting_balance"
+                      name="starting_balance"
+                      type="number"
+                      value={formData.starting_balance}
+                      onChange={handleChange}
+                      placeholder="100000"
+                      min="0"
+                      step="1000"
+                      required
+                      className="add-tournament-input add-tournament-input--money"
+                    />
+                  </div>
+                  <p className="add-tournament-helper">
+                    Standard competitive base: $100k
+                  </p>
+                </div>
+
+                <aside className="add-tournament-duration">
+                  <TimedIcon className="add-tournament-duration-icon" />
+                  <div className="add-tournament-duration-copy">
+                    <p className="add-tournament-duration-label">
+                      Calculated Duration
+                    </p>
+                    <output className="add-tournament-duration-value">
+                      {getDurationDaysHours()}
+                    </output>
+                  </div>
+                </aside>
+              </div>
+
+              <div className="add-tournament-row add-tournament-row--full">
+                <label htmlFor="description" className="add-tournament-label">
+                  Tournament Rules & Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
                   onChange={handleChange}
-                />
-                <TimePicker
-                  name="end_date"
-                  value={formData.end_date}
-                  onChange={handleChange}
+                  placeholder="Define entry requirements, trading limits, or asset classes permitted..."
+                  rows={5}
+                  className="add-tournament-textarea"
                 />
               </div>
-            </fieldset>
-            {validationErrors.end_date && (
-              <p role="alert" className="add-tournament-error">
-                {validationErrors.end_date}
-              </p>
-            )}
 
-            {/* Live Duration Display */}
-            <div className="add-tournament-duration">
-              <span className="add-tournament-duration-label ds-type-body-2">
-                Duration:
-              </span>
-              <output className="add-tournament-duration-value">
-                {getDuration()}
-              </output>
-            </div>
+              <div className="add-tournament-actions">
+                <Button
+                  className="add-tournament-action-cancel"
+                  variant="cancel"
+                  type="button"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="add-tournament-action-submit"
+                  variant="primary"
+                  type="submit"
+                  disabled={hasErrors}
+                >
+                  Create Tournament
+                </Button>
+              </div>
+            </form>
+          </article>
 
-            {/* Starting Balance Field with Dollar Prefix */}
-            <Input
-              label="Player Starting Balance"
-              id="starting_balance"
-              name="starting_balance"
-              type="number"
-              value={formData.starting_balance}
-              onChange={handleChange}
-              placeholder="10000"
-              required
-              min="0"
-              step="1000"
-              inputClassName="add-tournament-currency-field"
-            />
-
-            {/* Description Field */}
-            <label
-              htmlFor="description"
-              className="add-tournament-label ds-type-label"
-            >
-              Game Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Describe the rules and goals of this tournament…"
-              rows={4}
-              className="add-tournament-textarea"
-            />
-
-            {/* Action Buttons */}
-            <div className="add-tournament-actions">
-              <Button
-                className="add-tournament-action-cancel"
-                variant="cancel"
-                type="button"
-                onClick={() => navigate("/dashboard")}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="add-tournament-action-submit"
-                variant="primary"
-                type="submit"
-                disabled={hasErrors}
-              >
-                Create Tournament
-              </Button>
-            </div>
-          </form>
-        </article>
+          <div className="add-tournament-note" role="status" aria-live="polite">
+            <CautionIcon className="add-tournament-note-icon" />
+            <p>
+              Once created, the tournament will be listed in the public arena.
+              Members can join until the start date. Market data is synced in
+              real-time using institutional feeds.
+            </p>
+          </div>
+        </section>
       </main>
     </div>
   );

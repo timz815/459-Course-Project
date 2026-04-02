@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Button from "./UI/Button";
 import { ReactComponent as RightIcon16 } from "../assets/Icon_16x16/Right_16x16.svg";
-import trophyIcon24 from "../assets/Icon_24x24/Trophy_24x24.svg";
-import riseDiagramIcon24 from "../assets/Icon_24x24/Rise-Diagram_24x24.svg";
+import { ReactComponent as TrophyIcon24 } from "../assets/Icon_24x24/Trophy_24x24.svg";
+import { ReactComponent as RiseDiagramIcon24 } from "../assets/Icon_24x24/Rise-Diagram_24x24.svg";
 import plusIcon16 from "../assets/Icon_16x16/Plus_16x16.svg";
 import sortIcon16 from "../assets/Icon_16x16/Sort_16x16.svg";
 import magnifyIcon16 from "../assets/Icon_16x16/Magnify_16x16.svg";
@@ -41,8 +41,8 @@ const DEBUG_WATCHLIST = [
 
 /* Color palette for competition card icons (cycles) */
 const CARD_THEMES = [
-  { bg: "blue", icon: trophyIcon24, barColor: "blue" },
-  { bg: "green", icon: riseDiagramIcon24, barColor: "green" },
+  { bg: "blue", icon: TrophyIcon24, barColor: "blue" },
+  { bg: "green", icon: RiseDiagramIcon24, barColor: "green" },
 ];
 
 function UserHomeContent() {
@@ -275,6 +275,7 @@ function UserHomeContent() {
           <div className="uh-comp-grid" style={{ marginTop: "1.5rem" }}>
             {competitions.map((comp, i) => {
               const theme = CARD_THEMES[i % CARD_THEMES.length];
+              const CompIcon = theme.icon;
               const cash = comp.myEntry?.cash_balance ?? 0;
               const starting = comp.tournament.starting_balance ?? 0;
               const pct = starting > 0 ? (cash / starting) * 100 : 0;
@@ -287,7 +288,7 @@ function UserHomeContent() {
                 >
                   <div className="uh-comp-top">
                     <div className={`uh-comp-icon ${theme.bg}`}>
-                      <img src={theme.icon} alt="" />
+                      <CompIcon className="uh-comp-icon-svg" />
                     </div>
                     {comp.rank != null && (
                       <div className="uh-comp-rank">

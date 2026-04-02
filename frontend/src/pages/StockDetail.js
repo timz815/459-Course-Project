@@ -229,23 +229,37 @@ function StockDetail() {
 
   async function handleAddToWatchlist() {
     if (!stock?.symbol || !token) return;
-    try {
-      const res = await fetch("http://localhost:5000/api/watchlist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-        body: JSON.stringify({
-          symbol: stock.symbol,
-          name: stock.name || stock.symbol,
-          sector: stock.sector || "Unknown",
-          exchange: stock.exchange || "--",
-        }),
-      });
-      if (res.ok) setWatchlistAdded(true);
-    } catch {
-      // ignore
+    if (watchlistAdded) {
+      // Remove from watchlist
+      try {
+        await fetch(`http://localhost:5000/api/watchlist/${stock.symbol}`, {
+          method: "DELETE",
+          headers: { Authorization: token },
+        });
+        setWatchlistAdded(false);
+      } catch {
+        // ignore
+      }
+    } else {
+      // Add to watchlist
+      try {
+        const res = await fetch("http://localhost:5000/api/watchlist", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+          body: JSON.stringify({
+            symbol: stock.symbol,
+            name: stock.name || stock.symbol,
+            sector: stock.sector || "Unknown",
+            exchange: stock.exchange || "--",
+          }),
+        });
+        if (res.ok) setWatchlistAdded(true);
+      } catch {
+        // ignore
+      }
     }
   }
 
@@ -469,7 +483,7 @@ function StockDetail() {
                   View Tournaments
                 </button>
                 <button
-                  className="sd-btn-watchlist"
+                  className={`sd-btn-watchlist${watchlistAdded ? " sd-btn-watchlist--added" : ""}`}
                   onClick={handleAddToWatchlist}
                 >
                   {watchlistAdded ? "Added to Watchlist" : "Add to Watchlist"}

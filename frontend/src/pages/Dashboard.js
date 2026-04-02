@@ -20,6 +20,9 @@ import { ReactComponent as RightIcon } from "../assets/Icon_16x16/Right_16x16.sv
 import { ReactComponent as OutlierDiagramIcon } from "../assets/Icon_16x16/Outlier-Diagram_16x16.svg";
 import { ReactComponent as AlertIcon } from "../assets/Icon_16x16/Alert_16x16.svg";
 import { ReactComponent as KebabIcon } from "../assets/Icon_16x16/Kebab-Menu_16x16.svg";
+import sortIcon16 from "../assets/Icon_16x16/Sort_16x16.svg";
+import magnifyIcon16 from "../assets/Icon_16x16/Magnify_16x16.svg";
+import deleteIcon16 from "../assets/Icon_16x16/Delete_16x16.svg";
 import "../styles/Dashboard.css";
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
@@ -50,6 +53,25 @@ function formatCurrency(n) {
   });
 }
 
+function formatPrice(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "$0.00";
+  return (
+    "$" +
+    n.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
+}
+
+function formatChange(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "0.00%";
+  const sign = n >= 0 ? "+" : "";
+  return `${sign}${n.toFixed(2)}%`;
+}
+
 /* ─── Component ────────────────────────────────────────────────────────────── */
 
 function Dashboard() {
@@ -58,6 +80,8 @@ function Dashboard() {
 
   const [competitions, setCompetitions] = useState([]);
   const [stocks, setStocks] = useState([]);
+  const [watchlist, setWatchlist] = useState([]);
+  const [watchlistPrices, setWatchlistPrices] = useState({});
 
   /* ─── Decode userId from JWT ───────────────────────────────────────────── */
   function getUserId() {
@@ -135,6 +159,24 @@ function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  /* ─── Fetch user's watchlist ──────────────────────────────────────────── */
+  useEffect(() => {
+    if (!token) return;
+    async function fetchWatchlist() {
+      try {
+        const res = await fetch("http://localhost:5000/api/watchlist", {
+          headers: { Authorization: token },
+        });
+        if (!res.ok) return;
+        const items = await res.json();
+        if (Array.isArray(items)) setWatchlist(items);
+      } catch {
+        // ignore
+      }
+    }
+    fetchWatchlist();
+  }, [token]);
+
   /* ─── Fetch stocks for Top Movers ──────────────────────────────────────── */
   useEffect(() => {
     async function fetchStocks() {
@@ -147,6 +189,25 @@ function Dashboard() {
       }
     }
     fetchStocks();
+  }, []);
+
+  /* ─── Fetch live prices for watchlist symbols ──────────────────────────── */
+  useEffect(() => {
+    async function fetchWatchlistPrices() {
+      try {
+        const res = await fetch("http://localhost:5000/api/stocks");
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+        const priceMap = {};
+        for (const s of data) {
+          priceMap[s.symbol] = { price: s.price, changePct: s.changePct };
+        }
+        setWatchlistPrices(priceMap);
+      } catch (err) {
+        console.error("Error fetching watchlist prices:", err);
+      }
+    }
+    fetchWatchlistPrices();
   }, []);
 
   /* ─── Derive net liquidity from all participations ─────────────────────── */
@@ -350,6 +411,113 @@ function Dashboard() {
               <div className="dash-tournaments-empty">
                 <p>No active tournaments.</p>
                 <p>Create or join a tournament to get started.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ─── Watchlist ─────────────────────────────────────────────────── */}
+        <section className="dash-watchlist">
+          <div className="dash-watchlist-head">
+            <div>
+              <p className="dash-watchlist-eyebrow">Market Pulse</p>
+              <h2 className="dash-watchlist-title">Watchlist</h2>
+            </div>
+            <div className="dash-watchlist-actions">
+              <button type="button" className="dash-watchlist-icon-btn">
+                <img src={sortIcon16} alt="Sort" />
+              </button>
+              <button type="button" className="dash-watchlist-icon-btn">
+                <img src={magnifyIcon16} alt="Search" />
+              </button>
+            </div>
+          </div>
+
+          <div className="dash-wl-table">
+            <div className="dash-wl-header">
+              <span>Asset</span>
+              <span>Sector / Exchange</span>
+              <span>Price</span>
+              <span>Change</span>
+              <span />
+            </div>
+
+            {watchlist.map((stock) => {
+              const priceData = watchlistPrices[stock.symbol];
+              const changePct = priceData?.changePct ?? 0;
+              const isPositive = changePct >= 0;
+
+              return (
+                <div key={stock.symbol} className="dash-wl-row">
+                  <div className="dash-wl-asset">
+                    <div className="dash-wl-avatar">
+                      {stock.symbol.charAt(0)}
+                    </div>
+                    <div className="dash-wl-asset-info">
+                      <span
+                        className="dash-wl-symbol"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          navigate(`/stock-market/${stock.symbol}`)
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter")
+                            navigate(`/stock-market/${stock.symbol}`);
+                        }}
+                      >
+                        {stock.symbol}
+                      </span>
+                      <span className="dash-wl-name">{stock.name}</span>
+                    </div>
+                  </div>
+
+                  <div className="dash-wl-tags">
+                    <span className="dash-wl-tag">{stock.sector}</span>
+                    <span className="dash-wl-tag">{stock.exchange}</span>
+                  </div>
+
+                  <span className="dash-wl-price">
+                    {priceData ? formatPrice(priceData.price) : "—"}
+                  </span>
+
+                  <span
+                    className={`dash-wl-change ${isPositive ? "positive" : "negative"}`}
+                  >
+                    {priceData ? formatChange(changePct) : "—"}
+                  </span>
+
+                  <div className="dash-wl-delete">
+                    <button
+                      type="button"
+                      className="dash-wl-delete-btn"
+                      aria-label={`Remove ${stock.symbol} from watchlist`}
+                      onClick={() => {
+                        setWatchlist((prev) =>
+                          prev.filter((w) => w.symbol !== stock.symbol),
+                        );
+                        fetch(
+                          `http://localhost:5000/api/watchlist/${stock.symbol}`,
+                          {
+                            method: "DELETE",
+                            headers: { Authorization: token },
+                          },
+                        ).catch(() => {});
+                      }}
+                    >
+                      <img src={deleteIcon16} alt="" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {watchlist.length === 0 && (
+              <div className="dash-wl-empty">
+                <p>
+                  Your watchlist is empty. Add stocks from the Stock Market
+                  page.
+                </p>
               </div>
             )}
           </div>

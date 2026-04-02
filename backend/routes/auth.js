@@ -162,9 +162,14 @@ router.patch("/profile/avatar", verifyToken, async (req, res) => {
   try {
     const { avatarUrl } = req.body;
 
-    // basic URL format check
+    // Validate URL format and restrict to http/https only
     try {
-      new URL(avatarUrl);
+      const parsed = new URL(avatarUrl);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return res
+          .status(400)
+          .json({ message: "Please enter a valid image URL." });
+      }
     } catch {
       return res
         .status(400)

@@ -61,10 +61,14 @@ function AccountSettings() {
     setAvatarUrl(url);
     setAvatarError(false);
 
-    // Only attempt preview if it looks like a URL
+    // Only attempt preview for http/https URLs
     try {
-      new URL(url);
-      setAvatarPreview(url);
+      const parsed = new URL(url);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        setAvatarPreview(url);
+      } else {
+        setAvatarPreview("");
+      }
     } catch {
       setAvatarPreview("");
     }

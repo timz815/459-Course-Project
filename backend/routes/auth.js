@@ -65,6 +65,7 @@ router.post("/login", async (req, res) => {
         email: user.email || "",
         avatarUrl: user.avatarUrl || "",
         accountBalance: user.accountBalance,
+        role: user.role || "user",
       },
     });
   } catch (err) {

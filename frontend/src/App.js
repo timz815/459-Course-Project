@@ -10,7 +10,9 @@ import AddTournament from "./pages/AddTournament";
 import StockMarket from "./pages/StockMarket";
 import StockDetail from "./pages/StockDetail";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard"; // ← new
 import ProtectedRoute from "./routes/ProtectedRoute";
+import AdminRoute from "./routes/AdminRoute"; // ← new
 import TournamentDetail from "./pages/TournamentDetail";
 import BuyStock from "./pages/BuyStock";
 import SellStock from "./pages/SellStock";
@@ -34,46 +36,14 @@ function App() {
           <Route path="/tournaments/:id" element={<TournamentDetail />} />
 
           {/* protected routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tournaments/:id/buy/:symbol"
-            element={
-              <ProtectedRoute>
-                <BuyStock />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tournaments/:id/sell/:symbol"
-            element={
-              <ProtectedRoute>
-                <SellStock />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-tournament"
-            element={
-              <ProtectedRoute>
-                <AddTournament />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/account-settings"
-            element={
-              <ProtectedRoute>
-                <AccountSettings />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/tournaments/:id/buy/:symbol" element={<ProtectedRoute><BuyStock /></ProtectedRoute>} />
+          <Route path="/tournaments/:id/sell/:symbol" element={<ProtectedRoute><SellStock /></ProtectedRoute>} />
+          <Route path="/add-tournament" element={<ProtectedRoute><AddTournament /></ProtectedRoute>} />
+          <Route path="/account-settings" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
+
+          {/* admin route */}
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         </Routes>
         <Footer />
       </Router>

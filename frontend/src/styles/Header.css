@@ -295,3 +295,22 @@
     font-size: 0.875rem;
   }
 }
+
+.header-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 2.5rem;
+  padding: 0 0.875rem;
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  border-radius: var(--radius-md);
+  background: rgba(255, 77, 77, 0.08);
+  color: var(--color-danger-500);
+  font: 600 0.8125rem/1 var(--font-sans);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.header-admin-btn:hover {
+  background: rgba(255, 77, 77, 0.16);
+  border-color: rgba(255, 77, 77, 0.55);
+}

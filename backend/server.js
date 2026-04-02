@@ -39,7 +39,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/tournaments", tradeRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/stocks", stockRoutes);
-app.use("/api/users", userRoutes); // ← new
+app.use("/api/users", userRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

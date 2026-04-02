@@ -18,15 +18,14 @@ function Header({ minimal = false }) {
   const { token, user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Handle logout and navigation
+  const isAdmin = user?.role === "admin";
+
   function handleLogout() {
     logout();
     navigate("/");
   }
 
-  function closeMenu() {
-    // no-op for now; kept for nav click handlers
-  }
+  function closeMenu() {}
 
   return (
     <header className="app-header" data-node-id="28:3357">
@@ -96,15 +95,27 @@ function Header({ minimal = false }) {
           {!minimal && (
             <nav className="header-auth" aria-label="User navigation">
               {token ? (
-                <ProfileDropdown
-                  userName={user?.username || "Account"}
-                  isAdmin={user?.role === "admin" || user?.isAdmin === true}
-                  accountBalance={user?.accountBalance ?? 100000}
-                  onAccountSettings={() => navigate("/account-settings")}
-                  onDashboard={() => navigate("/dashboard")}
-                  onAdminDashboard={() => navigate("/dashboard")}
-                  onLogout={handleLogout}
-                />
+                <>
+                  {/* ── only renders for admins ── */}
+                  {isAdmin && (
+                    <button
+                      className="header-admin-btn"
+                      onClick={() => navigate("/admin")}
+                    >
+                      Admin
+                    </button>
+                  )}
+
+                  <ProfileDropdown
+                    userName={user?.username || "Account"}
+                    isAdmin={isAdmin}
+                    accountBalance={user?.accountBalance ?? 100000}
+                    onAccountSettings={() => navigate("/account-settings")}
+                    onDashboard={() => navigate("/dashboard")}
+                    onAdminDashboard={() => navigate("/admin")}
+                    onLogout={handleLogout}
+                  />
+                </>
               ) : (
                 <>
                   <Button as={Link} to="/login" variant="secondary">

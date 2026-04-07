@@ -20,6 +20,8 @@ import { ReactComponent as ArrowRiseIcon } from "../assets/Icon_16x16/Arrow-Rise
 import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Default_32x32.svg";
 import { ReactComponent as ThumbsupIcon } from "../assets/Icon_Others/Thumbsup.svg";
 import { ReactComponent as ReplyIcon } from "../assets/Icon_Others/Reply.svg";
+import TradeConfirmModal from "../components/TradeConfirmModal";
+import { isPendingUntilOpen } from "../utils/marketHours";
 import "../styles/TournamentDetail.css";
 
 function formatTimeAgo(dateStr) {
@@ -117,6 +119,7 @@ function TournamentDetailJoined({
   const [isBuyConfirmOpen, setIsBuyConfirmOpen] = useState(false);
   const [submittingBuy, setSubmittingBuy] = useState(false);
   const [buyError, setBuyError] = useState("");
+  const [buyWarnings, setBuyWarnings] = useState([]);
   const [isSellConfirmOpen, setIsSellConfirmOpen] = useState(false);
   const [sellTargetHolding, setSellTargetHolding] = useState(null);
   const [submittingSell, setSubmittingSell] = useState(false);
@@ -253,6 +256,35 @@ function TournamentDetailJoined({
   function handleExecuteBuy() {
     if (!selectedStock || Number(tradeAmount) <= 0) return;
     setBuyError("");
+
+    const amount = parseFloat(tradeAmount);
+    const warnings = [];
+
+    if (isPendingUntilOpen()) {
+      warnings.push({
+        type: "info",
+        message: "Market is currently closed. Your trade will be queued and executed at the next market open.",
+      });
+    }
+
+    const estimatedSharesAtSubmit = selectedStock.price
+      ? parseFloat((amount / selectedStock.price).toFixed(1))
+      : null;
+    if (estimatedSharesAtSubmit !== null && estimatedSharesAtSubmit <= 0) {
+      warnings.push({
+        type: "error",
+        message: "Amount is too small to purchase any shares at the current price. Please increase your order.",
+      });
+    }
+
+    if (amount > cashBalance) {
+      warnings.push({
+        type: "error",
+        message: `Insufficient funds. You have $${cashBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}, but this order requires $${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`,
+      });
+    }
+
+    setBuyWarnings(warnings);
     setIsBuyConfirmOpen(true);
   }
 
@@ -286,6 +318,7 @@ function TournamentDetailJoined({
       if (!res.ok) {
         setBuyError(data.message || "Failed to queue trade.");
         setSubmittingBuy(false);
+        setIsBuyConfirmOpen(false);
         return;
       }
 
@@ -294,6 +327,7 @@ function TournamentDetailJoined({
     } catch (err) {
       setBuyError("Server error. Please try again.");
       setSubmittingBuy(false);
+      setIsBuyConfirmOpen(false);
     }
   }
 
@@ -729,6 +763,7 @@ function TournamentDetailJoined({
                     Amount exceeds available cash.
                   </p>
                 )}
+                {buyError && <p className="td-trade-error">{buyError}</p>}
               </div>
             </div>
 
@@ -809,78 +844,24 @@ function TournamentDetailJoined({
       </main>
 
       {isBuyConfirmOpen && (
-        <div className="td-modal-overlay" role="dialog" aria-modal="true">
-          <div className="td-buy-modal">
-            <div className="td-buy-modal-header">
-              <h2 className="td-buy-modal-title">Confirm Buy Order</h2>
-              <p className="td-buy-modal-subtitle">
-                Review your transaction before execution
-              </p>
-            </div>
-
-            <div className="td-buy-modal-content">
-              <div className="td-buy-stock-summary">
-                <div>
-                  <p className="td-buy-stock-symbol">{selectedStock?.symbol}</p>
-                  <p className="td-buy-stock-name">{selectedStock?.name}</p>
-                </div>
-                <div className="td-buy-current-price-wrap">
-                  <p className="td-buy-current-price-label">Current Price</p>
-                  <p className="td-buy-current-price-value">
-                    ${formatCurrency(selectedStock?.price || 0)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="td-buy-details">
-                <div className="td-buy-detail-row">
-                  <span>Amount to Invest</span>
-                  <span>${formatCurrency(investAmount)}</span>
-                </div>
-                <div className="td-buy-detail-row">
-                  <span>Estimated Shares</span>
-                  <span>{estimatedShares} shares</span>
-                </div>
-                <div className="td-buy-detail-row">
-                  <span>Transaction Fee</span>
-                  <span className="td-buy-fee">$0.00 (Paper Account)</span>
-                </div>
-              </div>
-
-              <div className="td-buy-total-row">
-                <span>Total Cost</span>
-                <span className="td-buy-total-value">
-                  ${formatCurrency(investAmount)}
-                </span>
-              </div>
-            </div>
-
-            <div className="td-buy-modal-actions">
-              <Button
-                variant="primary"
-                className="td-buy-confirm-btn"
-                onClick={handleConfirmBuySubmit}
-                disabled={submittingBuy}
-              >
-                {submittingBuy ? "Submitting..." : "Confirm & Submit"}
-              </Button>
-              <button
-                type="button"
-                className="td-buy-cancel-btn"
-                onClick={() => {
-                  if (!submittingBuy) {
-                    setIsBuyConfirmOpen(false);
-                    setBuyError("");
-                  }
-                }}
-                disabled={submittingBuy}
-              >
-                Cancel
-              </button>
-              {buyError && <p className="td-buy-error">{buyError}</p>}
-            </div>
-          </div>
-        </div>
+        <TradeConfirmModal
+          side="buy"
+          symbol={selectedStock?.symbol}
+          companyName={selectedStock?.name}
+          price={selectedStock?.price}
+          amount={investAmount}
+          shares={estimatedShares || "0.000"}
+          onConfirm={handleConfirmBuySubmit}
+          onCancel={() => {
+            if (!submittingBuy) {
+              setIsBuyConfirmOpen(false);
+              setBuyError("");
+              setBuyWarnings([]);
+            }
+          }}
+          submitting={submittingBuy}
+          warnings={buyWarnings}
+        />
       )}
 
       {isSellConfirmOpen && (

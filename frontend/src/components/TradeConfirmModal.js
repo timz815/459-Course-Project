@@ -25,6 +25,8 @@ function formatCurrency(n) {
  *   onConfirm   — called when user clicks confirm
  *   onCancel    — called when user clicks cancel or overlay
  *   submitting  — if true, disable confirm button
+ *   warnings    — optional array of { type: "error" | "info", message: string }
+ *                 "error" warnings block confirm; "info" warnings are informational only
  */
 function TradeConfirmModal({
   side,
@@ -36,9 +38,11 @@ function TradeConfirmModal({
   onConfirm,
   onCancel,
   submitting,
+  warnings = [],
 }) {
   const overlayRef = useRef(null);
   const isBuy = side === "buy";
+  const hasBlockingWarning = warnings.some((w) => w.type === "error");
 
   function handleOverlayClick(e) {
     if (e.target === overlayRef.current) onCancel();
@@ -114,12 +118,23 @@ function TradeConfirmModal({
           </div>
         )}
 
+        {/* Warnings */}
+        {warnings.length > 0 && (
+          <div className="tcm-warnings">
+            {warnings.map((w, i) => (
+              <p key={i} className={`tcm-warning tcm-warning--${w.type}`}>
+                {w.message}
+              </p>
+            ))}
+          </div>
+        )}
+
         {/* Confirm button */}
         <button
           type="button"
           className={`tcm-confirm-btn ${isBuy ? "tcm-confirm-btn--buy" : "tcm-confirm-btn--sell"}`}
           onClick={onConfirm}
-          disabled={submitting}
+          disabled={submitting || hasBlockingWarning}
         >
           {submitting
             ? "Processing\u2026"

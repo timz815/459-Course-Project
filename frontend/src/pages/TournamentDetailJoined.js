@@ -729,6 +729,7 @@ function TournamentDetailJoined({
                   <span className="td-trade-cash-value">${formatCurrency(cashBalance)}</span>
                 </div>
 
+
                 <div className="td-trade-field">
                   <label className="td-trade-label">Select Ticker</label>
                   <StockSearchDropdown
@@ -817,52 +818,55 @@ function TournamentDetailJoined({
 
               <div className="td-holdings-list">
                 {holdings.length > 0 ? (
-                  holdings.map((h) => {
-                    const stockInfo = stocks.find((s) => s.symbol === h.symbol);
-                    const currentValue = stockInfo?.price != null
-                      ? h.shares * stockInfo.price
-                      : h.amount_invested || 0;
-                    const costBasis = h.amount_invested || 0;
-                    const delta = currentValue - costBasis;
-                    const isPositive = delta >= 0;
-                    return (
-                      <div
-                        key={h.symbol}
-                        className={`td-holding-item ${isPositive ? "td-holding-item--positive" : "td-holding-item--negative"}`}
-                      >
-                        <div className="td-holding-left">
-                          <div className="td-holding-name-row">
-                            <span className="td-holding-symbol">{h.symbol}</span>
-                            <span className="td-holding-company">{stockInfo?.name || ""}</span>
-                          </div>
-                          <span className="td-holding-cost">
-                            Cost ${formatCurrency(costBasis)}
-                          </span>
-                        </div>
-                        <div className="td-holding-right">
-                          <div className="td-holding-value-col">
-                            <span className="td-holding-total">
-                              ${formatCurrency(currentValue)}
-                            </span>
-                            <span className={`td-holding-delta ${isPositive ? "td-holding-delta--positive" : "td-holding-delta--negative"}`}>
-                              {delta >= 0 ? "+" : ""}${formatCurrency(delta)}
+                  <>
+                    <div className="td-holdings-list-header">
+                      <span className="td-holdings-col-label">Position</span>
+                      <span className="td-holdings-col-label">Sell Value / Gain</span>
+                    </div>
+                    {holdings.map((h) => {
+                      const stockInfo = stocks.find((s) => s.symbol === h.symbol);
+                      const currentValue = stockInfo?.price != null
+                        ? h.shares * stockInfo.price
+                        : h.amount_invested || 0;
+                      const costBasis = h.amount_invested || 0;
+                      const delta = currentValue - costBasis;
+                      const isPositive = delta >= 0;
+                      return (
+                        <div key={h.symbol} className="td-holding-item">
+                          <div className="td-holding-left">
+                            <div className="td-holding-name-row">
+                              <span className="td-holding-symbol">{h.symbol}</span>
+                              <span className="td-holding-company">{stockInfo?.name || ""}</span>
+                            </div>
+                            <span className="td-holding-cost">
+                              Cost ${formatCurrency(costBasis)}
                             </span>
                             <span className="td-holding-shares">
                               {h.shares} shares
                             </span>
                           </div>
-                          <button
-                            type="button"
-                            className="td-holding-sell-btn"
-                            onClick={() => openSellModal(h)}
-                            aria-label={`Sell ${h.symbol}`}
-                          >
-                            <ShareIcon />
-                          </button>
+                          <div className="td-holding-right">
+                            <div className="td-holding-value-col">
+                              <span className="td-holding-total">
+                                ${formatCurrency(currentValue)}
+                              </span>
+                              <span className={`td-holding-delta ${isPositive ? "td-holding-delta--positive" : "td-holding-delta--negative"}`}>
+                                {delta >= 0 ? "+" : ""}${formatCurrency(delta)}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="td-holding-sell-btn"
+                              onClick={() => openSellModal(h)}
+                              aria-label={`Sell ${h.symbol}`}
+                            >
+                              <ShareIcon />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </>
                 ) : (
                   <div className="td-holdings-empty">
                     No holdings yet. Use the trading console above.

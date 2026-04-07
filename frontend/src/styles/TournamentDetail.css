@@ -619,9 +619,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--color-neutral-900);
-  border-radius: 0.375rem;
-  padding: 0.625rem 1rem;
 }
 
 .td-trade-cash-label {
@@ -633,7 +630,7 @@
 
 .td-trade-cash-value {
   font: 600 0.875rem/1.25rem var(--font-mono);
-  color: #66fdac;
+  color: #60a5fa;
 }
 
 .td-holdings-list {
@@ -642,21 +639,26 @@
   gap: 0.75rem;
 }
 
+.td-holdings-list-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+}
+
+.td-holdings-col-label {
+  font: 700 0.625rem/0.875rem var(--font-ui);
+  color: var(--color-neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06875rem;
+}
+
 .td-holding-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--color-neutral-850);
+  background: var(--color-neutral-900);
   border-radius: 0.5rem;
-  padding: 1rem 1rem 1rem 1.125rem;
-}
-
-.td-holding-item--positive {
-  border-left: 0.125rem solid var(--color-success-400);
-}
-
-.td-holding-item--negative {
-  border-left: 0.125rem solid var(--color-danger-500);
+  padding: 0.875rem 1rem;
 }
 
 .td-holding-left {

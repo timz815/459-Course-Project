@@ -58,6 +58,10 @@
 
 .td-header-right {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
 }
 
 /* Chips Row */
@@ -332,6 +336,126 @@
   text-align: right;
 }
 
+.td-th--expand {
+  width: 3rem;
+}
+
+.td-td--expand {
+  width: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.td-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  color: var(--color-neutral-400);
+  cursor: pointer;
+  transition: color 200ms;
+}
+
+.td-expand-btn:hover {
+  color: var(--color-neutral-100);
+}
+
+.td-chevron {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 200ms ease;
+}
+
+.td-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ── Holdings Dropdown ── */
+.td-holdings-dropdown {
+  display: flex;
+  flex-direction: column;
+  margin: 0 1.5rem 1rem;
+  background: var(--color-neutral-850);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.td-hd-header {
+  display: grid;
+  grid-template-columns: 5rem 1fr 1fr 1fr;
+  padding: 0.5rem 1rem;
+  font: 700 0.625rem/0.875rem var(--font-ui);
+  color: var(--color-neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06875rem;
+  border-bottom: 1px solid rgba(63, 72, 81, 0.15);
+}
+
+.td-hd-row {
+  display: grid;
+  grid-template-columns: 5rem 1fr 1fr 1fr;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid rgba(63, 72, 81, 0.08);
+}
+
+.td-hd-row:last-child {
+  border-bottom: none;
+}
+
+.td-hd-symbol {
+  font: 700 0.8125rem/1.125rem var(--font-mono);
+  color: var(--color-neutral-100);
+}
+
+.td-hd-shares {
+  font: 400 0.75rem/1rem var(--font-mono);
+  color: var(--color-neutral-400);
+}
+
+.td-hd-value {
+  font: 600 0.8125rem/1.125rem var(--font-mono);
+  color: var(--color-neutral-100);
+}
+
+.td-hd-gain {
+  font: 600 0.75rem/1rem var(--font-mono);
+}
+
+.td-hd-gain--pos {
+  color: var(--color-success-400);
+}
+
+.td-hd-gain--neg {
+  color: var(--color-danger-500);
+}
+
+.td-hd-cash-row {
+  display: grid;
+  grid-template-columns: 5rem 1fr 1fr 1fr;
+  padding: 0.625rem 1rem;
+  border-top: 1px solid rgba(63, 72, 81, 0.15);
+  font: 600 0.8125rem/1.125rem var(--font-mono);
+  color: var(--color-neutral-400);
+}
+
+.td-hd-cash-row span:nth-child(3) {
+  color: var(--color-neutral-100);
+}
+
+.td-hd-empty {
+  margin: 0;
+  padding: 1rem;
+  font: 400 0.75rem/1rem var(--font-sans);
+  color: var(--color-neutral-400);
+  text-align: center;
+}
+
 .td-table-body {
   display: flex;
   flex-direction: column;
@@ -339,8 +463,14 @@
 
 .td-table-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   border-top: 1px solid rgba(63, 72, 81, 0.05);
+}
+
+.td-row-main {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .td-table-row:first-child {
@@ -643,7 +773,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0;
 }
 
 .td-holdings-col-label-right {
@@ -662,7 +792,7 @@
 .td-holding-item {
   display: flex;
   flex-direction: column;
-  padding: 0.875rem 1rem;
+  padding: 0.875rem 0;
   gap: 0.5rem;
 }
 
@@ -777,7 +907,6 @@
   justify-content: center;
   gap: 0.625rem;
   height: 2.625rem;
-  width: 100%;
   padding: 0 1rem;
   border: 1px solid rgba(255, 77, 77, 0.2);
   border-radius: 0.375rem;
@@ -1365,6 +1494,23 @@
   text-align: center;
   color: var(--color-danger-500);
   font: 500 0.75rem/1rem var(--font-sans);
+}
+
+.td-sell-warning {
+  margin: 0.5rem 0 0;
+  font: 500 0.75rem/1rem var(--font-sans);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.td-sell-warning--error {
+  color: var(--color-danger-500);
+  background: rgba(255, 59, 59, 0.08);
+}
+
+.td-sell-warning--info {
+  color: var(--color-neutral-300);
+  background: rgba(136, 146, 156, 0.1);
 }
 
 /* ── Responsive ── */

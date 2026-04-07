@@ -17,6 +17,7 @@ import { ReactComponent as WalletIcon } from "../assets/Icon_16x16/Wallet_16x16.
 import { ReactComponent as CancelIcon } from "../assets/Icon_16x16/Cancel_16x16.svg";
 import { ReactComponent as ShareIcon } from "../assets/Icon_16x16/Share_16x16.svg";
 import { ReactComponent as ArrowRiseIcon } from "../assets/Icon_16x16/Arrow-Rise_16x16.svg";
+import { ReactComponent as ArrowFallIcon } from "../assets/Icon_16x16/Arrow-Fall_16x16.svg";
 import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Default_32x32.svg";
 import { ReactComponent as ThumbsupIcon } from "../assets/Icon_Others/Thumbsup.svg";
 import { ReactComponent as ReplyIcon } from "../assets/Icon_Others/Reply.svg";
@@ -117,6 +118,7 @@ function TournamentDetailJoined({
   const [comments, setComments] = useState([]);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentFilter, setCommentFilter] = useState("all");
+  const [expandedParticipantId, setExpandedParticipantId] = useState(null);
   const [isBuyConfirmOpen, setIsBuyConfirmOpen] = useState(false);
   const [submittingBuy, setSubmittingBuy] = useState(false);
   const [buyError, setBuyError] = useState("");
@@ -125,6 +127,9 @@ function TournamentDetailJoined({
   const [sellTargetHolding, setSellTargetHolding] = useState(null);
   const [submittingSell, setSubmittingSell] = useState(false);
   const [sellError, setSellError] = useState("");
+  const [sellAmount, setSellAmount] = useState("");
+  const [sellWarnings, setSellWarnings] = useState([]);
+  const [isSellAmountConfirmed, setIsSellAmountConfirmed] = useState(false);
   const commentInputRef = useRef(null);
 
   const cashBalance = myParticipant?.cash_balance ?? 0;
@@ -276,9 +281,13 @@ function TournamentDetailJoined({
       ? parseFloat((amount / selectedStock.price).toFixed(1))
       : null;
     if (estimatedSharesAtSubmit !== null && estimatedSharesAtSubmit <= 0) {
+      const minDollar = (0.05 * selectedStock.price).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
       warnings.push({
         type: "error",
-        message: "Amount is too small to purchase any shares at the current price. Please increase your order.",
+        message: `Amount too small — minimum order is 0.05 shares of ${selectedStock.symbol.toUpperCase()} ($${minDollar} at the current price). Please increase your order.`,
       });
     }
 
@@ -338,8 +347,37 @@ function TournamentDetailJoined({
 
   function openSellModal(holding) {
     setSellError("");
+    setSellWarnings([]);
+    setSellAmount("");
+    setIsSellAmountConfirmed(false);
     setSellTargetHolding(holding);
     setIsSellConfirmOpen(true);
+  }
+
+  function handleReviewSell() {
+    const amount = parseFloat(sellAmount);
+    if (!amount || amount <= 0) return;
+
+    const warnings = [];
+
+    if (amount > sellDollarAmount) {
+      warnings.push({
+        type: "error",
+        message: `Amount exceeds your position value of $${formatCurrency(sellDollarAmount)}.`,
+      });
+    }
+
+    if (isPendingUntilOpen()) {
+      warnings.push({
+        type: "info",
+        message: "Market is currently closed. Your sell will be queued and executed at the next market open.",
+      });
+    }
+
+    setSellWarnings(warnings);
+    if (!warnings.some((w) => w.type === "error")) {
+      setIsSellAmountConfirmed(true);
+    }
   }
 
   function getSellStockInfo(holding) {
@@ -358,11 +396,10 @@ function TournamentDetailJoined({
   async function handleConfirmSellSubmit() {
     if (!sellTargetHolding) return;
 
-    const stockInfo = getSellStockInfo(sellTargetHolding);
-    const dollarAmount = getSellDollarAmount(sellTargetHolding, stockInfo);
+    const dollarAmount = parseFloat(sellAmount);
 
     if (!dollarAmount || dollarAmount <= 0) {
-      setSellError("Unable to calculate liquidation amount.");
+      setSellError("Invalid sell amount.");
       return;
     }
 
@@ -410,7 +447,6 @@ function TournamentDetailJoined({
     sellTargetHolding,
     sellStockInfo,
   );
-  const sellShares = Number(sellTargetHolding?.shares || 0);
   const sellChangePct = Number(sellStockInfo?.changePct);
   const sellChangeText = Number.isFinite(sellChangePct)
     ? `${sellChangePct >= 0 ? "+" : ""}${sellChangePct.toFixed(1)}% Today`
@@ -471,6 +507,14 @@ function TournamentDetailJoined({
           <div className="td-header-right">
             <button type="button" className="td-view-rules-btn">
               View Rules
+            </button>
+            <button
+              type="button"
+              className="td-leave-btn"
+              onClick={handleLeave}
+            >
+              <CancelIcon className="td-leave-icon" />
+              Leave Tournament
             </button>
           </div>
         </section>
@@ -542,53 +586,110 @@ function TournamentDetailJoined({
                   <span className="td-th td-th--user">User</span>
                   <span className="td-th td-th--value">Portfolio Value</span>
                   <span className="td-th td-th--change">Day Change</span>
+                  <span className="td-th td-th--expand" />
                 </div>
                 <div className="td-table-body">
                   {participants.map((p, i) => {
                     const isMe =
                       user && (p.user?._id === user.id || p.user === user.id);
                     const rank = i + 1;
+                    const isExpanded = expandedParticipantId === p._id;
+                    const participantHoldings = p.holdings || [];
                     return (
                       <div
                         key={p._id}
-                        className={`td-table-row${isMe ? " td-table-row--me" : ""}`}
+                        className={`td-table-row${isMe ? " td-table-row--me" : ""}${isExpanded ? " td-table-row--expanded" : ""}`}
                       >
-                        <span className="td-td td-td--rank">
-                          <span
-                            className={`td-rank-badge${rank === 1 ? " td-rank-badge--first" : ""}${isMe ? " td-rank-badge--me" : ""}`}
-                          >
-                            {String(rank).padStart(2, "0")}
+                        <div className="td-row-main">
+                          <span className="td-td td-td--rank">
+                            <span
+                              className={`td-rank-badge${rank === 1 ? " td-rank-badge--first" : ""}${isMe ? " td-rank-badge--me" : ""}`}
+                            >
+                              {String(rank).padStart(2, "0")}
+                            </span>
                           </span>
-                        </span>
-                        <span className="td-td td-td--user">
-                          {p.user?.avatarUrl ? (
-                            <img
-                              src={p.user.avatarUrl}
-                              alt={`${p.user?.username || "User"} avatar`}
-                              className="td-avatar"
-                            />
-                          ) : (
-                            <ProfileIcon className="td-avatar" />
-                          )}
-                          <span
-                            className={`td-username${rank === 1 ? " td-username--first" : ""}${isMe ? " td-username--me" : ""}`}
-                          >
-                            {p.user?.username || "Unknown"}
-                            {isMe && " (You)"}
+                          <span className="td-td td-td--user">
+                            {p.user?.avatarUrl ? (
+                              <img
+                                src={p.user.avatarUrl}
+                                alt={`${p.user?.username || "User"} avatar`}
+                                className="td-avatar"
+                              />
+                            ) : (
+                              <ProfileIcon className="td-avatar" />
+                            )}
+                            <span
+                              className={`td-username${rank === 1 ? " td-username--first" : ""}${isMe ? " td-username--me" : ""}`}
+                            >
+                              {p.user?.username || "Unknown"}
+                              {isMe && " (You)"}
+                            </span>
                           </span>
-                        </span>
-                        <span className="td-td td-td--value">
-                          ${formatCurrency(p.portfolio_value ?? p.cash_balance ?? 0)}
-                        </span>
-                        <span className={`td-td td-td--change ${
-                          p.day_change == null ? "td-change--neutral" :
-                          p.day_change > 0 ? "td-change--positive" :
-                          p.day_change < 0 ? "td-change--negative" :
-                          "td-change--neutral"
-                        }`}>
-                          {p.day_change == null ? "--" :
-                            `${p.day_change >= 0 ? "+" : ""}$${formatCurrency(p.day_change)}`}
-                        </span>
+                          <span className="td-td td-td--value">
+                            ${formatCurrency(p.portfolio_value ?? p.cash_balance ?? 0)}
+                          </span>
+                          <span className={`td-td td-td--change ${
+                            p.day_change == null ? "td-change--neutral" :
+                            p.day_change > 0 ? "td-change--positive" :
+                            p.day_change < 0 ? "td-change--negative" :
+                            "td-change--neutral"
+                          }`}>
+                            {p.day_change == null ? "--" :
+                              `${p.day_change >= 0 ? "+" : ""}$${formatCurrency(p.day_change)}`}
+                          </span>
+                          <span className="td-td td-td--expand">
+                            <button
+                              type="button"
+                              className="td-expand-btn"
+                              onClick={() =>
+                                setExpandedParticipantId(isExpanded ? null : p._id)
+                              }
+                              aria-label={isExpanded ? "Collapse holdings" : "Expand holdings"}
+                            >
+                              <ArrowFallIcon className={`td-chevron${isExpanded ? " td-chevron--open" : ""}`} />
+                            </button>
+                          </span>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="td-holdings-dropdown">
+                            {participantHoldings.length > 0 ? (
+                              <>
+                                <div className="td-hd-header">
+                                  <span>Symbol</span>
+                                  <span>Shares</span>
+                                  <span>Current Value</span>
+                                  <span>Gain / Loss</span>
+                                </div>
+                                {participantHoldings.map((h) => {
+                                  const stockInfo = stocks.find((s) => s.symbol === h.symbol);
+                                  const currentVal = stockInfo?.price
+                                    ? stockInfo.price * h.shares
+                                    : h.amount_invested || 0;
+                                  const gain = currentVal - (h.amount_invested || 0);
+                                  return (
+                                    <div key={h.symbol} className="td-hd-row">
+                                      <span className="td-hd-symbol">{h.symbol}</span>
+                                      <span className="td-hd-shares">{h.shares} shares</span>
+                                      <span className="td-hd-value">${formatCurrency(currentVal)}</span>
+                                      <span className={`td-hd-gain${gain >= 0 ? " td-hd-gain--pos" : " td-hd-gain--neg"}`}>
+                                        {gain >= 0 ? "+" : ""}${formatCurrency(gain)}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                                <div className="td-hd-cash-row">
+                                  <span>Cash</span>
+                                  <span></span>
+                                  <span>${formatCurrency(p.cash_balance ?? 0)}</span>
+                                  <span></span>
+                                </div>
+                              </>
+                            ) : (
+                              <p className="td-hd-empty">No open positions.</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -841,7 +942,9 @@ function TournamentDetailJoined({
                           <div className="td-holding-data-row">
                             <div className="td-holding-left">
                               <span className="td-holding-paid">Paid ${formatCurrency(costBasis)}</span>
-                              <span className="td-holding-shares">{h.shares} shares</span>
+                              <span className="td-holding-shares">
+                                {h.shares} shares at ${formatCurrency(h.shares > 0 ? h.amount_invested / h.shares : 0)}
+                              </span>
                             </div>
                             <div className="td-holding-right">
                               <div className="td-holding-value-col">
@@ -871,14 +974,6 @@ function TournamentDetailJoined({
                 )}
               </div>
 
-              <button
-                type="button"
-                className="td-leave-btn"
-                onClick={handleLeave}
-              >
-                <CancelIcon className="td-leave-icon" />
-                Leave Tournament
-              </button>
             </div>
           </div>
         </div>
@@ -905,13 +1000,13 @@ function TournamentDetailJoined({
         />
       )}
 
-      {isSellConfirmOpen && (
+      {isSellConfirmOpen && !isSellAmountConfirmed && (
         <div className="td-modal-overlay" role="dialog" aria-modal="true">
           <div className="td-sell-modal">
             <div className="td-sell-modal-header">
-              <h2 className="td-sell-modal-title">Confirm Sell Order</h2>
+              <h2 className="td-sell-modal-title">Sell {sellTargetHolding?.symbol}</h2>
               <p className="td-sell-modal-subtitle">
-                Review your transaction before execution
+                Enter amount to sell
               </p>
             </div>
 
@@ -935,14 +1030,64 @@ function TournamentDetailJoined({
                 </div>
               </div>
 
+              <div className="td-trade-field">
+                <label className="td-trade-label">Amount (USD)</label>
+                <div className="td-trade-input-wrap">
+                  <span className="td-trade-dollar">$</span>
+                  <input
+                    type="number"
+                    className="td-trade-input"
+                    placeholder="0.00"
+                    value={sellAmount}
+                    onChange={(e) => setSellAmount(e.target.value)}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="td-trade-cash-row">
+                  <span className="td-trade-cash-label">Max Proceeds</span>
+                  <span className="td-trade-cash-value">${formatCurrency(sellDollarAmount)}</span>
+                </div>
+                <div className="td-trade-pct-row">
+                  {[25, 50, 75].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      className="td-pct-btn"
+                      onClick={() =>
+                        setSellAmount(((sellDollarAmount * pct) / 100).toFixed(2))
+                      }
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="td-pct-btn"
+                    onClick={() => setSellAmount(sellDollarAmount.toFixed(2))}
+                  >
+                    Max
+                  </button>
+                </div>
+              </div>
+
               <div className="td-sell-details">
                 <div className="td-sell-detail-row">
                   <span>Shares to Sell</span>
-                  <span>{sellShares.toFixed(2)}</span>
+                  <span>
+                    {sellStockInfo?.price
+                      ? (
+                          (parseFloat(sellAmount) > 0 ? parseFloat(sellAmount) : sellDollarAmount) /
+                          sellStockInfo.price
+                        ).toFixed(3)
+                      : Number(sellTargetHolding?.shares || 0).toFixed(3)}
+                  </span>
                 </div>
                 <div className="td-sell-detail-row">
                   <span>Estimated Proceeds</span>
-                  <span>${formatCurrency(sellDollarAmount)}</span>
+                  <span>
+                    ${formatCurrency(parseFloat(sellAmount) > 0 ? parseFloat(sellAmount) : sellDollarAmount)}
+                  </span>
                 </div>
                 <div className="td-sell-detail-row">
                   <span>Transaction Fee</span>
@@ -950,23 +1095,19 @@ function TournamentDetailJoined({
                 </div>
               </div>
 
-              <div className="td-sell-total-inset">
-                <p className="td-sell-total-label">Total Liquidation Value</p>
-                <p className="td-sell-total-value">
-                  ${formatCurrency(sellDollarAmount)}
-                </p>
-              </div>
+              {sellWarnings.map((w, i) => (
+                <p key={i} className={`td-sell-warning td-sell-warning--${w.type}`}>{w.message}</p>
+              ))}
             </div>
 
             <div className="td-sell-modal-actions">
               <Button
                 variant="cancel"
                 className="td-sell-confirm-btn"
-                headIcon={<ShareIcon />}
-                onClick={handleConfirmSellSubmit}
-                disabled={submittingSell}
+                onClick={handleReviewSell}
+                disabled={!sellAmount || parseFloat(sellAmount) <= 0}
               >
-                {submittingSell ? "Submitting..." : "Confirm & Sell"}
+                Review Order
               </Button>
               <button
                 type="button"
@@ -975,16 +1116,42 @@ function TournamentDetailJoined({
                   if (!submittingSell) {
                     setIsSellConfirmOpen(false);
                     setSellError("");
+                    setSellWarnings([]);
                   }
                 }}
-                disabled={submittingSell}
               >
                 Cancel
               </button>
-              {sellError && <p className="td-sell-error">{sellError}</p>}
             </div>
           </div>
         </div>
+      )}
+
+      {isSellConfirmOpen && isSellAmountConfirmed && (
+        <TradeConfirmModal
+          side="sell"
+          symbol={sellTargetHolding?.symbol}
+          companyName={sellStockInfo?.name}
+          price={sellStockInfo?.price}
+          amount={parseFloat(sellAmount)}
+          shares={
+            sellStockInfo?.price && parseFloat(sellAmount) > 0
+              ? (parseFloat(sellAmount) / sellStockInfo.price).toFixed(3)
+              : "0.000"
+          }
+          onConfirm={handleConfirmSellSubmit}
+          onCancel={() => {
+            if (!submittingSell) {
+              setIsSellAmountConfirmed(false);
+              setSellWarnings([]);
+            }
+          }}
+          submitting={submittingSell}
+          warnings={[
+            ...sellWarnings,
+            ...(sellError ? [{ type: "error", message: sellError }] : []),
+          ]}
+        />
       )}
     </div>
   );

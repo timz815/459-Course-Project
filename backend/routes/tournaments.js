@@ -19,6 +19,7 @@ const Tournament = require("../models/Tournament");
 const Participant = require("../models/Participant");
 const Trade = require("../models/Trade");
 const TradeQueue = require("../models/TradeQueue");
+const Comment = require("../models/Comment");
 const verifyToken = require("../middleware/authMiddleware");
 const verifyAdmin = require("../middleware/adminMiddleware");
 
@@ -219,6 +220,42 @@ router.delete("/:id/leave", verifyToken, async (req, res) => {
   }
 });
 
+// GET comments for a tournament
+router.get("/:id/comments", async (req, res) => {
+  try {
+    const comments = await Comment.find({ tournament: req.params.id })
+      .populate("user", "username avatarUrl")
+      .sort({ createdAt: -1 });
+    res.json(comments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST a comment
+router.post("/:id/comments", verifyToken, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "Comment text is required." });
+    }
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament)
+      return res.status(404).json({ message: "Tournament not found" });
+
+    const comment = new Comment({
+      tournament: req.params.id,
+      user: req.userId,
+      text: text.trim(),
+    });
+    await comment.save();
+    await comment.populate("user", "username avatarUrl");
+    res.status(201).json(comment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // TODO(tier-2 tournament-edit): Add PATCH /:id — owner-only edit before tournament starts.
 // - Verify the requesting user is the owner.
 // - Only allow edits when tournament.status === "open" (not yet started).
@@ -281,6 +318,7 @@ router.delete("/admin/:id", verifyAdmin, async (req, res) => {
       Participant.deleteMany({ tournament: req.params.id }),
       Trade.deleteMany({ tournament: req.params.id }),
       TradeQueue.deleteMany({ tournament: req.params.id }),
+      Comment.deleteMany({ tournament: req.params.id }),
     ]);
 
     await Tournament.findByIdAndDelete(req.params.id);

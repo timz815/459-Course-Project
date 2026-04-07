@@ -5,7 +5,7 @@
  * leaderboard, trading console sidebar, holdings, and community discussion.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
 import StockSearchDropdown from "../components/StockSearchDropdown";
@@ -19,30 +19,18 @@ import { ReactComponent as ShareIcon } from "../assets/Icon_16x16/Share_16x16.sv
 import { ReactComponent as ArrowRiseIcon } from "../assets/Icon_16x16/Arrow-Rise_16x16.svg";
 import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Default_32x32.svg";
 import { ReactComponent as ThumbsupIcon } from "../assets/Icon_Others/Thumbsup.svg";
-import { ReactComponent as ReplyIcon } from "../assets/Icon_Others/Reply.svg";
 import "../styles/TournamentDetail.css";
 
-// TODO(tier-1 comments): Replace hardcoded discussionComments with real API data.
-// Backend steps needed first:
-//   1. Create a Comment model: { tournamentId, userId, text, createdAt }
-//   2. Add POST /api/tournaments/:id/comments  (auth required)
-//   3. Add GET  /api/tournaments/:id/comments  (public)
-// Frontend steps:
-//   - On mount, fetch GET /api/tournaments/:id/comments and setDebugComments(data)
-//   - On "Post Comment" click, POST the commentText to the API, then refetch or
-//     append the returned comment to state.
-//   - Clear commentText after a successful post.
-//   - Show real author name, avatar, and createdAt timestamp from the API response.
-const discussionComments = [
-  {
-    id: "comment-1",
-    author: "Quant_Prophet",
-    timeAgo: "2 HOURS AGO",
-    body: "NVDA is looking extremely strong on the daily. My strategy here is simple: hold the core position and trade around the volatility. Good luck everyone!",
-    likes: 24,
-    likedByMe: false,
-  },
-];
+function formatTimeAgo(dateStr) {
+  const seconds = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (seconds < 60) return "JUST NOW";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} MINUTE${minutes !== 1 ? "S" : ""} AGO`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} HOUR${hours !== 1 ? "S" : ""} AGO`;
+  const days = Math.floor(hours / 24);
+  return `${days} DAY${days !== 1 ? "S" : ""} AGO`;
+}
 
 function formatCurrency(amount) {
   return Number(amount).toLocaleString("en-US", {
@@ -123,7 +111,8 @@ function TournamentDetailJoined({
   const [selectedStock, setSelectedStock] = useState(null);
   const [tradeAmount, setTradeAmount] = useState("");
   const [commentText, setCommentText] = useState("");
-  const [debugComments, setDebugComments] = useState(discussionComments);
+  const [comments, setComments] = useState([]);
+  const [submittingComment, setSubmittingComment] = useState(false);
   const [isBuyConfirmOpen, setIsBuyConfirmOpen] = useState(false);
   const [submittingBuy, setSubmittingBuy] = useState(false);
   const [buyError, setBuyError] = useState("");
@@ -157,8 +146,64 @@ function TournamentDetailJoined({
     setTradeAmount(((cashBalance * pct) / 100).toFixed(2));
   }
 
+  useEffect(() => {
+    fetch(`http://localhost:5000/api/tournaments/${id}/comments`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setComments(
+            data.map((c) => ({
+              id: c._id,
+              author: c.user?.username || "Unknown",
+              avatarUrl: c.user?.avatarUrl || "",
+              timeAgo: formatTimeAgo(c.createdAt),
+              body: c.text,
+              likes: 0,
+              likedByMe: false,
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+  }, [id]);
+
+  async function handlePostComment() {
+    if (!commentText.trim()) return;
+    setSubmittingComment(true);
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/tournaments/${id}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: token },
+          body: JSON.stringify({ text: commentText }),
+        },
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setComments((prev) => [
+          {
+            id: data._id,
+            author: data.user?.username || "Unknown",
+            avatarUrl: data.user?.avatarUrl || "",
+            timeAgo: "JUST NOW",
+            body: data.text,
+            likes: 0,
+            likedByMe: false,
+          },
+          ...prev,
+        ]);
+        setCommentText("");
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setSubmittingComment(false);
+    }
+  }
+
   function handleToggleLike(commentId) {
-    setDebugComments((prev) =>
+    setComments((prev) =>
       prev.map((comment) => {
         if (comment.id !== commentId) return comment;
         const likedByMe = !comment.likedByMe;
@@ -536,16 +581,17 @@ function TournamentDetailJoined({
                       variant="primary"
                       size="small"
                       className="td-comment-post-btn"
-                      // TODO(tier-1 comments): Wire onClick to POST /api/tournaments/:id/comments
+                      onClick={handlePostComment}
+                      disabled={submittingComment || !commentText.trim()}
                     >
-                      Post Comment
+                      {submittingComment ? "Posting..." : "Post Comment"}
                     </Button>
                   </div>
                 </div>
               </div>
 
               <div className="td-comments-list">
-                {debugComments.map((comment) => (
+                {comments.map((comment) => (
                   <article key={comment.id} className="td-comment-card">
                     {comment.avatarUrl ? (
                       <img

@@ -116,6 +116,7 @@ function TournamentDetailJoined({
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [commentFilter, setCommentFilter] = useState("all");
   const [isBuyConfirmOpen, setIsBuyConfirmOpen] = useState(false);
   const [submittingBuy, setSubmittingBuy] = useState(false);
   const [buyError, setBuyError] = useState("");
@@ -162,6 +163,8 @@ function TournamentDetailJoined({
               avatarUrl: c.user?.avatarUrl || "",
               timeAgo: formatTimeAgo(c.createdAt),
               body: c.text,
+              type: c.type || "comment",
+              side: c.side || null,
               likes: 0,
               likedByMe: false,
             })),
@@ -192,6 +195,8 @@ function TournamentDetailJoined({
             avatarUrl: data.user?.avatarUrl || "",
             timeAgo: "JUST NOW",
             body: data.text,
+            type: "comment",
+            side: null,
             likes: 0,
             likedByMe: false,
           },
@@ -592,6 +597,18 @@ function TournamentDetailJoined({
             <section className="td-discussion">
               <div className="td-discussion-header">
                 <h2 className="td-leaderboard-title">Community Discussion</h2>
+                <div className="td-discussion-filters">
+                  {["all", "comments", "trades"].map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      className={`td-discussion-filter-btn${commentFilter === f ? " td-discussion-filter-btn--active" : ""}`}
+                      onClick={() => setCommentFilter(f)}
+                    >
+                      {f === "all" ? "All" : f === "comments" ? "Comments" : "Trades"}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="td-comment-input-area">
                 {user?.avatarUrl ? (
@@ -626,7 +643,11 @@ function TournamentDetailJoined({
               </div>
 
               <div className="td-comments-list">
-                {comments.map((comment) => (
+                {comments.filter((c) =>
+                  commentFilter === "all" ? true :
+                  commentFilter === "comments" ? c.type === "comment" :
+                  c.type === "trade"
+                ).map((comment) => (
                   <article key={comment.id} className="td-comment-card">
                     {comment.avatarUrl ? (
                       <img
@@ -644,7 +665,14 @@ function TournamentDetailJoined({
                           {comment.timeAgo}
                         </time>
                       </header>
-                      <p className="td-comment-body">{comment.body}</p>
+                      <p className="td-comment-body">
+                        {comment.type === "trade" && (
+                          <span className={`td-trade-badge td-trade-badge--${comment.side}`}>
+                            {comment.side === "buy" ? "BUY" : "SELL"}
+                          </span>
+                        )}
+                        {comment.body}
+                      </p>
                       <div className="td-comment-actions">
                         <button
                           type="button"

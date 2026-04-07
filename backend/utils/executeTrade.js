@@ -19,6 +19,7 @@ const Tournament = require("../models/Tournament");
 const Participant = require("../models/Participant");
 const Trade = require("../models/Trade");
 const Stock = require("../models/Stock");
+const Comment = require("../models/Comment");
 const { isPendingUntilOpen } = require("./marketHours");
 
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
@@ -272,6 +273,14 @@ async function executeTrade({
       dollar_amount: amount,
     });
     await trade.save();
+
+    await new Comment({
+      tournament: tournamentId,
+      user: userId,
+      type: "trade",
+      side,
+      text: `${side === "buy" ? "bought" : "sold"} ${shares} share${shares !== 1 ? "s" : ""} of ${symbol.toUpperCase()} for $${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+    }).save();
 
     const priceNote = usedPreviousClose ? " (previous close price)" : "";
 

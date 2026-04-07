@@ -17,6 +17,15 @@ const CommentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    type: {
+      type: String,
+      enum: ["comment", "trade"],
+      default: "comment",
+    },
+    side: {
+      type: String,
+      enum: ["buy", "sell"],
+    },
   },
   { timestamps: true }
 );

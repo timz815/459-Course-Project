@@ -20,6 +20,7 @@ const Participant = require("../models/Participant");
 const Trade = require("../models/Trade");
 const TradeQueue = require("../models/TradeQueue");
 const Comment = require("../models/Comment");
+const Stock = require("../models/Stock");
 const verifyToken = require("../middleware/authMiddleware");
 const verifyAdmin = require("../middleware/adminMiddleware");
 
@@ -107,13 +108,38 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// GET participants
+// GET participants — sorted by portfolio value (cash + current holdings value)
 router.get("/:id/participants", async (req, res) => {
   try {
     const participants = await Participant.find({ tournament: req.params.id })
-      .populate("user", "username displayName avatarUrl")
-      .sort({ cash_balance: -1 });
-    res.json(participants);
+      .populate("user", "username displayName avatarUrl");
+
+    // Collect all unique symbols held across all participants
+    const symbols = [
+      ...new Set(
+        participants.flatMap((p) => p.holdings.map((h) => h.symbol))
+      ),
+    ];
+
+    // Fetch current prices in one query
+    const stocks = await Stock.find({ symbol: { $in: symbols } }, "symbol price");
+    const priceMap = Object.fromEntries(stocks.map((s) => [s.symbol, s.price]));
+
+    // Compute portfolio value and sort
+    const withValue = participants
+      .map((p) => {
+        const holdingsValue = p.holdings.reduce((sum, h) => {
+          const price = priceMap[h.symbol];
+          return sum + (price != null ? h.shares * price : h.amount_invested);
+        }, 0);
+        return {
+          ...p.toObject(),
+          portfolio_value: p.cash_balance + holdingsValue,
+        };
+      })
+      .sort((a, b) => b.portfolio_value - a.portfolio_value);
+
+    res.json(withValue);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

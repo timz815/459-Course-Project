@@ -19,6 +19,7 @@ import { ReactComponent as ShareIcon } from "../assets/Icon_16x16/Share_16x16.sv
 import { ReactComponent as ArrowRiseIcon } from "../assets/Icon_16x16/Arrow-Rise_16x16.svg";
 import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Default_32x32.svg";
 import { ReactComponent as ThumbsupIcon } from "../assets/Icon_Others/Thumbsup.svg";
+import { ReactComponent as ReplyIcon } from "../assets/Icon_Others/Reply.svg";
 import "../styles/TournamentDetail.css";
 
 function formatTimeAgo(dateStr) {
@@ -538,7 +539,7 @@ function TournamentDetailJoined({
                           </span>
                         </span>
                         <span className="td-td td-td--value">
-                          ${formatCurrency(p.cash_balance || 0)}
+                          ${formatCurrency(p.portfolio_value ?? p.cash_balance ?? 0)}
                         </span>
                         <span className="td-td td-td--change td-change--neutral">
                           --

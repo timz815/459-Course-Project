@@ -9,7 +9,9 @@
  * - GET /api/stocks           → returns all stocks with cached prices from DB (excludes priceHistory, history3M)
  * - GET /api/stocks/:symbol   → returns single stock with full priceHistory and history3M for detail page
  * - Daily job runs on server start then daily at 6am ET
- * - Fetches /prev from Polygon per symbol — stores volume AND appends [timestamp, close] to history3M
+ * - On server start: checks last candle date — backfills any missed trading days automatically
+ * - For normal daily updates: fetches /prev from Polygon per symbol
+ * - For backfill: fetches date range from Polygon covering all missed days
  * - history3M trimmed to max 63 entries (≈3 months of trading days) on each append
  * - Sequential fetching with 13s delay between calls (5 req/min free tier)
  * - Frontend reads from DB — always instant, never waits for Polygon
@@ -33,39 +35,51 @@ function sleep(ms) {
 // ─── Polygon Daily Job ────────────────────────────────────────────────────────
 
 /**
- * Fetches previous day's volume and close price for one symbol from Polygon.
- * Returns { volume, close, timestamp } or null on failure.
+ * Fetches daily candles for a symbol from Polygon over a date range.
+ * fromDate / toDate are "YYYY-MM-DD" strings (inclusive).
+ * Returns array of { timestamp, close, volume } or null on failure.
  */
-async function fetchPrevDay(symbol) {
+async function fetchDailyRange(symbol, fromDate, toDate) {
   try {
-    const url = `${POLYGON_BASE}/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`;
+    const url = `${POLYGON_BASE}/v2/aggs/ticker/${symbol}/range/1/day/${fromDate}/${toDate}?adjusted=true&sort=asc&limit=100&apiKey=${POLYGON_API_KEY}`;
     const res = await fetch(url);
     const data = await res.json();
 
     if (!res.ok || !data.results || data.results.length === 0) {
-      console.log(`[DailyJob] No data for ${symbol} (status ${res.status})`);
+      console.log(`[DailyJob] No data for ${symbol} ${fromDate}→${toDate} (status ${res.status})`);
       return null;
     }
 
-    const result = data.results[0];
-    return {
-      volume: result.v ?? null,
-      close: result.c ?? null,
-      timestamp: result.t ?? null, // Unix ms timestamp for start of that day
-    };
+    return data.results.map((r) => ({
+      timestamp: r.t ?? null,
+      close: r.c ?? null,
+      volume: r.v ?? null,
+    }));
   } catch (err) {
     console.error(`[DailyJob] Error fetching ${symbol}:`, err.message);
     return null;
   }
 }
 
+/**
+ * Returns a YYYY-MM-DD date string offset by `days` from today (ET).
+ */
+function getETDateString(offsetDays = 0) {
+  const now = new Date();
+  const offsetMs = (isEasternDST(now) ? -4 : -5) * 60 * 60 * 1000;
+  const etNow = new Date(now.getTime() + offsetMs);
+  etNow.setUTCDate(etNow.getUTCDate() + offsetDays);
+  return etNow.toISOString().slice(0, 10);
+}
+
 let isRefreshing = false;
 
 /**
- * Fetches and stores previous day volume + close candle for all stocks sequentially.
- * Appends [timestamp, close] to history3M and trims to MAX_HISTORY_CANDLES.
- * Piggybacks both writes in one DB call per symbol.
- * Takes ~4 minutes due to rate limiting.
+ * Fetches and stores missing daily candles for all stocks sequentially.
+ * On server start: checks last candle date and backfills any missed trading days.
+ * For normal daily updates (run at 6am ET): adds yesterday's candle.
+ * Appends new candles to history3M, trims to MAX_HISTORY_CANDLES, updates volume.
+ * Takes ~4 minutes due to rate limiting (13s between calls).
  */
 async function refreshAllDailyData() {
   if (isRefreshing) {
@@ -76,27 +90,42 @@ async function refreshAllDailyData() {
   isRefreshing = true;
   console.log("[DailyJob] Starting daily refresh (volume + history)...");
 
+  const yesterday = getETDateString(-1);
+
   try {
     const stocks = await Stock.find({}, "symbol history3M");
 
     for (let i = 0; i < stocks.length; i++) {
       const { symbol, history3M = [] } = stocks[i];
-      const prev = await fetchPrevDay(symbol);
 
-      if (prev !== null) {
-        const { volume, close, timestamp } = prev;
+      // Determine from-date: day after the last candle we have, or 90 days ago
+      let fromDate;
+      if (history3M.length > 0) {
+        const lastTs = history3M[history3M.length - 1][0];
+        const lastDate = new Date(lastTs);
+        lastDate.setUTCDate(lastDate.getUTCDate() + 1);
+        fromDate = lastDate.toISOString().slice(0, 10);
+      } else {
+        fromDate = getETDateString(-90);
+      }
 
-        // Build the updated history — append new candle and trim to max
+      // Already up to date — nothing to fetch
+      if (fromDate > yesterday) {
+        console.log(`[DailyJob] ✓ ${symbol} — already up to date`);
+        if (i < stocks.length - 1) await sleep(DELAY_MS);
+        continue;
+      }
+
+      const candles = await fetchDailyRange(symbol, fromDate, yesterday);
+
+      if (candles && candles.length > 0) {
+        const existingTs = new Set(history3M.map(([ts]) => ts));
         let updatedHistory = [...history3M];
-        if (close !== null && timestamp !== null) {
-          // Avoid duplicates — don't append if last entry has the same timestamp
-          const lastTs =
-            updatedHistory.length > 0
-              ? updatedHistory[updatedHistory.length - 1][0]
-              : null;
 
-          if (lastTs !== timestamp) {
+        for (const { timestamp, close } of candles) {
+          if (timestamp !== null && close !== null && !existingTs.has(timestamp)) {
             updatedHistory.push([timestamp, close]);
+            existingTs.add(timestamp);
           }
         }
 
@@ -105,19 +134,23 @@ async function refreshAllDailyData() {
           updatedHistory = updatedHistory.slice(-MAX_HISTORY_CANDLES);
         }
 
+        // Use most recent candle's volume
+        const latestVolume = candles[candles.length - 1].volume;
+
         await Stock.findOneAndUpdate(
           { symbol },
           {
             $set: {
-              volume,
+              volume: latestVolume,
               history3M: updatedHistory,
               historyUpdatedAt: new Date(),
             },
           },
         );
 
+        const added = updatedHistory.length - history3M.length;
         console.log(
-          `[DailyJob] ✓ ${symbol} — vol: ${volume}, close: $${close}, history: ${updatedHistory.length} candles`,
+          `[DailyJob] ✓ ${symbol} — +${added} candle(s), total: ${updatedHistory.length}`,
         );
       }
 

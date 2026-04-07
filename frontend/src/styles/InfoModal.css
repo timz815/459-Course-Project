@@ -128,7 +128,7 @@
 /* ── Section divider ── */
 .im-section-title {
   font: 500 0.625rem/1rem var(--font-mono);
-  color: var(--color-neutral-400);
+  color: #cbe6ff;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin: 0.5rem 0 0;

@@ -132,6 +132,7 @@ function TournamentDetailJoined({
   const [sellWarnings, setSellWarnings] = useState([]);
   const [isSellAmountConfirmed, setIsSellAmountConfirmed] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const commentInputRef = useRef(null);
 
   const cashBalance = myParticipant?.cash_balance ?? 0;
@@ -517,7 +518,7 @@ function TournamentDetailJoined({
             <button
               type="button"
               className="td-leave-btn"
-              onClick={handleLeave}
+              onClick={() => setShowLeaveConfirm(true)}
             >
               <CancelIcon className="td-leave-icon" />
               Leave Tournament
@@ -711,14 +712,14 @@ function TournamentDetailJoined({
               <div className="td-discussion-header">
                 <h2 className="td-leaderboard-title">Community Discussion</h2>
                 <div className="td-discussion-filters">
-                  {["all", "comments", "trades"].map((f) => (
+                  {["all", "comments", "trades", "activity"].map((f) => (
                     <button
                       key={f}
                       type="button"
                       className={`td-discussion-filter-btn${commentFilter === f ? " td-discussion-filter-btn--active" : ""}`}
                       onClick={() => setCommentFilter(f)}
                     >
-                      {f === "all" ? "All" : f === "comments" ? "Comments" : "Trades"}
+                      {f === "all" ? "All" : f === "comments" ? "Comments" : f === "trades" ? "Trades" : "Activity"}
                     </button>
                   ))}
                 </div>
@@ -759,7 +760,8 @@ function TournamentDetailJoined({
                 {comments.filter((c) =>
                   commentFilter === "all" ? true :
                   commentFilter === "comments" ? c.type === "comment" :
-                  c.type === "trade"
+                  commentFilter === "trades" ? c.type === "trade" :
+                  c.type === "event"
                 ).map((comment) => (
                   <article key={comment.id} className="td-comment-card">
                     {comment.avatarUrl ? (
@@ -782,6 +784,11 @@ function TournamentDetailJoined({
                         {comment.type === "trade" && (
                           <span className={`td-trade-badge td-trade-badge--${comment.side}`}>
                             {comment.side === "buy" ? "BUY" : "SELL"}
+                          </span>
+                        )}
+                        {comment.type === "event" && (
+                          <span className={`td-trade-badge td-trade-badge--${comment.side}`}>
+                            {comment.side === "join" ? "JOIN" : "LEFT"}
                           </span>
                         )}
                         {comment.body}
@@ -1158,6 +1165,38 @@ function TournamentDetailJoined({
             ...(sellError ? [{ type: "error", message: sellError }] : []),
           ]}
         />
+      )}
+
+      {showLeaveConfirm && (
+        <InfoModal
+          title="Leave Tournament?"
+          onClose={() => setShowLeaveConfirm(false)}
+        >
+          <p className="im-message">
+            Are you sure you want to leave <strong>{tournament.name}</strong>?
+          </p>
+          <p className="im-message" style={{ color: "#ff8580" }}>
+            Warning: All your holdings and cash balance in this tournament will
+            be permanently wiped. This cannot be undone.
+          </p>
+          <button
+            className="im-goto-btn"
+            style={{ background: "#ff625e", color: "#68000b", marginTop: "0.5rem" }}
+            onClick={() => {
+              setShowLeaveConfirm(false);
+              handleLeave();
+            }}
+          >
+            Yes, Leave Tournament
+          </button>
+          <button
+            className="im-goto-btn"
+            style={{ background: "var(--color-neutral-800)", color: "var(--color-neutral-100)", marginTop: "0.5rem" }}
+            onClick={() => setShowLeaveConfirm(false)}
+          >
+            Cancel
+          </button>
+        </InfoModal>
       )}
 
       {showDetails && (

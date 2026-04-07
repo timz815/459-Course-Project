@@ -320,6 +320,18 @@ function TournamentDetail() {
             </div>
           )}
 
+          {!canJoin && !isOwner && (
+            <div className="td-join-container">
+              <button
+                type="button"
+                className="td-view-rules-btn"
+                onClick={() => setShowDetails(true)}
+              >
+                View Details
+              </button>
+            </div>
+          )}
+
           {/* Owner Controls */}
           {isOwner && (
             <div className="td-join-container">
@@ -331,6 +343,13 @@ function TournamentDetail() {
               <Button variant="cancel" onClick={handleDeleteTournament}>
                 Delete Tournament
               </Button>
+              <button
+                type="button"
+                className="td-view-rules-btn"
+                onClick={() => setShowDetails(true)}
+              >
+                View Details
+              </button>
             </div>
           )}
         </section>

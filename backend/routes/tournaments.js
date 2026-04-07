@@ -226,6 +226,14 @@ router.post("/:id/join", verifyToken, async (req, res) => {
     });
     await participant.save();
 
+    await Comment.create({
+      tournament: req.params.id,
+      user: req.userId,
+      text: "joined the tournament",
+      type: "event",
+      side: "join",
+    });
+
     res.status(201).json(participant);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -243,6 +251,15 @@ router.delete("/:id/leave", verifyToken, async (req, res) => {
       return res
         .status(404)
         .json({ message: "You are not in this tournament." });
+
+    await Comment.create({
+      tournament: req.params.id,
+      user: req.userId,
+      text: "left the tournament",
+      type: "event",
+      side: "leave",
+    });
+
     res.json({ message: "You have left the tournament." });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -67,6 +67,25 @@
   gap: 1rem;
   max-height: 70vh;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #444 var(--color-neutral-850);
+}
+
+.im-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.im-body::-webkit-scrollbar-track {
+  background: var(--color-neutral-850);
+}
+
+.im-body::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 999px;
+}
+
+.im-body::-webkit-scrollbar-thumb:hover {
+  background: #666;
 }
 
 /* ── Detail row (label + value pair) ── */

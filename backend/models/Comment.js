@@ -19,12 +19,12 @@ const CommentSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["comment", "trade"],
+      enum: ["comment", "trade", "event"],
       default: "comment",
     },
     side: {
       type: String,
-      enum: ["buy", "sell"],
+      enum: ["buy", "sell", "join", "leave"],
     },
   },
   { timestamps: true }

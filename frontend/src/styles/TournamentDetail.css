@@ -1085,6 +1085,18 @@
   border: 1px solid rgba(255, 98, 94, 0.3);
 }
 
+.td-trade-badge--join {
+  background: rgba(15, 159, 234, 0.15);
+  color: #5bbfef;
+  border: 1px solid rgba(15, 159, 234, 0.3);
+}
+
+.td-trade-badge--leave {
+  background: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
 .td-comment-actions {
   display: flex;
   align-items: center;

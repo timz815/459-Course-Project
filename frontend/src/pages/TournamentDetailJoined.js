@@ -724,12 +724,6 @@ function TournamentDetailJoined({
               </div>
 
               <div className="td-trade-form">
-                <div className="td-trade-cash-row">
-                  <span className="td-trade-cash-label">Available Cash</span>
-                  <span className="td-trade-cash-value">${formatCurrency(cashBalance)}</span>
-                </div>
-
-
                 <div className="td-trade-field">
                   <label className="td-trade-label">Select Ticker</label>
                   <StockSearchDropdown
@@ -752,6 +746,10 @@ function TournamentDetailJoined({
                       min="0"
                       step="0.01"
                     />
+                  </div>
+                  <div className="td-trade-cash-row">
+                    <span className="td-trade-cash-label">Available Cash</span>
+                    <span className="td-trade-cash-value">${formatCurrency(cashBalance)}</span>
                   </div>
                   <div className="td-trade-pct-row">
                     <button
@@ -821,7 +819,10 @@ function TournamentDetailJoined({
                   <>
                     <div className="td-holdings-list-header">
                       <span className="td-holdings-col-label">Position</span>
-                      <span className="td-holdings-col-label">Sell Value / Gain</span>
+                      <div className="td-holdings-col-label-right">
+                        <span className="td-holdings-col-label">Current Price</span>
+                        <span className="td-holdings-col-label">Sell</span>
+                      </div>
                     </div>
                     {holdings.map((h) => {
                       const stockInfo = stocks.find((s) => s.symbol === h.symbol);
@@ -833,35 +834,31 @@ function TournamentDetailJoined({
                       const isPositive = delta >= 0;
                       return (
                         <div key={h.symbol} className="td-holding-item">
-                          <div className="td-holding-left">
-                            <div className="td-holding-name-row">
-                              <span className="td-holding-symbol">{h.symbol}</span>
-                              <span className="td-holding-company">{stockInfo?.name || ""}</span>
-                            </div>
-                            <span className="td-holding-cost">
-                              Cost ${formatCurrency(costBasis)}
-                            </span>
-                            <span className="td-holding-shares">
-                              {h.shares} shares
-                            </span>
+                          <div className="td-holding-name-row">
+                            <span className="td-holding-symbol">{h.symbol}</span>
+                            <span className="td-holding-company">{stockInfo?.name || ""}</span>
                           </div>
-                          <div className="td-holding-right">
-                            <div className="td-holding-value-col">
-                              <span className="td-holding-total">
-                                ${formatCurrency(currentValue)}
-                              </span>
-                              <span className={`td-holding-delta ${isPositive ? "td-holding-delta--positive" : "td-holding-delta--negative"}`}>
-                                {delta >= 0 ? "+" : ""}${formatCurrency(delta)}
-                              </span>
+                          <div className="td-holding-data-row">
+                            <div className="td-holding-left">
+                              <span className="td-holding-paid">Paid ${formatCurrency(costBasis)}</span>
+                              <span className="td-holding-shares">{h.shares} shares</span>
                             </div>
-                            <button
-                              type="button"
-                              className="td-holding-sell-btn"
-                              onClick={() => openSellModal(h)}
-                              aria-label={`Sell ${h.symbol}`}
-                            >
-                              <ShareIcon />
-                            </button>
+                            <div className="td-holding-right">
+                              <div className="td-holding-value-col">
+                                <span className="td-holding-total">${formatCurrency(currentValue)}</span>
+                                <span className={`td-holding-delta ${isPositive ? "td-holding-delta--positive" : "td-holding-delta--negative"}`}>
+                                  {delta >= 0 ? "+" : ""}${formatCurrency(delta)}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                className="td-holding-sell-btn"
+                                onClick={() => openSellModal(h)}
+                                aria-label={`Sell ${h.symbol}`}
+                              >
+                                <ShareIcon />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );

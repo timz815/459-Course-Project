@@ -22,6 +22,7 @@ import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Def
 import { ReactComponent as ThumbsupIcon } from "../assets/Icon_Others/Thumbsup.svg";
 import { ReactComponent as ReplyIcon } from "../assets/Icon_Others/Reply.svg";
 import TradeConfirmModal from "../components/TradeConfirmModal";
+import InfoModal from "../components/InfoModal";
 import { isPendingUntilOpen } from "../utils/marketHours";
 import "../styles/TournamentDetail.css";
 
@@ -130,6 +131,7 @@ function TournamentDetailJoined({
   const [sellAmount, setSellAmount] = useState("");
   const [sellWarnings, setSellWarnings] = useState([]);
   const [isSellAmountConfirmed, setIsSellAmountConfirmed] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const commentInputRef = useRef(null);
 
   const cashBalance = myParticipant?.cash_balance ?? 0;
@@ -505,8 +507,12 @@ function TournamentDetailJoined({
           </div>
 
           <div className="td-header-right">
-            <button type="button" className="td-view-rules-btn">
-              View Rules
+            <button
+              type="button"
+              className="td-view-rules-btn"
+              onClick={() => setShowDetails(true)}
+            >
+              Details
             </button>
             <button
               type="button"
@@ -1152,6 +1158,64 @@ function TournamentDetailJoined({
             ...(sellError ? [{ type: "error", message: sellError }] : []),
           ]}
         />
+      )}
+
+      {showDetails && (
+        <InfoModal
+          title="Tournament Details"
+          onClose={() => setShowDetails(false)}
+        >
+          <p className="im-section-title">Overview</p>
+          <div className="im-row">
+            <span className="im-label">Name</span>
+            <span className="im-value">{tournament.name}</span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Status</span>
+            <span className={`im-value im-value--${tournament.status}`}>
+              {getStatusLabel(tournament.status)}
+            </span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Host</span>
+            <span className="im-value">
+              {tournament.owner?.username || "—"}
+            </span>
+          </div>
+
+          <p className="im-section-title">Schedule</p>
+          <div className="im-row">
+            <span className="im-label">Start Date</span>
+            <span className="im-value">
+              {tournament.start_date ? formatDate(tournament.start_date) : "—"}
+            </span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">End Date</span>
+            <span className="im-value">{formatDate(tournament.end_date)}</span>
+          </div>
+
+          <p className="im-section-title">Rules</p>
+          <div className="im-row">
+            <span className="im-label">Starting Balance</span>
+            <span className="im-value">
+              ${formatCurrency(tournament.starting_balance)}
+            </span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Entry Fee</span>
+            <span className="im-value">Free</span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Transaction Fee</span>
+            <span className="im-value">$0.00 (Paper Account)</span>
+          </div>
+
+          <p className="im-section-title">Description</p>
+          <p className="im-message">
+            {tournament.description?.trim() || "No description / rules provided."}
+          </p>
+        </InfoModal>
       )}
     </div>
   );

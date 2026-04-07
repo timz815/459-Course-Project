@@ -5,6 +5,7 @@ import { ReactComponent as SettingIcon } from "../assets/Icon_16x16/Setting-Hori
 import { ReactComponent as AddIcon } from "../assets/Icon_16x16/Add_16x16.svg";
 import FilterDropdown from "./UI/FilterDropdown";
 import Button from "./UI/Button";
+import InfoModal from "./InfoModal";
 import "../styles/TournamentsContent.css";
 
 const STATUS_OPTIONS = [
@@ -19,6 +20,7 @@ function TournamentsContent({ isLoggedIn = false }) {
   const [tournaments, setTournaments] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedTournament, setSelectedTournament] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -148,7 +150,7 @@ function TournamentsContent({ isLoggedIn = false }) {
               <div
                 key={t._id}
                 className={`vtc-card ${isEnded ? "vtc-card--ended" : ""}`}
-                onClick={() => navigate(`/tournaments/${t._id}`)}
+                onClick={() => setSelectedTournament(t)}
               >
                 {/* Left */}
                 <div className="vtc-card-left">
@@ -217,6 +219,73 @@ function TournamentsContent({ isLoggedIn = false }) {
             Create Tournament
           </Button>
         </div>
+      )}
+
+      {/* ── Tournament Details Modal ── */}
+      {selectedTournament && (
+        <InfoModal
+          title="Tournament Details"
+          onClose={() => setSelectedTournament(null)}
+        >
+          <p className="im-section-title">Overview</p>
+          <div className="im-row">
+            <span className="im-label">Name</span>
+            <span className="im-value">{selectedTournament.name}</span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Status</span>
+            <span className={`im-value im-value--${selectedTournament.status}`}>
+              {selectedTournament.status === "closed"
+                ? "Cancelled"
+                : selectedTournament.status?.toUpperCase()}
+            </span>
+          </div>
+
+          <p className="im-section-title">Schedule</p>
+          <div className="im-row">
+            <span className="im-label">Start Date</span>
+            <span className="im-value">
+              {formatDate(selectedTournament.start_date)}
+            </span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">End Date</span>
+            <span className="im-value">
+              {formatDate(selectedTournament.end_date)}
+            </span>
+          </div>
+
+          <p className="im-section-title">Rules</p>
+          <div className="im-row">
+            <span className="im-label">Starting Balance</span>
+            <span className="im-value">
+              ${formatCurrency(selectedTournament.starting_balance || 0)}
+            </span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Entry Fee</span>
+            <span className="im-value">Free</span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Transaction Fee</span>
+            <span className="im-value">$0.00 (Paper Account)</span>
+          </div>
+
+          <p className="im-section-title">Description</p>
+          <p className="im-message">
+            {selectedTournament.description?.trim() || "No description / rules provided."}
+          </p>
+
+          <button
+            className="im-goto-btn"
+            onClick={() => {
+              setSelectedTournament(null);
+              navigate(`/tournaments/${selectedTournament._id}`);
+            }}
+          >
+            Go to Tournament →
+          </button>
+        </InfoModal>
       )}
     </main>
   );

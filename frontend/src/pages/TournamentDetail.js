@@ -10,6 +10,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Button from "../components/UI/Button";
+import InfoModal from "../components/InfoModal";
 import TournamentDetailJoined from "./TournamentDetailJoined";
 import { ReactComponent as TentIcon } from "../assets/Icon_16x16/Tent_16x16.svg";
 import { ReactComponent as CheckIcon } from "../assets/Icon_16x16/Check-Completed_16x16.svg";
@@ -62,6 +63,7 @@ function TournamentDetail() {
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(location.state?.toast || "");
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     if (toast) {
@@ -308,8 +310,12 @@ function TournamentDetail() {
               >
                 Join Tournament
               </Button>
-              <button type="button" className="td-view-rules-btn">
-                View Rules
+              <button
+                type="button"
+                className="td-view-rules-btn"
+                onClick={() => setShowDetails(true)}
+              >
+                Details
               </button>
             </div>
           )}
@@ -407,6 +413,68 @@ function TournamentDetail() {
           </div>
         </section>
       </main>
+
+      {showDetails && (
+        <InfoModal
+          title="Tournament Details"
+          onClose={() => setShowDetails(false)}
+        >
+          <p className="im-section-title">Overview</p>
+          <div className="im-row">
+            <span className="im-label">Name</span>
+            <span className="im-value">{tournament.name}</span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Status</span>
+            <span className={`im-value im-value--${tournament.status}`}>
+              {getStatusLabel(tournament.status)}
+            </span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Host</span>
+            <span className="im-value">
+              {tournament.owner?.username || "—"}
+            </span>
+          </div>
+
+          <p className="im-section-title">Schedule</p>
+          <div className="im-row">
+            <span className="im-label">Start Date</span>
+            <span className="im-value">
+              {tournament.start_date ? formatDate(tournament.start_date) : "—"}
+            </span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">End Date</span>
+            <span className="im-value">{formatDate(tournament.end_date)}</span>
+          </div>
+
+          <p className="im-section-title">Rules</p>
+          <div className="im-row">
+            <span className="im-label">Starting Balance</span>
+            <span className="im-value">
+              ${formatCurrency(tournament.starting_balance)}
+            </span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Entry Fee</span>
+            <span className="im-value">Free</span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Participants</span>
+            <span className="im-value">{participants.length}</span>
+          </div>
+          <div className="im-row">
+            <span className="im-label">Transaction Fee</span>
+            <span className="im-value">$0.00 (Paper Account)</span>
+          </div>
+
+          <p className="im-section-title">Description</p>
+          <p className="im-message">
+            {tournament.description?.trim() || "No description / rules provided."}
+          </p>
+        </InfoModal>
+      )}
     </div>
   );
 }

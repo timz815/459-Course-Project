@@ -131,10 +131,10 @@ function TournamentDetailJoined({
   const holdings = mergeHoldingsBySymbol(myParticipant?.holdings || []);
   const startingBalance = tournament.starting_balance || 100000;
 
-  const holdingsValue = holdings.reduce(
-    (sum, h) => sum + (h.amount_invested || 0),
-    0,
-  );
+  const holdingsValue = holdings.reduce((sum, h) => {
+    const stockInfo = stocks.find((s) => s.symbol === h.symbol);
+    return sum + (stockInfo?.price != null ? h.shares * stockInfo.price : h.amount_invested || 0);
+  }, 0);
   const portfolioValue = cashBalance + holdingsValue;
   const totalGain = portfolioValue - startingBalance;
   const totalGainPct =

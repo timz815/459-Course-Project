@@ -391,7 +391,7 @@ function TournamentDetailJoined({
   function getSellDollarAmount(holding, stockInfo) {
     if (!holding) return 0;
     if (stockInfo?.price && holding.shares) {
-      return Number(stockInfo.price) * Number(holding.shares);
+      return parseFloat((Number(stockInfo.price) * Number(holding.shares)).toFixed(2));
     }
     return Number(holding.amount_invested || 0);
   }

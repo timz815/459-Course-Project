@@ -724,6 +724,11 @@ function TournamentDetailJoined({
               </div>
 
               <div className="td-trade-form">
+                <div className="td-trade-cash-row">
+                  <span className="td-trade-cash-label">Available Cash</span>
+                  <span className="td-trade-cash-value">${formatCurrency(cashBalance)}</span>
+                </div>
+
                 <div className="td-trade-field">
                   <label className="td-trade-label">Select Ticker</label>
                   <StockSearchDropdown
@@ -806,18 +811,20 @@ function TournamentDetailJoined({
               <div className="td-holdings-header">
                 <div className="td-holdings-title-row">
                   <WalletIcon className="td-panel-icon" />
-                  <span className="td-panel-title">YOUR HOLDINGS</span>
+                  <span className="td-panel-title">SELL HOLDINGS</span>
                 </div>
-                <span className="td-holdings-cash">
-                  ${formatCurrency(cashBalance)} Cash
-                </span>
               </div>
 
               <div className="td-holdings-list">
                 {holdings.length > 0 ? (
                   holdings.map((h) => {
                     const stockInfo = stocks.find((s) => s.symbol === h.symbol);
-                    const isPositive = true;
+                    const currentValue = stockInfo?.price != null
+                      ? h.shares * stockInfo.price
+                      : h.amount_invested || 0;
+                    const costBasis = h.amount_invested || 0;
+                    const delta = currentValue - costBasis;
+                    const isPositive = delta >= 0;
                     return (
                       <div
                         key={h.symbol}
@@ -825,24 +832,23 @@ function TournamentDetailJoined({
                       >
                         <div className="td-holding-left">
                           <div className="td-holding-name-row">
-                            <span className="td-holding-symbol">
-                              {h.symbol}
-                            </span>
-                            <span className="td-holding-company">
-                              {stockInfo?.name || ""}
-                            </span>
+                            <span className="td-holding-symbol">{h.symbol}</span>
+                            <span className="td-holding-company">{stockInfo?.name || ""}</span>
                           </div>
-                          <span className="td-holding-gain td-holding-gain--positive">
-                            ${formatCurrency(h.amount_invested || 0)}
+                          <span className="td-holding-cost">
+                            Cost ${formatCurrency(costBasis)}
                           </span>
                         </div>
                         <div className="td-holding-right">
                           <div className="td-holding-value-col">
                             <span className="td-holding-total">
-                              ${formatCurrency(h.amount_invested || 0)}
+                              ${formatCurrency(currentValue)}
+                            </span>
+                            <span className={`td-holding-delta ${isPositive ? "td-holding-delta--positive" : "td-holding-delta--negative"}`}>
+                              {delta >= 0 ? "+" : ""}${formatCurrency(delta)}
                             </span>
                             <span className="td-holding-shares">
-                              {h.shares} Shares
+                              {h.shares} shares
                             </span>
                           </div>
                           <button

@@ -315,7 +315,7 @@ function TournamentDetail() {
                 className="td-view-rules-btn"
                 onClick={() => setShowDetails(true)}
               >
-                Details
+                View Details
               </button>
             </div>
           )}

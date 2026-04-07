@@ -512,7 +512,7 @@ function TournamentDetailJoined({
               className="td-view-rules-btn"
               onClick={() => setShowDetails(true)}
             >
-              Details
+              View Details
             </button>
             <button
               type="button"

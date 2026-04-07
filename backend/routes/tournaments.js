@@ -226,13 +226,15 @@ router.post("/:id/join", verifyToken, async (req, res) => {
     });
     await participant.save();
 
-    await Comment.create({
-      tournament: req.params.id,
-      user: req.userId,
-      text: "joined the tournament",
-      type: "event",
-      side: "join",
-    });
+    try {
+      await Comment.create({
+        tournament: req.params.id,
+        user: req.userId,
+        text: "joined the tournament",
+        type: "event",
+        side: "join",
+      });
+    } catch (_) {}
 
     res.status(201).json(participant);
   } catch (err) {
@@ -252,15 +254,31 @@ router.delete("/:id/leave", verifyToken, async (req, res) => {
         .status(404)
         .json({ message: "You are not in this tournament." });
 
-    await Comment.create({
-      tournament: req.params.id,
-      user: req.userId,
-      text: "left the tournament",
-      type: "event",
-      side: "leave",
-    });
+    try {
+      await Comment.create({
+        tournament: req.params.id,
+        user: req.userId,
+        text: "left the tournament",
+        type: "event",
+        side: "leave",
+      });
+    } catch (_) {}
 
     res.json({ message: "You have left the tournament." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE single comment — admin only
+router.delete("/:id/comments/:commentId", verifyAdmin, async (req, res) => {
+  try {
+    const comment = await Comment.findOneAndDelete({
+      _id: req.params.commentId,
+      tournament: req.params.id,
+    });
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+    res.json({ message: "Comment deleted." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

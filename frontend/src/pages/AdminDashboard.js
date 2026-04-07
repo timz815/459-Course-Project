@@ -44,16 +44,37 @@ function ConfirmButton({ label, onConfirm, disabled }) {
   );
 }
 
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function getStatusLabel(status) {
+  switch (status) {
+    case "open": return "OPEN";
+    case "active": return "ACTIVE";
+    case "closed": return "CLOSED";
+    case "ended": return "ENDED";
+    default: return status?.toUpperCase() || "—";
+  }
+}
+
 function AdminDashboard() {
   const { token, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState("users");
   const [users, setUsers] = useState([]);
   const [stocks, setStocks] = useState([]);
+  const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [userSearch, setUserSearch] = useState("");
   const [stockSearch, setStockSearch] = useState("");
+  const [tournamentSearch, setTournamentSearch] = useState("");
   const [stocksExpanded, setStocksExpanded] = useState(false);
 
   // Add-stock form
@@ -94,13 +115,15 @@ function AdminDashboard() {
     if (!token) return;
     setLoading(true);
     try {
-      const [usersRes, stocksRes] = await Promise.all([
+      const [usersRes, stocksRes, tournamentsRes] = await Promise.all([
         fetch("http://localhost:5000/api/users", { headers: authHeaders() }),
         fetch("http://localhost:5000/api/stocks", { headers: authHeaders() }),
+        fetch("http://localhost:5000/api/tournaments", { headers: authHeaders() }),
       ]);
 
       if (usersRes.ok) setUsers(await usersRes.json());
       if (stocksRes.ok) setStocks(await stocksRes.json());
+      if (tournamentsRes.ok) setTournaments(await tournamentsRes.json());
     } catch (err) {
       showToast("Failed to load data", "error");
     } finally {
@@ -213,6 +236,29 @@ function AdminDashboard() {
     }
   }
 
+  // ── Tournament actions ──
+
+  async function handleDeleteTournament(tournamentId) {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/tournaments/admin/${tournamentId}`,
+        {
+          method: "DELETE",
+          headers: authHeaders(),
+        },
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setTournaments((prev) => prev.filter((t) => t._id !== tournamentId));
+        showToast(data.message);
+      } else {
+        showToast(data.message || "Delete failed", "error");
+      }
+    } catch {
+      showToast("Server error", "error");
+    }
+  }
+
   // ── Filters ──
 
   const filteredUsers = users.filter(
@@ -227,6 +273,12 @@ function AdminDashboard() {
       s.name?.toLowerCase().includes(stockSearch.toLowerCase()),
   );
 
+  const filteredTournaments = tournaments.filter(
+    (t) =>
+      t.name?.toLowerCase().includes(tournamentSearch.toLowerCase()) ||
+      t.owner?.username?.toLowerCase().includes(tournamentSearch.toLowerCase()),
+  );
+
   const visibleStocks = stocksExpanded
     ? filteredStocks
     : filteredStocks.slice(0, VISIBLE_STOCK_COUNT);
@@ -235,6 +287,12 @@ function AdminDashboard() {
   function getRoleLabel(role) {
     return role === "admin" ? "ADMIN" : "TRADER";
   }
+
+  const TABS = [
+    { id: "users", label: "Users" },
+    { id: "stocks", label: "Stocks" },
+    { id: "tournaments", label: "Tournaments" },
+  ];
 
   return (
     <div className="adm-page">
@@ -247,9 +305,22 @@ function AdminDashboard() {
       )}
 
       <main className="adm-main">
-        <div className="adm-grid">
-          {/* ═══════════ LEFT: Manage Users ═══════════ */}
-          <section className="adm-panel adm-panel--users">
+        {/* ── Tab bar ── */}
+        <div className="adm-tab-bar">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              className={`adm-tab${activeTab === tab.id ? " adm-tab--active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ══════════════ USERS TAB ══════════════ */}
+        {activeTab === "users" && (
+          <section className="adm-panel">
             <div className="adm-panel-header">
               <div>
                 <span className="adm-eyebrow">SYSTEM CONTROL</span>
@@ -327,7 +398,7 @@ function AdminDashboard() {
                           <td>
                             <ConfirmButton
                               label="DELETE"
-                              disabled={u._id === user?.id}
+                              disabled={u._id === user?.id || u.role === "admin"}
                               onConfirm={() => handleDeleteUser(u._id)}
                             />
                           </td>
@@ -339,9 +410,11 @@ function AdminDashboard() {
               </div>
             )}
           </section>
+        )}
 
-          {/* ═══════════ RIGHT: Manage Stocks ═══════════ */}
-          <section className="adm-panel adm-panel--stocks">
+        {/* ══════════════ STOCKS TAB ══════════════ */}
+        {activeTab === "stocks" && (
+          <section className="adm-panel">
             <div className="adm-panel-header">
               <div>
                 <span className="adm-eyebrow adm-eyebrow--stocks">
@@ -370,7 +443,6 @@ function AdminDashboard() {
               </button>
             </div>
 
-            {/* Add stock form */}
             {showAddStock && (
               <form className="adm-add-form" onSubmit={handleAddStock}>
                 <input
@@ -543,7 +615,98 @@ function AdminDashboard() {
               </div>
             )}
           </section>
-        </div>
+        )}
+
+        {/* ══════════════ TOURNAMENTS TAB ══════════════ */}
+        {activeTab === "tournaments" && (
+          <section className="adm-panel">
+            <div className="adm-panel-header">
+              <div>
+                <span className="adm-eyebrow adm-eyebrow--tournaments">
+                  COMPETITION
+                </span>
+                <h2 className="adm-panel-title">Manage Tournaments</h2>
+              </div>
+            </div>
+
+            <div className="adm-search-row">
+              <div className="adm-search-wrap">
+                <MagnifyIcon className="adm-search-icon" />
+                <input
+                  className="adm-search"
+                  type="text"
+                  placeholder="Search tournaments..."
+                  value={tournamentSearch}
+                  onChange={(e) => setTournamentSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="adm-loading">Loading tournaments…</div>
+            ) : (
+              <div className="adm-table-wrap">
+                <table className="adm-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Host</th>
+                      <th>Status</th>
+                      <th>Participants</th>
+                      <th>End Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTournaments.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="adm-empty">
+                          No tournaments found.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTournaments.map((t) => (
+                        <tr key={t._id}>
+                          <td>
+                            <span className="adm-tournament-name">{t.name}</span>
+                          </td>
+                          <td className="adm-cell-muted">
+                            {t.owner?.username || "—"}
+                          </td>
+                          <td>
+                            <span className={`adm-status-badge adm-status-badge--${t.status}`}>
+                              {getStatusLabel(t.status)}
+                            </span>
+                          </td>
+                          <td className="adm-cell-muted">
+                            {t.participantCount ?? "—"}
+                          </td>
+                          <td className="adm-cell-muted">
+                            {t.end_date ? formatDate(t.end_date) : "—"}
+                          </td>
+                          <td>
+                            <div className="adm-tournament-actions">
+                              <button
+                                className="adm-btn adm-btn--ghost adm-btn--detail"
+                                onClick={() => navigate(`/tournaments/${t._id}`)}
+                              >
+                                Detail
+                              </button>
+                              <ConfirmButton
+                                label="DELETE"
+                                onConfirm={() => handleDeleteTournament(t._id)}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );

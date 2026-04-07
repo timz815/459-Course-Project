@@ -5,6 +5,7 @@ const Participant = require("../models/Participant");
 const Trade = require("../models/Trade");
 const TradeQueue = require("../models/TradeQueue");
 const Tournament = require("../models/Tournament");
+const Comment = require("../models/Comment");
 const verifyAdmin = require("../middleware/adminMiddleware");
 
 // GET all users
@@ -58,6 +59,7 @@ router.delete("/:id", verifyAdmin, async (req, res) => {
       Participant.deleteMany({ user: req.params.id }),
       Trade.deleteMany({ user: req.params.id }),
       TradeQueue.deleteMany({ user: req.params.id }),
+      Comment.deleteMany({ user: req.params.id }),
       Tournament.updateMany(
         { owner: req.params.id },
         { $set: { owner: req.userId } }

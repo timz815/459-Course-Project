@@ -23,6 +23,7 @@
  */
 
 const Stock = require("../models/Stock");
+const Participant = require("../models/Participant");
 const TradeQueue = require("../models/TradeQueue");
 const { executeTrade } = require("./executeTrade");
 const { isMarketOpen, isPendingUntilOpen, isEasternDST } = require("./marketHours");
@@ -37,6 +38,7 @@ let stockList = [];
 let stockPointer = 0;
 let isRunning = false;
 let isSnapshoting = false;
+let lastSnapshotDate = null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -152,6 +154,50 @@ async function refreshAllPricesOnce() {
     console.error("[PriceQueue] ❌ Snapshot error:", err.message);
   } finally {
     isSnapshoting = false;
+  }
+}
+
+// ─── Day Open Snapshot ────────────────────────────────────────────────────────
+
+/**
+ * Snapshots every participant's portfolio value at market open.
+ * Runs once per calendar day — guarded by lastSnapshotDate.
+ * day_change = current portfolio_value − day_open_value.
+ */
+async function snapshotDayOpen() {
+  const now = new Date();
+  const etNow = new Date(now.getTime() + (isEasternDST(now) ? -4 : -5) * 60 * 60 * 1000);
+  const today = etNow.toISOString().slice(0, 10);
+  if (lastSnapshotDate === today) return;
+  lastSnapshotDate = today;
+
+  console.log("[PriceQueue] Snapshotting day-open portfolio values...");
+
+  try {
+    const [participants, stocks] = await Promise.all([
+      Participant.find({}, "holdings cash_balance"),
+      Stock.find({}, "symbol price"),
+    ]);
+
+    const priceMap = Object.fromEntries(stocks.map((s) => [s.symbol, s.price]));
+
+    const ops = participants.map((p) => {
+      const holdingsValue = p.holdings.reduce((sum, h) => {
+        const price = priceMap[h.symbol];
+        return sum + (price != null ? h.shares * price : h.amount_invested);
+      }, 0);
+      return {
+        updateOne: {
+          filter: { _id: p._id },
+          update: { $set: { day_open_value: p.cash_balance + holdingsValue } },
+        },
+      };
+    });
+
+    if (ops.length > 0) await Participant.bulkWrite(ops);
+    console.log(`[PriceQueue] ✅ Day-open snapshot complete — ${ops.length} participants`);
+  } catch (err) {
+    console.error("[PriceQueue] ❌ Day-open snapshot error:", err.message);
   }
 }
 
@@ -330,6 +376,7 @@ async function scheduleNextCycle() {
 
   setTimeout(async () => {
     if (isMarketOpen()) {
+      await snapshotDayOpen();
       await runCycle();
       scheduleNextCycle();
     } else {

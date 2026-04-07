@@ -580,8 +580,14 @@ function TournamentDetailJoined({
                         <span className="td-td td-td--value">
                           ${formatCurrency(p.portfolio_value ?? p.cash_balance ?? 0)}
                         </span>
-                        <span className="td-td td-td--change td-change--neutral">
-                          --
+                        <span className={`td-td td-td--change ${
+                          p.day_change == null ? "td-change--neutral" :
+                          p.day_change > 0 ? "td-change--positive" :
+                          p.day_change < 0 ? "td-change--negative" :
+                          "td-change--neutral"
+                        }`}>
+                          {p.day_change == null ? "--" :
+                            `${p.day_change >= 0 ? "+" : ""}$${formatCurrency(p.day_change)}`}
                         </span>
                       </div>
                     );

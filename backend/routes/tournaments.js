@@ -125,16 +125,19 @@ router.get("/:id/participants", async (req, res) => {
     const stocks = await Stock.find({ symbol: { $in: symbols } }, "symbol price");
     const priceMap = Object.fromEntries(stocks.map((s) => [s.symbol, s.price]));
 
-    // Compute portfolio value and sort
+    // Compute portfolio value, day change, and sort
     const withValue = participants
       .map((p) => {
         const holdingsValue = p.holdings.reduce((sum, h) => {
           const price = priceMap[h.symbol];
           return sum + (price != null ? h.shares * price : h.amount_invested);
         }, 0);
+        const portfolio_value = p.cash_balance + holdingsValue;
+        const day_change = p.day_open_value != null ? portfolio_value - p.day_open_value : null;
         return {
           ...p.toObject(),
-          portfolio_value: p.cash_balance + holdingsValue,
+          portfolio_value,
+          day_change,
         };
       })
       .sort((a, b) => b.portfolio_value - a.portfolio_value);

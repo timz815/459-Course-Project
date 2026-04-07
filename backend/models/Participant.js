@@ -53,6 +53,10 @@ const ParticipantSchema = new mongoose.Schema(
       type: [HoldingSchema],
       default: [],
     },
+    day_open_value: {
+      type: Number,
+      default: null,
+    },
   },
   { timestamps: true }
 );

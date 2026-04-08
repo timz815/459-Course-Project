@@ -76,9 +76,9 @@ function TournamentDetail() {
     async function fetchData() {
       try {
         const [tRes, pRes, sRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/tournaments/${id}`),
-          fetch(`http://localhost:5000/api/tournaments/${id}/participants`),
-          fetch(`http://localhost:5000/api/stocks`),
+          fetch(`http://localhost:5001/api/tournaments/${id}`),
+          fetch(`http://localhost:5001/api/tournaments/${id}/participants`),
+          fetch(`http://localhost:5001/api/stocks`),
         ]);
         const tData = await tRes.json();
         const pData = await pRes.json();
@@ -113,13 +113,13 @@ function TournamentDetail() {
   async function handleJoin() {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/tournaments/${id}/join`,
+        `http://localhost:5001/api/tournaments/${id}/join`,
         { method: "POST", headers: { Authorization: token } },
       );
       const data = await res.json();
       if (res.ok) {
         const pRes = await fetch(
-          `http://localhost:5000/api/tournaments/${id}/participants`,
+          `http://localhost:5001/api/tournaments/${id}/participants`,
         );
         const pData = await pRes.json();
         setParticipants(pData);
@@ -139,7 +139,7 @@ function TournamentDetail() {
   async function handleLeave() {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/tournaments/${id}/leave`,
+        `http://localhost:5001/api/tournaments/${id}/leave`,
         { method: "DELETE", headers: { Authorization: token } },
       );
       const data = await res.json();
@@ -147,7 +147,7 @@ function TournamentDetail() {
         setIsParticipant(false);
         setMyParticipant(null);
         const pRes = await fetch(
-          `http://localhost:5000/api/tournaments/${id}/participants`,
+          `http://localhost:5001/api/tournaments/${id}/participants`,
         );
         const pData = await pRes.json();
         setParticipants(pData);
@@ -162,7 +162,7 @@ function TournamentDetail() {
   async function handleClose() {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/tournaments/${id}/close`,
+        `http://localhost:5001/api/tournaments/${id}/close`,
         { method: "PATCH", headers: { Authorization: token } },
       );
       const data = await res.json();
@@ -177,7 +177,7 @@ function TournamentDetail() {
     if (!window.confirm("Are you sure you want to delete this tournament?"))
       return;
     try {
-      const res = await fetch(`http://localhost:5000/api/tournaments/${id}`, {
+      const res = await fetch(`http://localhost:5001/api/tournaments/${id}`, {
         method: "DELETE",
         headers: { Authorization: token },
       });
@@ -192,7 +192,7 @@ function TournamentDetail() {
   }
 
   function refreshParticipants() {
-    fetch(`http://localhost:5000/api/tournaments/${id}/participants`)
+    fetch(`http://localhost:5001/api/tournaments/${id}/participants`)
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data)) setParticipants(data);
@@ -390,36 +390,38 @@ function TournamentDetail() {
                     key={p._id}
                     className={`td-table-row${isMe ? " td-table-row--me" : ""}`}
                   >
-                    <span className="td-td td-td--rank">
-                      <span
-                        className={`td-rank-badge${rank === 1 ? " td-rank-badge--first" : ""}${isMe ? " td-rank-badge--me" : ""}`}
-                      >
-                        {String(rank).padStart(2, "0")}
+                    <div className="td-row-main">
+                      <span className="td-td td-td--rank">
+                        <span
+                          className={`td-rank-badge${rank === 1 ? " td-rank-badge--first" : ""}${isMe ? " td-rank-badge--me" : ""}`}
+                        >
+                          {String(rank).padStart(2, "0")}
+                        </span>
                       </span>
-                    </span>
-                    <span className="td-td td-td--user">
-                      {p.user?.avatarUrl ? (
-                        <img
-                          src={p.user.avatarUrl}
-                          alt={`${p.user?.username || "User"} avatar`}
-                          className="td-avatar"
-                        />
-                      ) : (
-                        <ProfileIcon className="td-avatar" />
-                      )}
-                      <span
-                        className={`td-username${rank === 1 ? " td-username--first" : ""}${isMe ? " td-username--me" : ""}`}
-                      >
-                        {p.user?.username || "Unknown"}
-                        {isMe && " (You)"}
+                      <span className="td-td td-td--user">
+                        {p.user?.avatarUrl ? (
+                          <img
+                            src={p.user.avatarUrl}
+                            alt={`${p.user?.username || "User"} avatar`}
+                            className="td-avatar"
+                          />
+                        ) : (
+                          <ProfileIcon className="td-avatar" />
+                        )}
+                        <span
+                          className={`td-username${rank === 1 ? " td-username--first" : ""}${isMe ? " td-username--me" : ""}`}
+                        >
+                          {p.user?.username || "Unknown"}
+                          {isMe && " (You)"}
+                        </span>
                       </span>
-                    </span>
-                    <span className="td-td td-td--value">
-                      ${formatCurrency(p.cash_balance || 0)}
-                    </span>
-                    <span className="td-td td-td--change td-change--neutral">
-                      --
-                    </span>
+                      <span className="td-td td-td--value">
+                        ${formatCurrency(p.cash_balance || 0)}
+                      </span>
+                      <span className="td-td td-td--change td-change--neutral">
+                        --
+                      </span>
+                    </div>
                   </div>
                 );
               })}

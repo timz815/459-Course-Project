@@ -24,7 +24,7 @@ function TournamentsContent({ isLoggedIn = false }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/tournaments")
+    fetch("http://localhost:5001/api/tournaments")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setTournaments(data);

@@ -53,7 +53,7 @@ function StockMarket() {
   const fetchStocks = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch("http://localhost:5000/api/stocks");
+      const res = await fetch("http://localhost:5001/api/stocks");
       if (!res.ok) throw new Error("Failed to load stocks");
       const data = await res.json();
       setStocks(Array.isArray(data) ? data : []);

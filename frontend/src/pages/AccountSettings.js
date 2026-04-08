@@ -13,7 +13,7 @@ import LockedRefreshIcon from "../assets/Icon_16x16/Locked-Refresh-Body_16x16.sv
 import ProfileDefault16Icon from "../assets/Icon_Others/Profile-Default_16x16.svg";
 import "../styles/AccountSettings.css";
 
-const API = "http://localhost:5000/api/auth";
+const API = "http://localhost:5001/api/auth";
 
 function AccountSettings() {
   const { token, user, login } = useContext(AuthContext);

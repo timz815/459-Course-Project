@@ -226,6 +226,153 @@ router.get("/", async (req, res) => {
   }
 });
 
+// ─── Admin Stock Search (Polygon) ────────────────────────────────────────────
+
+const EXCHANGE_MAP = {
+  XNAS: "NASDAQ",
+  XNYS: "NYSE",
+  XASE: "NYSE",   // NYSE American (AMEX)
+};
+
+// SIC division → sector (matches seed conventions)
+const SIC_SECTOR_MAP = {
+  "01-09": "Agriculture",
+  10: "Energy",
+  12: "Energy",
+  13: "Energy",
+  14: "Basic Materials",
+  15: "Industrials",
+  16: "Industrials",
+  17: "Industrials",
+  20: "Consumer Defensive",
+  21: "Consumer Defensive",
+  22: "Consumer Cyclical",
+  23: "Consumer Cyclical",
+  24: "Basic Materials",
+  25: "Consumer Cyclical",
+  26: "Basic Materials",
+  27: "Communication Services",
+  28: "Healthcare",
+  29: "Energy",
+  30: "Industrials",
+  31: "Consumer Cyclical",
+  32: "Industrials",
+  33: "Basic Materials",
+  34: "Industrials",
+  35: "Technology",
+  36: "Technology",
+  37: "Industrials",
+  38: "Technology",
+  39: "Consumer Cyclical",
+  40: "Industrials",
+  41: "Industrials",
+  42: "Industrials",
+  43: "Communication Services",
+  44: "Industrials",
+  45: "Industrials",
+  46: "Industrials",
+  47: "Industrials",
+  48: "Communication Services",
+  49: "Utilities",
+  50: "Consumer Cyclical",
+  51: "Consumer Cyclical",
+  52: "Consumer Cyclical",
+  53: "Consumer Defensive",
+  54: "Consumer Defensive",
+  55: "Consumer Cyclical",
+  56: "Consumer Cyclical",
+  57: "Consumer Cyclical",
+  58: "Consumer Cyclical",
+  59: "Consumer Cyclical",
+  60: "Financial Services",
+  61: "Financial Services",
+  62: "Financial Services",
+  63: "Financial Services",
+  64: "Financial Services",
+  65: "Real Estate",
+  67: "Financial Services",
+  70: "Consumer Cyclical",
+  72: "Consumer Cyclical",
+  73: "Technology",
+  75: "Consumer Cyclical",
+  76: "Industrials",
+  78: "Communication Services",
+  79: "Communication Services",
+  80: "Healthcare",
+  81: "Technology",
+  82: "Consumer Cyclical",
+  83: "Consumer Cyclical",
+  84: "Consumer Cyclical",
+  86: "Consumer Cyclical",
+  87: "Technology",
+  89: "Technology",
+};
+
+function sicToSector(sicCode) {
+  if (!sicCode) return "";
+  const prefix = String(sicCode).slice(0, 2);
+  return SIC_SECTOR_MAP[prefix] || "";
+}
+
+// GET /api/stocks/admin/search?q=... — search Polygon tickers
+router.get("/admin/search", verifyAdmin, async (req, res) => {
+  try {
+    const q = (req.query.q || "").trim();
+    if (q.length < 1) return res.json([]);
+
+    const url = `${POLYGON_BASE}/v3/reference/tickers?search=${encodeURIComponent(q)}&type=CS&market=stocks&active=true&limit=8&apiKey=${POLYGON_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!response.ok || !data.results) {
+      return res.json([]);
+    }
+
+    const results = data.results
+      .filter((t) => EXCHANGE_MAP[t.primary_exchange])
+      .map((t) => ({
+        symbol: t.ticker,
+        name: t.name,
+        exchange: EXCHANGE_MAP[t.primary_exchange] || t.primary_exchange,
+      }));
+
+    res.json(results);
+  } catch (err) {
+    console.error("[StockSearch] Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/stocks/admin/lookup/:symbol — get full ticker details from Polygon
+router.get("/admin/lookup/:symbol", verifyAdmin, async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const url = `${POLYGON_BASE}/v3/reference/tickers/${symbol}?apiKey=${POLYGON_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!response.ok || !data.results) {
+      return res.status(404).json({ message: `Ticker ${symbol} not found on Polygon` });
+    }
+
+    const t = data.results;
+    const exchange = EXCHANGE_MAP[t.primary_exchange] || "";
+    const sector = sicToSector(t.sic_code);
+    const industry = t.sic_description || "";
+
+    res.json({
+      symbol: t.ticker,
+      name: t.name || "",
+      sector,
+      industry,
+      exchange,
+    });
+  } catch (err) {
+    console.error("[StockLookup] Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET single stock — includes full priceHistory and history3M for detail page
 router.get("/:symbol", async (req, res) => {
   try {
@@ -285,7 +432,33 @@ router.post("/admin", verifyAdmin, async (req, res) => {
     });
     await stock.save();
 
-    res.status(201).json({ message: `Stock ${stock.symbol} added.`, stock });
+    // Seed ~3 months of daily history from Polygon in the background
+    const from = getETDateString(-90);
+    const to = getETDateString(-1);
+    fetchDailyRange(stock.symbol, from, to)
+      .then(async (candles) => {
+        if (candles && candles.length > 0) {
+          const history3M = candles
+            .filter((c) => c.timestamp !== null && c.close !== null)
+            .map((c) => [c.timestamp, c.close])
+            .slice(-MAX_HISTORY_CANDLES);
+
+          const latestVolume = candles[candles.length - 1].volume;
+
+          await Stock.findOneAndUpdate(
+            { symbol: stock.symbol },
+            { $set: { history3M, volume: latestVolume, historyUpdatedAt: new Date() } },
+          );
+          console.log(`[AddStock] ✓ ${stock.symbol} — ${history3M.length} candles seeded`);
+        } else {
+          console.log(`[AddStock] ✗ ${stock.symbol} — no history data from Polygon`);
+        }
+      })
+      .catch((err) => {
+        console.error(`[AddStock] ✗ ${stock.symbol} history seed failed:`, err.message);
+      });
+
+    res.status(201).json({ message: `Stock ${stock.symbol} added. History is loading in the background.`, stock });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

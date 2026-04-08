@@ -17,6 +17,7 @@ import TournamentDetail from "./pages/TournamentDetail";
 import BuyStock from "./pages/BuyStock";
 import SellStock from "./pages/SellStock";
 import AccountSettings from "./pages/AccountSettings";
+import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
 
 function App() {
@@ -44,6 +45,9 @@ function App() {
 
           {/* admin route */}
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+
+          {/* 404 catch-all */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
       </Router>

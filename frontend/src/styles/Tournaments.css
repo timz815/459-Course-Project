@@ -166,3 +166,26 @@
 .tournaments-empty p {
   margin: 0;
 }
+
+/* ─── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 40rem) {
+  .tournaments-main {
+    padding: 2rem 1rem 4rem;
+  }
+
+  .tournaments-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .tournaments-card-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tournaments-search {
+    max-width: 100%;
+  }
+}

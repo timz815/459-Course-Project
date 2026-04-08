@@ -40,7 +40,7 @@ function VisitorHomeContent() {
   useEffect(() => {
     async function fetchOpenTournaments() {
       try {
-        const res = await fetch("http://localhost:5000/api/tournaments");
+        const res = await fetch("http://localhost:5001/api/tournaments");
         const data = await res.json();
         if (!Array.isArray(data)) return;
 
@@ -58,7 +58,7 @@ function VisitorHomeContent() {
 
           try {
             const participantsRes = await fetch(
-              `http://localhost:5000/api/tournaments/${currentArena._id}/participants`,
+              `http://localhost:5001/api/tournaments/${currentArena._id}/participants`,
             );
             const participantsData = await participantsRes.json();
             setLiveParticipants(

@@ -485,3 +485,18 @@
     width: 100%;
   }
 }
+
+@media (max-width: 40rem) {
+  .add-tournament-main {
+    padding: 4rem 1rem 3rem;
+  }
+
+  .add-tournament-form {
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+
+  .add-tournament-actions {
+    flex-direction: column;
+  }
+}

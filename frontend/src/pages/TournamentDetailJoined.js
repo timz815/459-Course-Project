@@ -160,7 +160,7 @@ function TournamentDetailJoined({
   }
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/tournaments/${id}/comments`)
+    fetch(`http://localhost:5001/api/tournaments/${id}/comments`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -187,7 +187,7 @@ function TournamentDetailJoined({
     setSubmittingComment(true);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/tournaments/${id}/comments`,
+        `http://localhost:5001/api/tournaments/${id}/comments`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: token },
@@ -249,7 +249,7 @@ function TournamentDetailJoined({
       const interval = setInterval(async () => {
         try {
           const res = await fetch(
-            `http://localhost:5000/api/tournaments/${id}/trades/queue`,
+            `http://localhost:5001/api/tournaments/${id}/trades/queue`,
             { headers: { Authorization: token } },
           );
           const pending = await res.json();
@@ -318,7 +318,7 @@ function TournamentDetailJoined({
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/tournaments/${id}/trades`,
+        `http://localhost:5001/api/tournaments/${id}/trades`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: token },
@@ -411,7 +411,7 @@ function TournamentDetailJoined({
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/tournaments/${id}/trades`,
+        `http://localhost:5001/api/tournaments/${id}/trades`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: token },

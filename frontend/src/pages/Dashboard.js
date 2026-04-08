@@ -103,7 +103,7 @@ function Dashboard() {
         if (!userId) return;
 
         // Fetch all tournaments
-        const allRes = await fetch("http://localhost:5000/api/tournaments");
+        const allRes = await fetch("http://localhost:5001/api/tournaments");
         const allTournaments = await allRes.json();
         if (!Array.isArray(allTournaments)) return;
 
@@ -116,7 +116,7 @@ function Dashboard() {
         for (const tournament of relevantTournaments) {
           try {
             const pRes = await fetch(
-              `http://localhost:5000/api/tournaments/${tournament._id}/participants`,
+              `http://localhost:5001/api/tournaments/${tournament._id}/participants`,
             );
             const participants = await pRes.json();
             if (!Array.isArray(participants)) continue;
@@ -164,7 +164,7 @@ function Dashboard() {
     if (!token) return;
     async function fetchWatchlist() {
       try {
-        const res = await fetch("http://localhost:5000/api/watchlist", {
+        const res = await fetch("http://localhost:5001/api/watchlist", {
           headers: { Authorization: token },
         });
         if (!res.ok) return;
@@ -181,7 +181,7 @@ function Dashboard() {
   useEffect(() => {
     async function fetchStocks() {
       try {
-        const res = await fetch("http://localhost:5000/api/stocks");
+        const res = await fetch("http://localhost:5001/api/stocks");
         const data = await res.json();
         if (Array.isArray(data)) setStocks(data);
       } catch (err) {
@@ -195,7 +195,7 @@ function Dashboard() {
   useEffect(() => {
     async function fetchWatchlistPrices() {
       try {
-        const res = await fetch("http://localhost:5000/api/stocks");
+        const res = await fetch("http://localhost:5001/api/stocks");
         const data = await res.json();
         if (!Array.isArray(data)) return;
         const priceMap = {};
@@ -497,7 +497,7 @@ function Dashboard() {
                           prev.filter((w) => w.symbol !== stock.symbol),
                         );
                         fetch(
-                          `http://localhost:5000/api/watchlist/${stock.symbol}`,
+                          `http://localhost:5001/api/watchlist/${stock.symbol}`,
                           {
                             method: "DELETE",
                             headers: { Authorization: token },

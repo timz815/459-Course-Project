@@ -300,3 +300,27 @@
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 36rem) {
+  .buy-stock-card {
+    padding: 1.5rem 1.25rem 2rem;
+  }
+
+  .buy-stock-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .buy-stock-price-section {
+    align-items: flex-start;
+  }
+
+  .buy-stock-pct-row {
+    flex-wrap: wrap;
+  }
+
+  .buy-stock-pct-btn {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 0;
+  }
+}

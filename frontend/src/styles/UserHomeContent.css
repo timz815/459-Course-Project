@@ -593,3 +593,73 @@
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
+
+/* ─── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 62rem) {
+  .user-home {
+    padding: 4rem 1.25rem;
+  }
+
+  .uh-hero {
+    padding: 2.25rem;
+  }
+
+  .uh-hero-title {
+    font-size: 2.5rem;
+    line-height: 2.5rem;
+    letter-spacing: -0.125rem;
+  }
+
+  .uh-comp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 40rem) {
+  .user-home {
+    padding: 3rem 1rem;
+  }
+
+  .uh-hero {
+    padding: 1.75rem;
+  }
+
+  .uh-hero-title {
+    font-size: 2rem;
+    line-height: 2rem;
+    letter-spacing: -0.0625rem;
+  }
+
+  .uh-hero-subtitle {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .uh-hero-actions {
+    flex-direction: column;
+  }
+
+  .uh-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .uh-section-title {
+    font-size: 1.5rem;
+    line-height: 1.75rem;
+  }
+
+  .uh-comp-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .uh-comp-card {
+    min-height: auto;
+  }
+
+  .uh-comp-new {
+    min-height: 10rem;
+  }
+}

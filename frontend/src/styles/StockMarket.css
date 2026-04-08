@@ -84,6 +84,7 @@
 .sm-filter-dropdown {
   height: 2.75rem;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .sm-filter-dropdown .filter-dropdown,
@@ -106,6 +107,9 @@
   display: flex;
   align-items: center;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .sm-closed-note {
@@ -310,16 +314,16 @@
   }
 
   .sm-filter-bar {
-    grid-template-columns: 1fr 1fr;
+    flex-wrap: wrap;
   }
 
   .sm-search-wrap {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
   }
 
   .sm-result-pill {
     justify-content: center;
-    grid-column: 1 / -1;
+    flex-basis: 100%;
   }
 
   .sm-grid {
@@ -332,6 +336,15 @@
     font-size: 2.25rem;
     line-height: 2.375rem;
     letter-spacing: -0.125rem;
+  }
+
+  .sm-filter-bar {
+    gap: 0.5rem;
+  }
+
+  .sm-filter-dropdown {
+    flex: 1;
+    min-width: 0;
   }
 
   .sm-filter-dropdown--sector,

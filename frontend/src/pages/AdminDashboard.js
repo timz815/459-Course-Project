@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, useCallback } from "react";
+import { useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
@@ -87,6 +87,15 @@ function AdminDashboard() {
     exchange: "NASDAQ",
   });
 
+  // Ticker search for add-stock form
+  const [tickerQuery, setTickerQuery] = useState("");
+  const [tickerResults, setTickerResults] = useState([]);
+  const [tickerLoading, setTickerLoading] = useState(false);
+  const [showTickerDropdown, setShowTickerDropdown] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const tickerDebounce = useRef(null);
+  const tickerWrapRef = useRef(null);
+
   // Edit-stock state
   const [editingSymbol, setEditingSymbol] = useState(null);
   const [editForm, setEditForm] = useState({ name: "" });
@@ -102,6 +111,81 @@ function AdminDashboard() {
     }
   }, [user, navigate]);
 
+  // Close ticker dropdown on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (tickerWrapRef.current && !tickerWrapRef.current.contains(e.target)) {
+        setShowTickerDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  // Debounced ticker search
+  function handleTickerSearch(value) {
+    setTickerQuery(value);
+    setNewStock((s) => ({ ...s, symbol: value }));
+    clearTimeout(tickerDebounce.current);
+
+    if (value.trim().length < 1) {
+      setTickerResults([]);
+      setShowTickerDropdown(false);
+      return;
+    }
+
+    setTickerLoading(true);
+    setShowTickerDropdown(true);
+
+    tickerDebounce.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5001/api/stocks/admin/search?q=${encodeURIComponent(value.trim())}`,
+          { headers: authHeaders() },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setTickerResults(data);
+        }
+      } catch {
+        setTickerResults([]);
+      } finally {
+        setTickerLoading(false);
+      }
+    }, 300);
+  }
+
+  // Select a ticker from dropdown → lookup full details
+  async function handleTickerSelect(symbol) {
+    setShowTickerDropdown(false);
+    setTickerQuery(symbol);
+    setLookupLoading(true);
+    try {
+      const res = await fetch(
+        `http://localhost:5001/api/stocks/admin/lookup/${encodeURIComponent(symbol)}`,
+        { headers: authHeaders() },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setNewStock({
+          symbol: data.symbol || symbol,
+          name: data.name || "",
+          sector: data.sector || "",
+          industry: data.industry || "",
+          exchange: data.exchange || "NASDAQ",
+        });
+        setTickerQuery(data.symbol || symbol);
+      } else {
+        setNewStock((s) => ({ ...s, symbol }));
+        showToast("Could not load ticker details — fill manually", "error");
+      }
+    } catch {
+      showToast("Lookup failed — fill fields manually", "error");
+    } finally {
+      setLookupLoading(false);
+    }
+  }
+
   function authHeaders() {
     return { "Content-Type": "application/json", Authorization: token };
   }
@@ -116,9 +200,9 @@ function AdminDashboard() {
     setLoading(true);
     try {
       const [usersRes, stocksRes, tournamentsRes] = await Promise.all([
-        fetch("http://localhost:5000/api/users", { headers: authHeaders() }),
-        fetch("http://localhost:5000/api/stocks", { headers: authHeaders() }),
-        fetch("http://localhost:5000/api/tournaments", { headers: authHeaders() }),
+        fetch("http://localhost:5001/api/users", { headers: authHeaders() }),
+        fetch("http://localhost:5001/api/stocks", { headers: authHeaders() }),
+        fetch("http://localhost:5001/api/tournaments", { headers: authHeaders() }),
       ]);
 
       if (usersRes.ok) setUsers(await usersRes.json());
@@ -139,7 +223,7 @@ function AdminDashboard() {
 
   async function handleDeleteUser(userId) {
     try {
-      const res = await fetch(`http://localhost:5000/api/users/${userId}`, {
+      const res = await fetch(`http://localhost:5001/api/users/${userId}`, {
         method: "DELETE",
         headers: authHeaders(),
       });
@@ -160,7 +244,7 @@ function AdminDashboard() {
   async function handleAddStock(e) {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/stocks/admin", {
+      const res = await fetch("http://localhost:5001/api/stocks/admin", {
         method: "POST",
         headers: authHeaders(),
         body: JSON.stringify(newStock),
@@ -180,6 +264,8 @@ function AdminDashboard() {
           industry: "",
           exchange: "NASDAQ",
         });
+        setTickerQuery("");
+        setTickerResults([]);
         showToast(data.message);
       } else {
         showToast(data.message || "Add failed", "error");
@@ -192,7 +278,7 @@ function AdminDashboard() {
   async function handleEditStock(symbol) {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/stocks/admin/${symbol}`,
+        `http://localhost:5001/api/stocks/admin/${symbol}`,
         {
           method: "PATCH",
           headers: authHeaders(),
@@ -217,7 +303,7 @@ function AdminDashboard() {
   async function handleDeleteStock(symbol) {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/stocks/admin/${symbol}`,
+        `http://localhost:5001/api/stocks/admin/${symbol}`,
         {
           method: "DELETE",
           headers: authHeaders(),
@@ -241,7 +327,7 @@ function AdminDashboard() {
   async function handleDeleteTournament(tournamentId) {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/tournaments/admin/${tournamentId}`,
+        `http://localhost:5001/api/tournaments/admin/${tournamentId}`,
         {
           method: "DELETE",
           headers: authHeaders(),
@@ -445,15 +531,44 @@ function AdminDashboard() {
 
             {showAddStock && (
               <form className="adm-add-form" onSubmit={handleAddStock}>
-                <input
-                  className="adm-add-input"
-                  placeholder="Symbol"
-                  value={newStock.symbol}
-                  onChange={(e) =>
-                    setNewStock((s) => ({ ...s, symbol: e.target.value }))
-                  }
-                  required
-                />
+                {/* Ticker search with autocomplete */}
+                <div className="adm-ticker-wrap" ref={tickerWrapRef}>
+                  <input
+                    className="adm-add-input adm-ticker-input"
+                    placeholder="Search ticker or company…"
+                    value={tickerQuery}
+                    onChange={(e) => handleTickerSearch(e.target.value)}
+                    onFocus={() => tickerResults.length > 0 && setShowTickerDropdown(true)}
+                    autoComplete="off"
+                    required
+                  />
+                  {showTickerDropdown && (
+                    <ul className="adm-ticker-dropdown">
+                      {tickerLoading ? (
+                        <li className="adm-ticker-item adm-ticker-item--loading">Searching…</li>
+                      ) : tickerResults.length === 0 ? (
+                        <li className="adm-ticker-item adm-ticker-item--empty">No results</li>
+                      ) : (
+                        tickerResults.map((t) => (
+                          <li
+                            key={t.symbol}
+                            className="adm-ticker-item"
+                            onMouseDown={() => handleTickerSelect(t.symbol)}
+                          >
+                            <span className="adm-ticker-item-symbol">{t.symbol}</span>
+                            <span className="adm-ticker-item-name">{t.name}</span>
+                            <span className="adm-ticker-item-exchange">{t.exchange}</span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  )}
+                </div>
+
+                {lookupLoading && (
+                  <span className="adm-lookup-loading">Loading details…</span>
+                )}
+
                 <input
                   className="adm-add-input"
                   placeholder="Company Name"
@@ -492,13 +607,17 @@ function AdminDashboard() {
                   <option value="NYSE">NYSE</option>
                 </select>
                 <div className="adm-add-actions">
-                  <button type="submit" className="adm-btn adm-btn--primary">
+                  <button type="submit" className="adm-btn adm-btn--primary" disabled={lookupLoading}>
                     Save
                   </button>
                   <button
                     type="button"
                     className="adm-btn adm-btn--ghost"
-                    onClick={() => setShowAddStock(false)}
+                    onClick={() => {
+                      setShowAddStock(false);
+                      setTickerQuery("");
+                      setTickerResults([]);
+                    }}
                   >
                     Cancel
                   </button>

@@ -11,20 +11,6 @@ function Footer() {
           <p>BUILT BY DENNIS DENG, TIMOTHY ZHANG, AND LANRE ALEGBELEYE.</p>
         </div>
 
-        <nav className="app-footer-links" aria-label="Footer links">
-          <button type="button" className="app-footer-link-btn">
-            TERMS
-          </button>
-          <button type="button" className="app-footer-link-btn">
-            PRIVACY
-          </button>
-          <button type="button" className="app-footer-link-btn">
-            SUPPORT
-          </button>
-          <button type="button" className="app-footer-link-btn">
-            API
-          </button>
-        </nav>
       </div>
     </footer>
   );

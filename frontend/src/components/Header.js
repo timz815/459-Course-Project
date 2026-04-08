@@ -26,7 +26,7 @@ function Header({ minimal = false }) {
 
     async function fetchTickerItems() {
       try {
-        const res = await fetch("http://localhost:5000/api/stocks");
+        const res = await fetch("http://localhost:5001/api/stocks");
         if (!res.ok) {
           throw new Error(`Ticker fetch failed with status ${res.status}`);
         }

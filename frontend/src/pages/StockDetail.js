@@ -192,7 +192,7 @@ function StockDetail() {
     async function fetchStock() {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/stocks/${symbol.toUpperCase()}`,
+          `http://localhost:5001/api/stocks/${symbol.toUpperCase()}`,
         );
         if (!res.ok) throw new Error("Stock not found");
         const data = await res.json();
@@ -211,7 +211,7 @@ function StockDetail() {
     if (!stock?.symbol || !token) return;
     async function checkWatchlist() {
       try {
-        const res = await fetch("http://localhost:5000/api/watchlist", {
+        const res = await fetch("http://localhost:5001/api/watchlist", {
           headers: { Authorization: token },
         });
         if (!res.ok) return;
@@ -232,7 +232,7 @@ function StockDetail() {
     if (watchlistAdded) {
       // Remove from watchlist
       try {
-        await fetch(`http://localhost:5000/api/watchlist/${stock.symbol}`, {
+        await fetch(`http://localhost:5001/api/watchlist/${stock.symbol}`, {
           method: "DELETE",
           headers: { Authorization: token },
         });
@@ -243,7 +243,7 @@ function StockDetail() {
     } else {
       // Add to watchlist
       try {
-        const res = await fetch("http://localhost:5000/api/watchlist", {
+        const res = await fetch("http://localhost:5001/api/watchlist", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

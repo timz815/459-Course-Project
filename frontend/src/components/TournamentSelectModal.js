@@ -58,7 +58,7 @@ function TournamentSelectModal({
         const tokenPayload = JSON.parse(atob(token.split(".")[1]));
         const userId = tokenPayload.id;
 
-        const res = await fetch("http://localhost:5000/api/tournaments");
+        const res = await fetch("http://localhost:5001/api/tournaments");
         const all = await res.json();
         if (!Array.isArray(all)) return;
 
@@ -70,7 +70,7 @@ function TournamentSelectModal({
         for (const t of active) {
           try {
             const pRes = await fetch(
-              `http://localhost:5000/api/tournaments/${t._id}/participants`,
+              `http://localhost:5001/api/tournaments/${t._id}/participants`,
             );
             const participants = await pRes.json();
             if (!Array.isArray(participants)) continue;

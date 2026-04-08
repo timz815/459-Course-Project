@@ -267,6 +267,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .vtc-card-heading {
@@ -281,6 +283,9 @@
   font-weight: var(--type-subtitle-l-weight);
   line-height: var(--type-subtitle-l-line);
   color: var(--color-neutral-100);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Chips ── */
@@ -444,4 +449,84 @@
   font-weight: var(--type-body-3-weight);
   line-height: 1rem;
   color: var(--color-body);
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 62rem) {
+  .vtc {
+    padding: 4rem 1.25rem 4rem;
+  }
+
+  .vtc-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .vtc-title {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+    letter-spacing: -0.125rem;
+  }
+
+  .vtc-ticker {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .vtc-filters {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 0.5rem;
+  }
+
+  .vtc-search {
+    flex-basis: 100%;
+    height: 3.125rem;
+  }
+
+  .vtc-filter-actions {
+    flex: 1;
+    gap: 0.5rem;
+  }
+
+  .vtc-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .vtc-card-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 40rem) {
+  .vtc {
+    padding: 3rem 1rem 3rem;
+  }
+
+  .vtc-title {
+    font-size: 1.75rem;
+    line-height: 2rem;
+  }
+
+  .vtc-ticker {
+    width: 100%;
+  }
+
+  .vtc-ticker-divider {
+    display: none;
+  }
+
+  .vtc-ticker-stat {
+    flex: 1;
+  }
+
+  .vtc-loadmore {
+    flex-direction: column;
+    gap: 1rem;
+  }
 }

@@ -100,7 +100,7 @@ function AddTournament() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/tournaments", {
+      const res = await fetch("http://localhost:5001/api/tournaments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

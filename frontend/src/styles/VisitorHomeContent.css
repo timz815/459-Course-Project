@@ -117,7 +117,7 @@
 }
 
 .vh-hero-card {
-  width: 17.8125rem;
+  width: min(17.8125rem, 100%);
   flex-shrink: 0;
   padding: 1.5rem;
   border-radius: 0.5rem;
@@ -443,6 +443,8 @@
 
 .vh-list-left p span {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .vh-list-left .success {
@@ -458,6 +460,8 @@
   align-items: center;
   gap: 3rem;
   margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .vh-list-right label {
@@ -511,10 +515,17 @@
     font-size: 3.75rem;
   }
 
+  .vh-features {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    max-height: none;
+  }
+
   .vh-main-feature,
   .vh-prize-card,
   .vh-small-card {
-    grid-column: span 12;
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .vh-prize-card {

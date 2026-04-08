@@ -130,6 +130,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .header-btn {
@@ -285,14 +286,26 @@
     font-size: 1.25rem;
   }
 
+  .header-nav-link {
+    font-size: 0.875rem;
+  }
+
   .header-auth {
     width: 100%;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
   .header-btn {
     padding: 0.5rem 0.875rem;
     font-size: 0.875rem;
+  }
+
+  .account-button {
+    min-width: auto;
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.625rem;
   }
 }
 

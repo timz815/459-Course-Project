@@ -59,7 +59,7 @@ function Register() {
     try {
       // TODO(backend): Ensure /api/auth/register accepts { username, email, password }.
       // Current frontend already sends email; backend must validate, normalize, and store it.
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch("http://localhost:5001/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -72,7 +72,7 @@ function Register() {
       const data = await res.json();
       if (res.ok) {
         // Auto-login after successful registration
-        const loginRes = await fetch("http://localhost:5000/api/auth/login", {
+        const loginRes = await fetch("http://localhost:5001/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

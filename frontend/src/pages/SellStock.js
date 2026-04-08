@@ -47,9 +47,9 @@ function SellStock() {
     async function fetchData() {
       try {
         const [stockRes, participantsRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/stocks`),
+          fetch(`http://localhost:5001/api/stocks`),
           fetch(
-            `http://localhost:5000/api/tournaments/${tournamentId}/participants`,
+            `http://localhost:5001/api/tournaments/${tournamentId}/participants`,
           ),
         ]);
         const stocks = await stockRes.json();
@@ -83,7 +83,7 @@ function SellStock() {
       const interval = setInterval(async () => {
         try {
           const res = await fetch(
-            `http://localhost:5000/api/tournaments/${tournamentId}/trades/queue`,
+            `http://localhost:5001/api/tournaments/${tournamentId}/trades/queue`,
             { headers: { Authorization: token } },
           );
           const pending = await res.json();
@@ -114,7 +114,7 @@ function SellStock() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/tournaments/${tournamentId}/trades`,
+        `http://localhost:5001/api/tournaments/${tournamentId}/trades`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: token },

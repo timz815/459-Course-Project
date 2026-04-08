@@ -333,3 +333,22 @@
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 36rem) {
+  .sell-stock-main {
+    padding: 4rem 1rem 4rem;
+  }
+
+  .sell-stock-body {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .sell-stock-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .sell-stock-price-section {
+    align-items: flex-start;
+  }
+}

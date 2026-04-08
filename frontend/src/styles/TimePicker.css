@@ -57,6 +57,11 @@
   overflow: hidden;
 }
 
+.timepicker-panel--right {
+  right: 0;
+  left: auto;
+}
+
 .timepicker-panel-header {
   display: flex;
   padding: 0.625rem 1rem 0.25rem;

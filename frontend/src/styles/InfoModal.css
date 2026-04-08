@@ -50,7 +50,9 @@
   color: var(--color-neutral-400);
   font-size: 1rem;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   flex-shrink: 0;
 }
 
@@ -143,20 +145,9 @@
 }
 
 /* ── Go-to navigation button ── */
+/* Layout-only; inherits all styling from ui-btn + variant classes */
 .im-goto-btn {
   width: 100%;
   margin-top: 0.5rem;
-  padding: 0.75rem;
-  background: linear-gradient(to right, #90cdff, #0f9fea);
-  color: var(--color-primary-ink);
-  border: none;
-  border-radius: var(--radius-md);
-  font: 800 0.9375rem/1.5rem var(--font-sans);
-  letter-spacing: -0.03125rem;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.im-goto-btn:hover {
-  opacity: 0.9;
+  padding: 0.5rem;
 }

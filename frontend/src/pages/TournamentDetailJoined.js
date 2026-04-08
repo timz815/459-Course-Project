@@ -18,6 +18,7 @@ import { ReactComponent as CancelIcon } from "../assets/Icon_16x16/Cancel_16x16.
 import { ReactComponent as ShareIcon } from "../assets/Icon_16x16/Share_16x16.svg";
 import { ReactComponent as ArrowRiseIcon } from "../assets/Icon_16x16/Arrow-Rise_16x16.svg";
 import { ReactComponent as ArrowFallIcon } from "../assets/Icon_16x16/Arrow-Fall_16x16.svg";
+import { ReactComponent as RightIcon } from "../assets/Icon_16x16/Right_16x16.svg";
 import { ReactComponent as ProfileIcon } from "../assets/Icon_Others/Profile-Default_32x32.svg";
 import { ReactComponent as ThumbsupIcon } from "../assets/Icon_Others/Thumbsup.svg";
 import { ReactComponent as ReplyIcon } from "../assets/Icon_Others/Reply.svg";
@@ -141,7 +142,12 @@ function TournamentDetailJoined({
 
   const holdingsValue = holdings.reduce((sum, h) => {
     const stockInfo = stocks.find((s) => s.symbol === h.symbol);
-    return sum + (stockInfo?.price != null ? h.shares * stockInfo.price : h.amount_invested || 0);
+    return (
+      sum +
+      (stockInfo?.price != null
+        ? h.shares * stockInfo.price
+        : h.amount_invested || 0)
+    );
   }, 0);
   const portfolioValue = cashBalance + holdingsValue;
   const totalGain = portfolioValue - startingBalance;
@@ -276,7 +282,8 @@ function TournamentDetailJoined({
     if (isPendingUntilOpen()) {
       warnings.push({
         type: "info",
-        message: "Market is currently closed. Your trade will be queued and executed at the next market open.",
+        message:
+          "Market is currently closed. Your trade will be queued and executed at the next market open.",
       });
     }
 
@@ -373,7 +380,8 @@ function TournamentDetailJoined({
     if (isPendingUntilOpen()) {
       warnings.push({
         type: "info",
-        message: "Market is currently closed. Your sell will be queued and executed at the next market open.",
+        message:
+          "Market is currently closed. Your sell will be queued and executed at the next market open.",
       });
     }
 
@@ -391,7 +399,9 @@ function TournamentDetailJoined({
   function getSellDollarAmount(holding, stockInfo) {
     if (!holding) return 0;
     if (stockInfo?.price && holding.shares) {
-      return parseFloat((Number(stockInfo.price) * Number(holding.shares)).toFixed(2));
+      return parseFloat(
+        (Number(stockInfo.price) * Number(holding.shares)).toFixed(2),
+      );
     }
     return Number(holding.amount_invested || 0);
   }
@@ -633,27 +643,44 @@ function TournamentDetailJoined({
                             </span>
                           </span>
                           <span className="td-td td-td--value">
-                            ${formatCurrency(p.portfolio_value ?? p.cash_balance ?? 0)}
+                            $
+                            {formatCurrency(
+                              p.portfolio_value ?? p.cash_balance ?? 0,
+                            )}
                           </span>
-                          <span className={`td-td td-td--change ${
-                            p.day_change == null ? "td-change--neutral" :
-                            p.day_change > 0 ? "td-change--positive" :
-                            p.day_change < 0 ? "td-change--negative" :
-                            "td-change--neutral"
-                          }`}>
-                            {p.day_change == null ? "--" :
-                              `${p.day_change >= 0 ? "+" : ""}$${formatCurrency(p.day_change)}`}
+                          <span
+                            className={`td-td td-td--change ${
+                              p.day_change == null
+                                ? "td-change--neutral"
+                                : p.day_change > 0
+                                  ? "td-change--positive"
+                                  : p.day_change < 0
+                                    ? "td-change--negative"
+                                    : "td-change--neutral"
+                            }`}
+                          >
+                            {p.day_change == null
+                              ? "--"
+                              : `${p.day_change >= 0 ? "+" : ""}$${formatCurrency(p.day_change)}`}
                           </span>
                           <span className="td-td td-td--expand">
                             <button
                               type="button"
                               className="td-expand-btn"
                               onClick={() =>
-                                setExpandedParticipantId(isExpanded ? null : p._id)
+                                setExpandedParticipantId(
+                                  isExpanded ? null : p._id,
+                                )
                               }
-                              aria-label={isExpanded ? "Collapse holdings" : "Expand holdings"}
+                              aria-label={
+                                isExpanded
+                                  ? "Collapse holdings"
+                                  : "Expand holdings"
+                              }
                             >
-                              <ArrowFallIcon className={`td-chevron${isExpanded ? " td-chevron--open" : ""}`} />
+                              <ArrowFallIcon
+                                className={`td-chevron${isExpanded ? " td-chevron--open" : ""}`}
+                              />
                             </button>
                           </span>
                         </div>
@@ -669,18 +696,30 @@ function TournamentDetailJoined({
                                   <span>Gain / Loss</span>
                                 </div>
                                 {participantHoldings.map((h) => {
-                                  const stockInfo = stocks.find((s) => s.symbol === h.symbol);
+                                  const stockInfo = stocks.find(
+                                    (s) => s.symbol === h.symbol,
+                                  );
                                   const currentVal = stockInfo?.price
                                     ? stockInfo.price * h.shares
                                     : h.amount_invested || 0;
-                                  const gain = currentVal - (h.amount_invested || 0);
+                                  const gain =
+                                    currentVal - (h.amount_invested || 0);
                                   return (
                                     <div key={h.symbol} className="td-hd-row">
-                                      <span className="td-hd-symbol">{h.symbol}</span>
-                                      <span className="td-hd-shares">{h.shares} shares</span>
-                                      <span className="td-hd-value">${formatCurrency(currentVal)}</span>
-                                      <span className={`td-hd-gain${gain >= 0 ? " td-hd-gain--pos" : " td-hd-gain--neg"}`}>
-                                        {gain >= 0 ? "+" : ""}${formatCurrency(gain)}
+                                      <span className="td-hd-symbol">
+                                        {h.symbol}
+                                      </span>
+                                      <span className="td-hd-shares">
+                                        {h.shares} shares
+                                      </span>
+                                      <span className="td-hd-value">
+                                        ${formatCurrency(currentVal)}
+                                      </span>
+                                      <span
+                                        className={`td-hd-gain${gain >= 0 ? " td-hd-gain--pos" : " td-hd-gain--neg"}`}
+                                      >
+                                        {gain >= 0 ? "+" : ""}$
+                                        {formatCurrency(gain)}
                                       </span>
                                     </div>
                                   );
@@ -688,7 +727,9 @@ function TournamentDetailJoined({
                                 <div className="td-hd-cash-row">
                                   <span>Cash</span>
                                   <span></span>
-                                  <span>${formatCurrency(p.cash_balance ?? 0)}</span>
+                                  <span>
+                                    ${formatCurrency(p.cash_balance ?? 0)}
+                                  </span>
                                   <span></span>
                                 </div>
                               </>
@@ -719,7 +760,13 @@ function TournamentDetailJoined({
                       className={`td-discussion-filter-btn${commentFilter === f ? " td-discussion-filter-btn--active" : ""}`}
                       onClick={() => setCommentFilter(f)}
                     >
-                      {f === "all" ? "All" : f === "comments" ? "Comments" : f === "trades" ? "Trades" : "Activity"}
+                      {f === "all"
+                        ? "All"
+                        : f === "comments"
+                          ? "Comments"
+                          : f === "trades"
+                            ? "Trades"
+                            : "Activity"}
                     </button>
                   ))}
                 </div>
@@ -757,67 +804,76 @@ function TournamentDetailJoined({
               </div>
 
               <div className="td-comments-list">
-                {comments.filter((c) =>
-                  commentFilter === "all" ? true :
-                  commentFilter === "comments" ? c.type === "comment" :
-                  commentFilter === "trades" ? c.type === "trade" :
-                  c.type === "event"
-                ).map((comment) => (
-                  <article key={comment.id} className="td-comment-card">
-                    {comment.avatarUrl ? (
-                      <img
-                        src={comment.avatarUrl}
-                        alt={`${comment.author} avatar`}
-                        className="td-avatar"
-                      />
-                    ) : (
-                      <ProfileIcon className="td-avatar" />
-                    )}
-                    <div className="td-comment-content">
-                      <header className="td-comment-top">
-                        <p className="td-comment-author">{comment.author}</p>
-                        <time className="td-comment-time">
-                          {comment.timeAgo}
-                        </time>
-                      </header>
-                      <p className="td-comment-body">
-                        {comment.type === "trade" && (
-                          <span className={`td-trade-badge td-trade-badge--${comment.side}`}>
-                            {comment.side === "buy" ? "BUY" : "SELL"}
-                          </span>
-                        )}
-                        {comment.type === "event" && (
-                          <span className={`td-trade-badge td-trade-badge--${comment.side}`}>
-                            {comment.side === "join" ? "JOIN" : "LEFT"}
-                          </span>
-                        )}
-                        {comment.body}
-                      </p>
-                      <div className="td-comment-actions">
-                        <button
-                          type="button"
-                          className="td-comment-action-btn"
-                          onClick={() => handleToggleLike(comment.id)}
-                          aria-label={`Like comment from ${comment.author}`}
-                        >
-                          <ThumbsupIcon className="td-comment-action-icon td-comment-action-icon--thumb" />
-                          <span className="td-comment-like-count">
-                            {comment.likes}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          className="td-comment-action-btn"
-                          onClick={() => handleReply(comment)}
-                          aria-label={`Reply to ${comment.author}`}
-                        >
-                          <ReplyIcon className="td-comment-action-icon td-comment-action-icon--reply" />
-                          <span className="td-comment-reply-text">Reply</span>
-                        </button>
+                {comments
+                  .filter((c) =>
+                    commentFilter === "all"
+                      ? true
+                      : commentFilter === "comments"
+                        ? c.type === "comment"
+                        : commentFilter === "trades"
+                          ? c.type === "trade"
+                          : c.type === "event",
+                  )
+                  .map((comment) => (
+                    <article key={comment.id} className="td-comment-card">
+                      {comment.avatarUrl ? (
+                        <img
+                          src={comment.avatarUrl}
+                          alt={`${comment.author} avatar`}
+                          className="td-avatar"
+                        />
+                      ) : (
+                        <ProfileIcon className="td-avatar" />
+                      )}
+                      <div className="td-comment-content">
+                        <header className="td-comment-top">
+                          <p className="td-comment-author">{comment.author}</p>
+                          <time className="td-comment-time">
+                            {comment.timeAgo}
+                          </time>
+                        </header>
+                        <p className="td-comment-body">
+                          {comment.type === "trade" && (
+                            <span
+                              className={`td-trade-badge td-trade-badge--${comment.side}`}
+                            >
+                              {comment.side === "buy" ? "BUY" : "SELL"}
+                            </span>
+                          )}
+                          {comment.type === "event" && (
+                            <span
+                              className={`td-trade-badge td-trade-badge--${comment.side}`}
+                            >
+                              {comment.side === "join" ? "JOIN" : "LEFT"}
+                            </span>
+                          )}
+                          {comment.body}
+                        </p>
+                        <div className="td-comment-actions">
+                          <button
+                            type="button"
+                            className="td-comment-action-btn"
+                            onClick={() => handleToggleLike(comment.id)}
+                            aria-label={`Like comment from ${comment.author}`}
+                          >
+                            <ThumbsupIcon className="td-comment-action-icon td-comment-action-icon--thumb" />
+                            <span className="td-comment-like-count">
+                              {comment.likes}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            className="td-comment-action-btn"
+                            onClick={() => handleReply(comment)}
+                            aria-label={`Reply to ${comment.author}`}
+                          >
+                            <ReplyIcon className="td-comment-action-icon td-comment-action-icon--reply" />
+                            <span className="td-comment-reply-text">Reply</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  ))}
               </div>
 
               <div className="td-discussion-footer">
@@ -863,7 +919,9 @@ function TournamentDetailJoined({
                   </div>
                   <div className="td-trade-cash-row">
                     <span className="td-trade-cash-label">Available Cash</span>
-                    <span className="td-trade-cash-value">${formatCurrency(cashBalance)}</span>
+                    <span className="td-trade-cash-value">
+                      ${formatCurrency(cashBalance)}
+                    </span>
                   </div>
                   <div className="td-trade-pct-row">
                     <button
@@ -934,36 +992,57 @@ function TournamentDetailJoined({
                     <div className="td-holdings-list-header">
                       <span className="td-holdings-col-label">Position</span>
                       <div className="td-holdings-col-label-right">
-                        <span className="td-holdings-col-label">Current Price</span>
+                        <span className="td-holdings-col-label">
+                          Current Price
+                        </span>
                         <span className="td-holdings-col-label">Sell</span>
                       </div>
                     </div>
                     {holdings.map((h) => {
-                      const stockInfo = stocks.find((s) => s.symbol === h.symbol);
-                      const currentValue = stockInfo?.price != null
-                        ? h.shares * stockInfo.price
-                        : h.amount_invested || 0;
+                      const stockInfo = stocks.find(
+                        (s) => s.symbol === h.symbol,
+                      );
+                      const currentValue =
+                        stockInfo?.price != null
+                          ? h.shares * stockInfo.price
+                          : h.amount_invested || 0;
                       const costBasis = h.amount_invested || 0;
                       const delta = currentValue - costBasis;
                       const isPositive = delta >= 0;
                       return (
                         <div key={h.symbol} className="td-holding-item">
                           <div className="td-holding-name-row">
-                            <span className="td-holding-symbol">{h.symbol}</span>
-                            <span className="td-holding-company">{stockInfo?.name || ""}</span>
+                            <span className="td-holding-symbol">
+                              {h.symbol}
+                            </span>
+                            <span className="td-holding-company">
+                              {stockInfo?.name || ""}
+                            </span>
                           </div>
                           <div className="td-holding-data-row">
                             <div className="td-holding-left">
-                              <span className="td-holding-paid">Paid ${formatCurrency(costBasis)}</span>
+                              <span className="td-holding-paid">
+                                Paid ${formatCurrency(costBasis)}
+                              </span>
                               <span className="td-holding-shares">
-                                {h.shares} shares at ${formatCurrency(h.shares > 0 ? h.amount_invested / h.shares : 0)}
+                                {h.shares} shares at $
+                                {formatCurrency(
+                                  h.shares > 0
+                                    ? h.amount_invested / h.shares
+                                    : 0,
+                                )}
                               </span>
                             </div>
                             <div className="td-holding-right">
                               <div className="td-holding-value-col">
-                                <span className="td-holding-total">${formatCurrency(currentValue)}</span>
-                                <span className={`td-holding-delta ${isPositive ? "td-holding-delta--positive" : "td-holding-delta--negative"}`}>
-                                  {delta >= 0 ? "+" : ""}${formatCurrency(delta)}
+                                <span className="td-holding-total">
+                                  ${formatCurrency(currentValue)}
+                                </span>
+                                <span
+                                  className={`td-holding-delta ${isPositive ? "td-holding-delta--positive" : "td-holding-delta--negative"}`}
+                                >
+                                  {delta >= 0 ? "+" : ""}$
+                                  {formatCurrency(delta)}
                                 </span>
                               </div>
                               <button
@@ -986,7 +1065,6 @@ function TournamentDetailJoined({
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         </div>
@@ -1017,10 +1095,10 @@ function TournamentDetailJoined({
         <div className="td-modal-overlay" role="dialog" aria-modal="true">
           <div className="td-sell-modal">
             <div className="td-sell-modal-header">
-              <h2 className="td-sell-modal-title">Sell {sellTargetHolding?.symbol}</h2>
-              <p className="td-sell-modal-subtitle">
-                Enter amount to sell
-              </p>
+              <h2 className="td-sell-modal-title">
+                Sell {sellTargetHolding?.symbol}
+              </h2>
+              <p className="td-sell-modal-subtitle">Enter amount to sell</p>
             </div>
 
             <div className="td-sell-modal-content">
@@ -1059,7 +1137,9 @@ function TournamentDetailJoined({
                 </div>
                 <div className="td-trade-cash-row">
                   <span className="td-trade-cash-label">Max Proceeds</span>
-                  <span className="td-trade-cash-value">${formatCurrency(sellDollarAmount)}</span>
+                  <span className="td-trade-cash-value">
+                    ${formatCurrency(sellDollarAmount)}
+                  </span>
                 </div>
                 <div className="td-trade-pct-row">
                   {[25, 50, 75].map((pct) => (
@@ -1068,7 +1148,9 @@ function TournamentDetailJoined({
                       type="button"
                       className="td-pct-btn"
                       onClick={() =>
-                        setSellAmount(((sellDollarAmount * pct) / 100).toFixed(2))
+                        setSellAmount(
+                          ((sellDollarAmount * pct) / 100).toFixed(2),
+                        )
                       }
                     >
                       {pct}%
@@ -1090,8 +1172,9 @@ function TournamentDetailJoined({
                   <span>
                     {sellStockInfo?.price
                       ? (
-                          (parseFloat(sellAmount) > 0 ? parseFloat(sellAmount) : sellDollarAmount) /
-                          sellStockInfo.price
+                          (parseFloat(sellAmount) > 0
+                            ? parseFloat(sellAmount)
+                            : sellDollarAmount) / sellStockInfo.price
                         ).toFixed(3)
                       : Number(sellTargetHolding?.shares || 0).toFixed(3)}
                   </span>
@@ -1099,7 +1182,12 @@ function TournamentDetailJoined({
                 <div className="td-sell-detail-row">
                   <span>Estimated Proceeds</span>
                   <span>
-                    ${formatCurrency(parseFloat(sellAmount) > 0 ? parseFloat(sellAmount) : sellDollarAmount)}
+                    $
+                    {formatCurrency(
+                      parseFloat(sellAmount) > 0
+                        ? parseFloat(sellAmount)
+                        : sellDollarAmount,
+                    )}
                   </span>
                 </div>
                 <div className="td-sell-detail-row">
@@ -1109,7 +1197,12 @@ function TournamentDetailJoined({
               </div>
 
               {sellWarnings.map((w, i) => (
-                <p key={i} className={`td-sell-warning td-sell-warning--${w.type}`}>{w.message}</p>
+                <p
+                  key={i}
+                  className={`td-sell-warning td-sell-warning--${w.type}`}
+                >
+                  {w.message}
+                </p>
               ))}
             </div>
 
@@ -1179,23 +1272,24 @@ function TournamentDetailJoined({
             Warning: All your holdings and cash balance in this tournament will
             be permanently wiped. This cannot be undone.
           </p>
-          <button
+          <Button
             className="im-goto-btn"
-            style={{ background: "#ff625e", color: "#68000b", marginTop: "0.5rem" }}
+            variant="cancel"
+            tailIcon={<RightIcon />}
             onClick={() => {
               setShowLeaveConfirm(false);
               handleLeave();
             }}
           >
             Yes, Leave Tournament
-          </button>
-          <button
+          </Button>
+          <Button
             className="im-goto-btn"
-            style={{ background: "var(--color-neutral-800)", color: "var(--color-neutral-100)", marginTop: "0.5rem" }}
+            variant="secondary"
             onClick={() => setShowLeaveConfirm(false)}
           >
             Cancel
-          </button>
+          </Button>
         </InfoModal>
       )}
 
@@ -1252,7 +1346,8 @@ function TournamentDetailJoined({
 
           <p className="im-section-title">Description</p>
           <p className="im-message">
-            {tournament.description?.trim() || "No description / rules provided."}
+            {tournament.description?.trim() ||
+              "No description / rules provided."}
           </p>
         </InfoModal>
       )}

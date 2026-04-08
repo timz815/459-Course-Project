@@ -271,12 +271,12 @@
   max-width: 40rem;
   color: #bec7d2;
   font:
-    400 1.125rem/1.82813rem "Manrope",
+    500 0.875rem / 1.25rem "Manrope",
     sans-serif;
 }
 
 .vh-metrics {
-  margin-top: 3rem;
+  margin-top: 6rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;

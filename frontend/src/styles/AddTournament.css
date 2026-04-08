@@ -82,7 +82,7 @@
 .add-tournament-fieldset {
   border: 0;
   margin: 0;
-  padding: 0;
+  padding-top: 0.5rem;
 }
 
 .add-tournament-row {

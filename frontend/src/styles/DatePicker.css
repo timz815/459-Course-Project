@@ -52,6 +52,11 @@
   min-width: 17.5rem;
 }
 
+.datepicker-calendar--right {
+  right: 0;
+  left: auto;
+}
+
 .datepicker-header {
   display: flex;
   justify-content: space-between;

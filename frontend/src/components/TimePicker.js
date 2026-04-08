@@ -15,7 +15,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../styles/TimePicker.css";
 
-function TimePicker({ name, value, onChange }) {
+function TimePicker({ name, value, onChange, align = "left" }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -149,7 +149,7 @@ function TimePicker({ name, value, onChange }) {
         <div
           role="dialog"
           aria-label="Time picker"
-          className="timepicker-panel"
+          className={`timepicker-panel${align === "right" ? " timepicker-panel--right" : ""}`}
         >
           <div className="timepicker-panel-header">
             <span className="timepicker-panel-label">Hour</span>

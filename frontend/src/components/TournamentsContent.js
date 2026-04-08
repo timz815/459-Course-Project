@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ReactComponent as MagnifyIcon } from "../assets/Icon_16x16/Magnify_16x16.svg";
 import { ReactComponent as SettingIcon } from "../assets/Icon_16x16/Setting-Horizontal_16x16.svg";
 import { ReactComponent as AddIcon } from "../assets/Icon_16x16/Add_16x16.svg";
+import { ReactComponent as RightIcon } from "../assets/Icon_16x16/Right_16x16.svg";
 import FilterDropdown from "./UI/FilterDropdown";
 import Button from "./UI/Button";
 import InfoModal from "./InfoModal";
@@ -112,6 +113,24 @@ function TournamentsContent({ isLoggedIn = false }) {
         </div>
       </div>
 
+      {/* ── Load More Section (logged-in only) ── */}
+      {isLoggedIn && (
+        <div className="vtc-loadmore">
+          <p className="vtc-loadmore-text">
+            Near real-time quote updates using Finnhub at up to 1
+            request/second, plus cached market data stored in MongoDB for fast
+            UI rendering.
+          </p>
+          <Button
+            variant="primary"
+            headIcon={<AddIcon />}
+            onClick={() => navigate("/add-tournament")}
+          >
+            Create Tournament
+          </Button>
+        </div>
+      )}
+
       {/* ── Filter Bar ── */}
       <div className="vtc-filters">
         <div className="vtc-search">
@@ -203,24 +222,6 @@ function TournamentsContent({ isLoggedIn = false }) {
         )}
       </div>
 
-      {/* ── Load More Section (logged-in only) ── */}
-      {isLoggedIn && (
-        <div className="vtc-loadmore">
-          <p className="vtc-loadmore-text">
-            Near real-time quote updates using Finnhub at up to 1
-            request/second, plus cached market data stored in MongoDB for fast
-            UI rendering.
-          </p>
-          <Button
-            variant="primary"
-            headIcon={<AddIcon />}
-            onClick={() => navigate("/add-tournament")}
-          >
-            Create Tournament
-          </Button>
-        </div>
-      )}
-
       {/* ── Tournament Details Modal ── */}
       {selectedTournament && (
         <InfoModal
@@ -273,18 +274,21 @@ function TournamentsContent({ isLoggedIn = false }) {
 
           <p className="im-section-title">Description</p>
           <p className="im-message">
-            {selectedTournament.description?.trim() || "No description / rules provided."}
+            {selectedTournament.description?.trim() ||
+              "No description / rules provided."}
           </p>
 
-          <button
+          <Button
             className="im-goto-btn"
+            variant="primary"
+            tailIcon={<RightIcon />}
             onClick={() => {
               setSelectedTournament(null);
               navigate(`/tournaments/${selectedTournament._id}`);
             }}
           >
-            Go to Tournament →
-          </button>
+            Go to Tournament
+          </Button>
         </InfoModal>
       )}
     </main>

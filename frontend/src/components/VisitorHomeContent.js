@@ -33,12 +33,12 @@ const FEATURE_CARDS = [
 
 function VisitorHomeContent() {
   const navigate = useNavigate();
-  const [openTournaments, setOpenTournaments] = useState([]);
+  const [visibleTournaments, setVisibleTournaments] = useState([]);
   const [liveArena, setLiveArena] = useState(null);
   const [liveParticipants, setLiveParticipants] = useState(0);
 
   useEffect(() => {
-    async function fetchOpenTournaments() {
+    async function fetchTournaments() {
       try {
         const res = await fetch("http://localhost:5001/api/tournaments");
         const data = await res.json();
@@ -76,23 +76,27 @@ function VisitorHomeContent() {
           setLiveParticipants(0);
         }
 
-        const openOnly = data
-          .filter((t) => t.status === "open")
-          .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+        const activeAndOpen = data
+          .filter((t) => t.status === "active" || t.status === "open")
+          .sort((a, b) => {
+            if (a.status === "active" && b.status !== "active") return -1;
+            if (a.status !== "active" && b.status === "active") return 1;
+            return new Date(a.start_date) - new Date(b.start_date);
+          });
 
-        setOpenTournaments(openOnly);
+        setVisibleTournaments(activeAndOpen);
       } catch (err) {
         console.error("Error fetching open tournaments:", err);
       }
     }
 
-    fetchOpenTournaments();
+    fetchTournaments();
   }, []);
 
   const browseLabel = useMemo(() => {
-    if (openTournaments.length === 0) return "Browse all tournaments";
-    return `Browse all ${openTournaments.length} tournaments`;
-  }, [openTournaments.length]);
+    if (visibleTournaments.length === 0) return "Browse all tournaments";
+    return `Browse all ${visibleTournaments.length} tournaments`;
+  }, [visibleTournaments.length]);
 
   function formatDate(dateValue) {
     if (!dateValue) return "TBD";
@@ -275,7 +279,7 @@ function VisitorHomeContent() {
           <div className="vh-section-head">
             <div>
               <p className="vh-eyebrow">Active Arenas</p>
-              <h2>Upcoming Tournaments</h2>
+              <h2>Live and Upcoming Tournaments</h2>
             </div>
             <button
               type="button"
@@ -287,11 +291,11 @@ function VisitorHomeContent() {
           </div>
 
           <div className="vh-list">
-            {openTournaments.length === 0 ? (
+            {visibleTournaments.length === 0 ? (
               <article className="vh-list-item vh-list-empty">
                 <div className="vh-list-left">
                   <div>
-                    <h3>No Open Tournaments Right Now</h3>
+                    <h3>No Active or Open Tournaments Right Now</h3>
                     <p>
                       <span>Check back soon for upcoming arenas.</span>
                     </p>
@@ -299,7 +303,7 @@ function VisitorHomeContent() {
                 </div>
               </article>
             ) : (
-              openTournaments.map((tourney) => {
+              visibleTournaments.map((tourney) => {
                 const entryFee = Number(tourney.entry_fee);
                 const hasEntryFee = Number.isFinite(entryFee) && entryFee > 0;
 

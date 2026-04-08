@@ -187,11 +187,13 @@ function AddTournament() {
                       value={formData.end_date}
                       onChange={handleChange}
                       placeholder="mm/dd/yyyy"
+                      align="right"
                     />
                     <TimePicker
                       name="end_date"
                       value={formData.end_date}
                       onChange={handleChange}
+                      align="right"
                     />
                   </div>
                   {validationErrors.end_date && (

@@ -335,12 +335,9 @@ function StockDetail() {
       <main className="sd-main">
         {/* Back link */}
         <nav className="sd-breadcrumb">
-          <button
-            className="sd-back-btn"
-            onClick={() => navigate("/stock-market")}
-          >
+          <button className="sd-back-btn" onClick={() => navigate(-1)}>
             <LeftIcon className="sd-back-icon" />
-            <span>Back to Market</span>
+            <span>Back</span>
           </button>
         </nav>
 

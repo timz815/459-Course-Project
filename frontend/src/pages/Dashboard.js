@@ -458,12 +458,10 @@ function Dashboard() {
                         className="dash-wl-symbol"
                         role="button"
                         tabIndex={0}
-                        onClick={() =>
-                          navigate(`/stock-market/${stock.symbol}`)
-                        }
+                        onClick={() => navigate(`/stocks/${stock.symbol}`)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter")
-                            navigate(`/stock-market/${stock.symbol}`);
+                            navigate(`/stocks/${stock.symbol}`);
                         }}
                       >
                         {stock.symbol}
